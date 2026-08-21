@@ -2,7 +2,6 @@
 // (setChar ⇄ setTrack) is replaced with an explicit state machine in phase.
 
 export type Phase =
-  | 'menu'  // before the "Старт" button is pressed
   | 'idle'  // choosing an empty cell
   | 'letter' // entering a letter, the virtual keyboard is open
   | 'word'  // clicks on adjacent cells build the path
@@ -31,10 +30,10 @@ export interface GameState {
 }
 
 export type Action =
-  | { type: 'START_GAME' }
   | { type: 'NEW_GAME' }
   | { type: 'CLICK_CELL'; index: number }
   | { type: 'SET_LETTER'; char: string }
+  | { type: 'BACKSPACE' } // one step back: drop the last path cell / change the letter
   | { type: 'SUBMIT_MOVE' }
   | { type: 'CANCEL_MOVE' }
   | { type: 'BOT_MOVED'; move: BotMove | null };

@@ -114,8 +114,9 @@ function findWordPath(board: string[], word: string, mustInclude: number): numbe
   return null;
 }
 
-let s = gameReducer(initialState, { type: 'START_GAME' });
-assert(s.phase === 'idle' && s.usedWords.length === 1 && s.board[10] === 'б', 'START_GAME: the starting word is in the middle row');
+let s = initialState;
+assert(s.phase === 'idle' && s.usedWords.length === 1 && s.board[10] === 'б',
+  'the game starts immediately: the starting word is in the middle row');
 assert(gameReducer(s, { type: 'NEW_GAME' }).usedWords.length === 1, 'NEW_GAME restarts the game');
 
 // the player plays "фалда", the computer replies "халда" (a constructed move)
@@ -137,8 +138,43 @@ s = gameReducer(s, { type: 'SET_LETTER', char: 'а' });
 for (const c of [16, 17, 12, 13, 14]) s = gameReducer(s, { type: 'CLICK_CELL', index: c });
 assert(wordFromTrack(s.board, s.track) === 'халда', 'the path builds the word "халда"');
 s = gameReducer(s, { type: 'SUBMIT_MOVE' });
-assert(s.error === 'Слово "халда" уже использовано' && s.track.length === 0 && s.phase === 'word',
+assert(s.error === 'Слово "халда" уже использовано' && s.phase === 'word',
   'a repeated word is rejected with the original text');
+assert(s.track.length === 5, 'a validation error keeps the path for editing');
+
+// a click on the last path cell and BACKSPACE remove it from the path
+s = gameReducer(s, { type: 'CLICK_CELL', index: 14 });
+assert(s.track.length === 4 && wordFromTrack(s.board, s.track) === 'халд',
+  'a click on the last cell removes it from the path');
+s = gameReducer(s, { type: 'BACKSPACE' });
+assert(s.track.length === 3 && wordFromTrack(s.board, s.track) === 'хал',
+  'BACKSPACE removes the last path cell');
+s = gameReducer(s, { type: 'CLICK_CELL', index: 13 });
+s = gameReducer(s, { type: 'CLICK_CELL', index: 14 });
+assert(wordFromTrack(s.board, s.track) === 'халда', 'the path is rebuilt back to "халда"');
+
+// changing the letter without canceling the move: a click on the added letter
+// mid-path reopens the keyboard, the path stays; a new letter replaces the old one
+s = gameReducer(s, { type: 'CLICK_CELL', index: 17 });
+assert(s.phase === 'letter' && s.selectedCell === 17 && s.numChar === 17 && s.track.length === 5,
+  'a click on the added letter mid-path reopens the keyboard, the path is kept');
+s = gameReducer(s, { type: 'SET_LETTER', char: 'у' });
+assert(s.phase === 'word' && s.board[17] === 'у' && wordFromTrack(s.board, s.track) === 'хулда',
+  'a new letter replaces the old one in the same path');
+s = gameReducer(s, { type: 'CLICK_CELL', index: 17 });
+s = gameReducer(s, { type: 'CANCEL_MOVE' });
+assert(s.phase === 'word' && s.board[17] === 'у' && s.track.length === 5,
+  'canceling the letter change returns to the word, the path is kept');
+
+// BACKSPACE with an empty path reopens the keyboard over the added letter
+for (let k = 0; k < 5; k++) s = gameReducer(s, { type: 'BACKSPACE' });
+assert(s.phase === 'word' && s.track.length === 0, 'BACKSPACE empties the path');
+s = gameReducer(s, { type: 'BACKSPACE' });
+assert(s.phase === 'letter' && s.selectedCell === 17 && s.numChar === 17,
+  'BACKSPACE with an empty path reopens the keyboard over the added letter');
+s = gameReducer(s, { type: 'SET_LETTER', char: 'а' });
+assert(s.phase === 'word' && s.board[17] === 'а' && s.track.length === 0,
+  'the letter is changed, the move continues');
 
 // "Отмена" resets numChar (a fix over the original)
 s = gameReducer(s, { type: 'CANCEL_MOVE' });
@@ -166,7 +202,7 @@ if (mv2 === null) {
 
 // --- a full game to the end through the reducer (both sides play the best move) ---
 
-let g = gameReducer(initialState, { type: 'START_GAME' });
+let g = initialState;
 let guard = 0;
 let simError = '';
 while (g.phase !== 'over' && guard++ < 100 && !simError) {

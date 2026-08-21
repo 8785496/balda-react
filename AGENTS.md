@@ -36,10 +36,10 @@ There is no test framework — correctness of the logic is verified by `npm run 
 ## Architecture
 
 - **State is the source of truth, not the DOM**: the board is `board: string[25]` (25 cells, `''` = empty) in `useReducer`; cells are `<button class="cell">`. The dictionary is bundled as an ES module; hashes are built on load.
-- **A state machine** instead of the original's attaching of listeners: `phase: 'menu' | 'idle' | 'letter' | 'word' | 'bot' | 'over'`. Cycle: `idle` (choosing an empty cell) → `letter` (the virtual keyboard is open) → `word` (clicks on adjacent cells build the `track`) → `SUBMIT_MOVE` → `bot` (an effect in App calls `findBestMove` via `setTimeout`) → `idle`; with 21 words in `usedWords` — `over` (EndPanel instead of `alert()`).
+- **A state machine** instead of the original's attaching of listeners: `phase: 'idle' | 'letter' | 'word' | 'bot' | 'over'` — the game starts immediately in `idle` (the original's «Старт»/menu screen is dropped). Cycle: `idle` (choosing an empty cell) → `letter` (the virtual keyboard is open) → `word` (clicks on adjacent cells build the `track`) → `SUBMIT_MOVE` → `bot` (an effect in App calls `findBestMove` via `setTimeout`) → `idle`; with 21 words in `usedWords` — `over` (EndPanel instead of `alert()`). `word` → `letter` is a back-transition: the keyboard reopens over an existing move to change the added letter.
 - **Bot's turn**: `useEffect` in App when `phase === 'bot'`; the result arrives as the `BOT_MOVED` action (`null` = no move, skip).
-- **Physical keyboard**: in the `letter` phase a letter (ё → е) enters it, `Escape` cancels the move, `Enter` in the `word` phase submits.
-- **Board themes**: the palette is a set of CSS custom properties; `data-theme` on `<html>` (set from App, persisted in localStorage; `index.html` hardcodes `neon` for the first paint) switches it. Default: `neon` (`DEFAULT_THEME`); empty cells are styled via `.cell:empty`. A saved id that is no longer in `THEMES` falls back to the default.
+- **Physical keyboard**: in the `letter` phase a letter (ё → е) enters it, `Escape` cancels the move, `Enter` in the `word` phase submits, `Backspace` steps the move back (the last path cell, then the letter).
+- **Board themes**: the palette is a set of CSS custom properties; `data-theme` on `<html>` (set from App, persisted in localStorage; `index.html` hardcodes `neon` for the first paint) switches it. Default: `neon` (`DEFAULT_THEME`); empty cells are styled via `.cell:empty`. A saved id that is no longer in `THEMES` falls back to the default. The ThemePicker swatches and the rules icon-link live in the page footer (`App.tsx`).
 
 ### Game model (as in the original)
 
@@ -68,3 +68,5 @@ There is no test framework — correctness of the logic is verified by `npm run 
 2. Neighbor check `i > 5` → `i >= 5` (cell 5 could not see its top neighbor) — `helpers.ts`, `finder.ts`.
 3. No move for the bot — the turn is skipped (the original crashed).
 4. The hidden `#time` and `#emulator` ("Help") were not ported.
+5. UI cleanups: the «Старт» screen is dropped (the game starts immediately); the submit button is «Готово» (was «Ход») and is disabled until a word path exists; «Отмена» is rendered only in the `word` phase (in the `letter` phase the keyboard overlay covers the page); the theme picker and the rules link live in the footer.
+6. Path editing (the original offered none): a validation error keeps the `track` instead of clearing it; a click on the last path cell — or `Backspace`/the «⌫» button — removes that cell; a click on the added letter already in the path, or `Backspace` with an empty path, reopens the keyboard to change the letter without dropping the move (the `word → letter` back-transition; canceling there returns to `word`). The added-letter cell itself must stay normally clickable so the letter can enter the path — hence the click-to-edit only in the mid-path case.

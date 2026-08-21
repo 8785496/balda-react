@@ -44,11 +44,12 @@ export default function App() {
   }, [state.phase, state.board, state.usedWords]);
 
   // physical keyboard: a letter (ё → е) in the letter phase,
-  // Escape — cancel, Enter in the word phase — submit
+  // Escape — cancel, Enter in the word phase — submit,
+  // Backspace — one step back (the last path cell, then the letter)
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (state.phase === 'letter') {
-        if (e.key === 'Escape') {
+        if (e.key === 'Escape' || e.key === 'Backspace') {
           dispatch({ type: 'CANCEL_MOVE' });
           return;
         }
@@ -62,6 +63,8 @@ export default function App() {
           dispatch({ type: 'CANCEL_MOVE' });
         else if (e.key === 'Enter')
           dispatch({ type: 'SUBMIT_MOVE' });
+        else if (e.key === 'Backspace')
+          dispatch({ type: 'BACKSPACE' });
       }
     }
     window.addEventListener('keydown', onKeyDown);
@@ -70,7 +73,6 @@ export default function App() {
 
   return (
     <div className="context">
-      <ThemePicker value={theme} onChange={setTheme} />
       <StatusBar
         result={wordFromTrack(state.board, state.track)}
         error={state.error}
@@ -96,11 +98,26 @@ export default function App() {
       </div>
       <Controls
         phase={state.phase}
-        onStart={() => dispatch({ type: state.phase === 'menu' ? 'START_GAME' : 'NEW_GAME' })}
+        canSubmit={state.phase === 'word' && state.track.length > 0}
+        onRestart={() => dispatch({ type: 'NEW_GAME' })}
         onSubmit={() => dispatch({ type: 'SUBMIT_MOVE' })}
+        onBack={() => dispatch({ type: 'BACKSPACE' })}
         onCancel={() => dispatch({ type: 'CANCEL_MOVE' })}
       />
       <ScorePanel playerWords={state.playerWords} botWords={state.botWords} />
+      <footer className="footer">
+        <a
+          className="rules-icon"
+          href="https://ru.wikipedia.org/wiki/%D0%91%D0%B0%D0%BB%D0%B4%D0%B0_%28%D0%B8%D0%B3%D1%80%D0%B0%29"
+          target="_blank"
+          rel="noreferrer"
+          title="Правила игры"
+          aria-label="Правила игры"
+        >
+          ?
+        </a>
+        <ThemePicker value={theme} onChange={setTheme} />
+      </footer>
       {state.phase === 'letter' && (
         <Keyboard
           onLetter={(char) => dispatch({ type: 'SET_LETTER', char })}

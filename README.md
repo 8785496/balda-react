@@ -32,19 +32,21 @@ npm run check    # node logic-check script (dictionary, move search)
 | `src/state/types.ts` | `GameState`, `Phase`, `Action` |
 | `src/state/gameReducer.ts` | All move and validation logic (from `events.js`) |
 | `src/state/helpers.ts` | Cell neighbors, word from a path, adjacency check |
-| `src/components/` | Board, Cell, Keyboard, Controls, ScorePanel, StatusBar, EndPanel |
+| `src/components/` | Board, Cell, Keyboard, Controls, ScorePanel, StatusBar, EndPanel, ThemePicker |
 | `scripts/check.ts` | Logic check without a test framework (`npm run check`) |
 
 ## Architecture
 
 - State, not DOM: the board is `board: string[25]` in `useReducer`; cells are `<button>`.
-- An explicit `phase` state machine: `menu → idle` (choosing an empty cell) `→ letter` (entering a letter) `→ word` (building the path) `→ SUBMIT → bot → idle`; the game ends with `over` at 21 words.
+- An explicit `phase` state machine: the game starts right away in `idle` (choosing an empty cell) `→ letter` (entering a letter) `→ word` (building the path) `→ SUBMIT → bot → idle`; the game ends with `over` at 21 words.
 - The original's algorithms (dictionary hashes, DFS move search) are ported unchanged: only the packaging changes (ES modules, types) and DOM reads are removed.
 - Bot's turn: after a successful submit, a `useEffect` calls `findBestMove` via `setTimeout`, so the UI has time to show the player's word and the «Компьютер думает…» status.
 
 ### Differences from the original (otherwise behavior is 1:1)
 
-- Responsive layout (grid + `clamp()`), physical keyboard input (a letter, `Escape` — cancel, `Enter` — submit), end of game as a panel instead of `alert()`.
+- Responsive layout (grid + `clamp()`), physical keyboard input (a letter, `Escape` — cancel, `Enter` — submit, `Backspace` — step the move back), end of game as a panel instead of `alert()`.
+- The game starts immediately — the original's "Старт" screen with an empty board is dropped; the submit button («Готово», the original's «Ход») is disabled until a word path exists; «Отмена» shows only while the path is being built (in the letter phase the keyboard overlay covers the page); the theme picker and the rules link live in the footer.
+- The path can be edited instead of being rebuilt: a validation error no longer clears it; a click on the last path cell (or `Backspace` / the «⌫» button) removes it; a click on the added letter mid-path (or `Backspace` with an empty path) reopens the keyboard to change the letter without canceling the move.
 - Fixed: "Отмена" now also resets the highlight of the added letter (`numChar`).
 - Fixed: neighbor check `i > 5` → `i >= 5` (cell 5 could not see its top neighbor).
 - Fixed: when the computer has no move, the turn is skipped (the original crashed).

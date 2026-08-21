@@ -311,11 +311,44 @@ a:hover {
 
 /* --- theme picker --- */
 
+/* --- footer: the rules link and the theme picker --- */
+
+.footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+/* a round "?" icon-link to the game rules (the former "Правила игры"
+   link in the status row) */
+.rules-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--btn-color);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.rules-icon:hover {
+  border: var(--btn-hover-border);
+  background: var(--btn-hover-bg);
+  color: var(--btn-hover-color);
+  text-decoration: none;
+}
+
 .theme-row {
   display: flex;
   justify-content: center;
   gap: 6px;
-  margin: 0 0 10px;
 }
 
 .theme-swatch {
@@ -342,13 +375,6 @@ a:hover {
 
 .status-bar {
   min-height: 3em;
-}
-
-.status-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
 }
 
 .result {
@@ -469,8 +495,18 @@ button:disabled {
   border: var(--cell-selected-border);
 }
 
+/* the added letter reopened for editing (.add and .selected together):
+   keep the .add look — the open keyboard overlay is the editing cue */
+.cell.add.selected {
+  background: var(--cell-add-bg);
+  color: var(--cell-add-color);
+  border: var(--cell-add-border);
+  box-shadow: var(--cell-add-shadow);
+}
+
 .cell:focus-visible,
 .keyboard button:focus-visible,
+.rules-icon:focus-visible,
 .theme-swatch:focus-visible {
   outline: 2px solid var(--focus-color);
   outline-offset: 1px;
