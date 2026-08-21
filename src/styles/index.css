@@ -56,6 +56,10 @@
   --btn-active-bg: linear-gradient(to bottom, #969796, #ffffff);
   --btn-active-color: #323232;
 
+  --btn-primary-border: 1px solid #323232;
+  --btn-primary-bg: linear-gradient(to bottom, #565656, #323232);
+  --btn-primary-color: #ffffff;
+
   --substrate-bg: rgba(100, 100, 100, 0.5);
   --card-bg: #ffffff;
   --card-border: 1px solid #646464;
@@ -108,6 +112,10 @@
   --btn-active-bg: linear-gradient(to bottom, #c9ad78, #fffaf0);
   --btn-active-color: #3a2c18;
 
+  --btn-primary-border: 1px solid #1f5c31;
+  --btn-primary-bg: linear-gradient(180deg, #3f9c5c, #2e7d46);
+  --btn-primary-color: #fdf4dd;
+
   --substrate-bg: rgba(64, 42, 16, 0.55);
   --card-bg: #fdf4dd;
   --card-border: 1px solid #a9713d;
@@ -159,6 +167,10 @@
   --btn-hover-color: #ffffff;
   --btn-active-bg: #444444;
   --btn-active-color: #ffffff;
+
+  --btn-primary-border: 1.5px solid #1a1a1a;
+  --btn-primary-bg: #1a1a1a;
+  --btn-primary-color: #ffffff;
 
   --substrate-bg: rgba(26, 26, 26, 0.45);
   --card-bg: #ffffff;
@@ -213,6 +225,10 @@
   --btn-active-bg: linear-gradient(to bottom, #222936, #384254);
   --btn-active-color: #ffffff;
 
+  --btn-primary-border: 1px solid #0a6b7d;
+  --btn-primary-bg: linear-gradient(180deg, #34d3e8, #0e94ac);
+  --btn-primary-color: #04333c;
+
   --substrate-bg: rgba(4, 7, 12, 0.66);
   --card-bg: #232a35;
   --card-border: 1px solid #3d4959;
@@ -266,6 +282,10 @@
   --btn-hover-color: #ffffff;
   --btn-active-bg: linear-gradient(to bottom, #1e173a, #352869);
   --btn-active-color: #ffffff;
+
+  --btn-primary-border: 1px solid #0aae7c;
+  --btn-primary-bg: linear-gradient(180deg, #3dfcb0, #0ed392);
+  --btn-primary-color: #032e1e;
 
   --substrate-bg: rgba(8, 5, 20, 0.7);
   --card-bg: #241b45;
@@ -486,24 +506,111 @@ button:disabled {
   cursor: default;
 }
 
+/* the controls live in two rows: the main action row and a separate small
+   row for Заново, tucked to the right — away from «Готово»'s tap area */
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* equal heights for text and icon buttons: the row stretches every button
    to the tallest one, and each button centers its own content */
-.controls {
+.controls-main {
   display: flex;
   justify-content: center;
   align-items: stretch;
   flex-wrap: wrap;
+  width: 100%;
 }
 
-.controls button {
+.controls-main button {
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1.4;
+  margin: 10px 2px;
+}
+
+/* the submit — the one large primary action of the screen */
+.btn-primary {
+  flex: 1 1 150px;
+  min-width: 150px;
+  max-width: 320px;
+  padding: 10px 18px;
+  font-size: 22px;
+  font-weight: 600;
+  border: var(--btn-primary-border);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+}
+
+/* must repeat the colors on :hover/:active — the generic button:hover wins
+   over the plain class; brightness shifts stand in for extra hover vars */
+.btn-primary:hover:not(:disabled) {
+  border: var(--btn-primary-border);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+  filter: brightness(1.08);
+}
+
+.btn-primary:active:not(:disabled) {
+  border: var(--btn-primary-border);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+  filter: brightness(0.92);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+}
+
+/* small text buttons that must not compete with the primary one: Отмена in
+   the main row and on the keyboard panel, and the demoted Заново */
+.btn-secondary {
+  min-width: 0;
+  margin: 2px;
+  padding: 4px 12px;
+  font-size: 14px;
+  box-shadow: none;
+  background: transparent;
+  border-color: transparent; /* keeps the base 1px box: no size jump on hover */
+}
+
+.btn-secondary:hover {
+  border-color: var(--btn-hover-border);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--btn-color);
+}
+
+/* the Заново row: small, right-aligned, off the primary button's way */
+.controls-restart {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.btn-restart {
+  margin: 0 2px 8px;
+  font-weight: 600;
+}
+
+/* the armed «Точно?» state — the second-tap confirmation, tinted with the
+   theme's error color to read as danger */
+.btn-restart.armed,
+.btn-restart.armed:hover {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--error);
 }
 
 /* the backspace button: the ⌫ glyph is missing from the Play/Open Sans
    fonts, so the button carries an SVG icon instead of a character */
+#back {
+  min-width: 0;
+  padding: 5px 14px;
+}
+
 #back svg {
   width: 1.4em;
   height: 1.4em;
@@ -607,7 +714,7 @@ button:disabled {
 }
 
 /* the added letter reopened for editing (.add and .selected together):
-   keep the .add look — the open keyboard overlay is the editing cue */
+   keep the .add look — the floating keyboard at the cell is the editing cue */
 .cell.add.selected {
   background: var(--cell-add-bg);
   color: var(--cell-add-color);
@@ -661,7 +768,73 @@ button:disabled {
   color: var(--bot-color);
 }
 
-/* --- overlays: keyboard and end of game --- */
+/* --- letter keyboard: floating at the selected cell (the letter phase) --- */
+
+/* a popover anchored by the keyboard component (inline left/top, measured
+   from the cell): it opens next to the tapped cell, so neither the cursor
+   nor the thumb has to travel, and it floats above the board, which stays
+   interactive around it */
+.keyboard-panel {
+  position: absolute;
+  z-index: 30; /* above the cells, below the end-of-game overlay (1000) */
+  width: min(92vw, 364px);
+  margin: 0;
+  padding: 8px 8px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.25);
+  color: var(--card-color);
+  animation: keyboard-in 0.15s ease-out;
+}
+
+.keyboard-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.keyboard-cancel {
+  margin: 0;
+}
+
+.keyboard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.keyboard button {
+  min-width: 0;
+  width: clamp(30px, 9vw, 38px);
+  margin: 2px;
+  font-size: clamp(16px, 4vw, 20px);
+  padding: 6px 0;
+}
+
+@keyframes keyboard-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .keyboard-panel {
+    animation: none;
+  }
+}
+
+/* --- end-of-game overlay (the only overlay left: the letter keyboard used
+   to be one too, before it became a floating panel at the selected cell) --- */
 
 .substrate {
   position: fixed;
@@ -672,24 +845,8 @@ button:disabled {
   z-index: 1000;
   background: var(--substrate-bg);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  padding-top: 66px;
-}
-
-.keyboard {
-  width: min(92vw, 340px);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.keyboard button {
-  min-width: 0;
-  width: clamp(30px, 9vw, 38px);
-  margin: 1px;
-  font-size: clamp(16px, 4vw, 20px);
-  padding: 5px 0;
 }
 
 .end-panel {
@@ -724,10 +881,10 @@ button:disabled {
     padding: 8px;
   }
 
-  .controls button {
-    min-width: 84px;
-    font-size: 18px;
-    padding: 4px;
+  .btn-primary {
+    min-width: 130px;
+    font-size: 20px;
+    padding: 8px 12px;
   }
 
   .score-columns {

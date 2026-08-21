@@ -9,7 +9,9 @@
 //   - a validation error keeps the track (the original cleared the whole path);
 //   - the path is editable: a click on the last cell (or BACKSPACE) removes it, and a click
 //     on the added letter already in the path (or BACKSPACE with an empty path) reopens the
-//     keyboard to change the letter — the path and the board survive all of this.
+//     keyboard to change the letter — the path and the board survive all of this;
+//   - in the letter phase a click on another empty cell moves the pending letter there
+//     (the floating keyboard sits at the cell, so the field around it stays clickable).
 import { ALPHABET, SIZE, START_WORD, START_ROW, MAX_WORDS } from '../game/constants';
 import { dic } from '../game/dic';
 import { areAdjacent, wordFromTrack } from './helpers';
@@ -58,6 +60,15 @@ export function gameReducer(state: GameState, action: Action): GameState {
           error: '',
           status: '',
         };
+      }
+      if (state.phase === 'letter') {
+        // the keyboard is open for a fresh cell: a tap on another empty cell
+        // moves the pending letter there (the board stays visible). Not in the
+        // letter-change back-transition — there the cell is fixed by the move
+        // being edited (numChar is set), and the board backup still matches.
+        if (state.numChar === null && state.board[i] === '')
+          return { ...state, selectedCell: i };
+        return state;
       }
       if (state.phase === 'word') {
         if (state.board[i] === '')
@@ -146,7 +157,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
     }
 
     // one step back: removes the last path cell; once the path is empty,
-    // reopens the keyboard over the added letter
+    // reopens the keyboard for the added letter
     case 'BACKSPACE': {
       if (state.phase !== 'word')
         return state;
@@ -160,7 +171,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'CANCEL_MOVE': {
       if (state.phase !== 'letter' && state.phase !== 'word')
         return state;
-      // canceling a letter change (the keyboard reopened over an existing move —
+      // canceling a letter change (the keyboard reopened for an existing move —
       // numChar is set): back to the word, the path and the letter survive
       if (state.phase === 'letter' && state.numChar !== null)
         return { ...state, selectedCell: null, phase: 'word', error: '' };

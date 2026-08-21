@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer, useRef, useState } from 'react';
 import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 import { EndPanel } from './components/EndPanel';
@@ -26,6 +26,8 @@ const BOT_MOVE_HIGHLIGHT_MS = 3000;
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
   const [theme, setTheme] = useState<ThemeId>(loadTheme);
+  // the board grid element: the floating letter keyboard anchors to its cells
+  const boardRef = useRef<HTMLDivElement | null>(null);
 
   // the color theme: data-theme on <html> switches the CSS variable set
   useEffect(() => {
@@ -106,8 +108,17 @@ export default function App() {
           selectedCell={state.selectedCell}
           phase={state.phase}
           botMove={showBotMove ? lastBotMove : null}
+          boardRef={boardRef}
           onCellClick={(index) => dispatch({ type: 'CLICK_CELL', index })}
         />
+        {state.phase === 'letter' && state.selectedCell !== null && (
+          <Keyboard
+            boardRef={boardRef}
+            cellIndex={state.selectedCell}
+            onLetter={(char) => dispatch({ type: 'SET_LETTER', char })}
+            onCancel={() => dispatch({ type: 'CANCEL_MOVE' })}
+          />
+        )}
         {state.phase === 'over' && (
           <EndPanel
             playerScore={scoreOf(state.playerWords)}
@@ -143,12 +154,6 @@ export default function App() {
         </a>
         <ThemePicker value={theme} onChange={setTheme} />
       </footer>
-      {state.phase === 'letter' && (
-        <Keyboard
-          onLetter={(char) => dispatch({ type: 'SET_LETTER', char })}
-          onCancel={() => dispatch({ type: 'CANCEL_MOVE' })}
-        />
-      )}
     </div>
   );
 }

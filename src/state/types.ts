@@ -3,7 +3,7 @@
 
 export type Phase =
   | 'idle'  // choosing an empty cell
-  | 'letter' // entering a letter, the virtual keyboard is open
+  | 'letter' // entering a letter (the keyboard floats at the selected cell)
   | 'word'  // clicks on adjacent cells build the path
   | 'bot'   // the computer's turn
   | 'over'; // the game is over

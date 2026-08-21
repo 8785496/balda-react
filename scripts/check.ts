@@ -126,6 +126,11 @@ assert(gameReducer(s, { type: 'NEW_GAME' }).usedWords.length === 1, 'NEW_GAME re
 // the player plays "фалда", the computer replies "халда" (a constructed move)
 s = gameReducer(s, { type: 'CLICK_CELL', index: 6 });
 assert(s.phase === 'letter' && s.selectedCell === 6, 'a click on an empty cell opens letter input');
+s = gameReducer(s, { type: 'CLICK_CELL', index: 18 });
+assert(s.phase === 'letter' && s.selectedCell === 18,
+  'in the letter phase a tap on another empty cell moves the pending letter there');
+s = gameReducer(s, { type: 'CLICK_CELL', index: 6 });
+assert(s.selectedCell === 6, 'the pending letter moves back the same way');
 s = gameReducer(s, { type: 'SET_LETTER', char: 'ф' });
 assert(s.phase === 'word' && s.numChar === 6 && s.board[6] === 'ф', 'the letter is placed and highlighted (numChar)');
 const faldaPath = [6, 11, 12, 13, 14];

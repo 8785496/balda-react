@@ -1,23 +1,70 @@
-// Virtual keyboard with an overlay (the analog of the original's #substrate/#keyboard).
-import { ALPHABET } from '../game/constants';
+// Floating letter keyboard anchored to the selected cell: it opens right
+// next to the tapped cell — below it in the top half of the board, above in
+// the bottom half — so neither the cursor nor the thumb has to travel far,
+// and it follows the cell when the letter is re-targeted. The board stays
+// interactive around the panel; the small «Отмена» cancels the move.
+import { useLayoutEffect, useRef, useState } from 'react';
+import type { RefObject } from 'react';
+import { ALPHABET, SIZE } from '../game/constants';
 
 interface KeyboardProps {
+  boardRef: RefObject<HTMLDivElement | null>; // the .board grid, for the cell's position
+  cellIndex: number;                          // the selected cell the panel anchors to
   onLetter: (char: string) => void;
   onCancel: () => void;
 }
 
-export function Keyboard({ onLetter, onCancel }: KeyboardProps) {
+export function Keyboard({ boardRef, cellIndex, onLetter, onCancel }: KeyboardProps) {
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+
+  // Place the panel by measured geometry: the cells' offsetParent is
+  // .board-wrap (relative) and the panel is absolute in the same host, so
+  // the two coordinate systems match. useLayoutEffect positions the panel
+  // before the first paint, so it never flashes in a wrong spot.
+  useLayoutEffect(() => {
+    function place() {
+      const board = boardRef.current;
+      const panel = panelRef.current;
+      if (!board || !panel)
+        return;
+      const cell = board.children[cellIndex] as HTMLElement | undefined;
+      if (!cell)
+        return;
+      const host = cell.offsetParent as HTMLElement | null;
+      const hostWidth = host ? host.clientWidth : 0;
+      // centered on the cell, clamped into the board column
+      const left = Math.min(
+        Math.max(cell.offsetLeft + cell.offsetWidth / 2 - panel.offsetWidth / 2, 4),
+        Math.max(4, hostWidth - panel.offsetWidth - 4),
+      );
+      const below = Math.floor(cellIndex / SIZE) < SIZE / 2;
+      const top = below
+        ? cell.offsetTop + cell.offsetHeight + 8
+        : cell.offsetTop - panel.offsetHeight - 8;
+      setPos({ left, top: Math.max(top, 4) });
+    }
+    place();
+    // re-targeting moves the panel; a resize re-measures everything
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [boardRef, cellIndex]);
+
   return (
-    <div className="substrate" onClick={onCancel}>
-      <div
-        className="keyboard"
-        onClick={(e) => {
-          // a click on the panel itself does not close the keyboard
-          e.stopPropagation();
-        }}
-        role="group"
-        aria-label="Виртуальная клавиатура"
-      >
+    <div
+      className="keyboard-panel"
+      ref={panelRef}
+      style={pos === null ? undefined : { left: pos.left, top: pos.top }}
+      role="group"
+      aria-label="Виртуальная клавиатура"
+    >
+      <div className="keyboard-title">
+        <span>Выберите букву</span>
+        <button type="button" className="btn-secondary keyboard-cancel" onClick={onCancel}>
+          Отмена
+        </button>
+      </div>
+      <div className="keyboard">
         {ALPHABET.split('').map((char) => (
           <button key={char} type="button" onClick={() => onLetter(char)}>
             {char}
