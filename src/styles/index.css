@@ -724,6 +724,19 @@ button:disabled {
   color: var(--cell-color);
 }
 
+/* an empty cell with no letters around it — not a legal spot for a new
+   letter: dimmed, without the hover invite */
+.cell:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.cell:disabled:hover {
+  background: var(--cell-empty-bg);
+  border: var(--cell-empty-border);
+  box-shadow: var(--cell-empty-shadow);
+}
+
 /* the computer's last move — its word path and the added letter, tinted with
    the theme's bot accent and shown for a few seconds after the move */
 .cell.bot {

@@ -16,6 +16,7 @@ export interface Texts {
   boardAria: string;
   controls: {
     submit: string;              // «Готово»
+    addLetter: string;           // «Добавьте букву» — the submit's label until a letter is chosen
     cancel: string;              // «Отмена»
     restart: string;             // «Заново»
     confirm: string;             // the armed «Точно?»
@@ -63,6 +64,7 @@ export const TEXTS: Record<Lang, Texts> = {
     boardAria: 'Игровое поле',
     controls: {
       submit: 'Готово',
+      addLetter: 'Добавьте букву',
       cancel: 'Отмена',
       restart: 'Заново',
       confirm: 'Точно?',
@@ -127,6 +129,7 @@ export const TEXTS: Record<Lang, Texts> = {
     boardAria: 'Game board',
     controls: {
       submit: 'Done',
+      addLetter: 'Add a letter',
       cancel: 'Cancel',
       restart: 'Restart',
       confirm: 'Sure?',

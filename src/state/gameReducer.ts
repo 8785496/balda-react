@@ -14,10 +14,12 @@
 //     on the added letter already in the path (or BACKSPACE with an empty path) reopens the
 //     keyboard to change the letter — the path and the board survive all of this;
 //   - in the letter phase a click on another empty cell moves the pending letter there
-//     (the floating keyboard sits at the cell, so the field around it stays clickable).
+//     (the floating keyboard sits at the cell, so the field around it stays clickable);
+//   - an empty cell with no letters around it cannot be chosen for the new letter
+//     (the original allowed any empty cell, and an isolated letter could enter no word).
 import { SIZE, START_ROW, MAX_WORDS } from '../game/constants';
 import { alphabetFor, dicFor, startWordFor, type Lang } from '../game/lang';
-import { areAdjacent, wordFromTrack } from './helpers';
+import { areAdjacent, hasFilledNeighbor, wordFromTrack } from './helpers';
 import type { Action, GameState } from './types';
 
 // a new game: an empty board with the starting word in the middle row.
@@ -54,8 +56,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'CLICK_CELL': {
       const i = action.index;
       if (state.phase === 'idle') {
-        // choosing an empty cell for the new letter
-        if (state.board[i] !== '')
+        // choosing an empty cell for the new letter — only one that adjoins
+        // existing letters (an isolated letter could not enter any word)
+        if (state.board[i] !== '' || !hasFilledNeighbor(state.board, i))
           return state;
         return {
           ...state,
@@ -71,7 +74,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         // moves the pending letter there (the board stays visible). Not in the
         // letter-change back-transition — there the cell is fixed by the move
         // being edited (numChar is set), and the board backup still matches.
-        if (state.numChar === null && state.board[i] === '')
+        if (state.numChar === null && state.board[i] === '' && hasFilledNeighbor(state.board, i))
           return { ...state, selectedCell: i };
         return state;
       }

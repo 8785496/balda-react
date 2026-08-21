@@ -2,6 +2,7 @@
 import type { Ref } from 'react';
 import type { Texts } from '../i18n';
 import type { BotMove, Phase } from '../state/types';
+import { hasFilledNeighbor } from '../state/helpers';
 import { Cell } from './Cell';
 
 interface BoardProps {
@@ -20,6 +21,9 @@ export function Board({ board, track, numChar, selectedCell, phase, botMove, boa
   // idle — choosing an empty cell; letter — the keyboard is open, and a tap on
   // another empty cell moves the pending letter there; word — building the path
   const interactive = phase === 'idle' || phase === 'letter' || phase === 'word';
+  // while a spot for the new letter is being chosen, empty cells with no
+  // letters around them are not legal spots — dimmed and unclickable
+  const choosing = phase === 'idle' || phase === 'letter';
   return (
     <div className="board" role="grid" aria-label={texts.boardAria} ref={boardRef}>
       {board.map((letter, i) => {
@@ -34,6 +38,7 @@ export function Board({ board, track, numChar, selectedCell, phase, botMove, boa
             isSelected={selectedCell === i}
             bot={botMove !== null && botMove.track.indexOf(i) !== -1}
             botNew={botMove !== null && botMove.index === i}
+            disabled={choosing && letter === '' && !hasFilledNeighbor(board, i)}
             onClick={() => {
               if (interactive) onCellClick(i);
             }}

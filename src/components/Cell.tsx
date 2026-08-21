@@ -8,10 +8,11 @@ interface CellProps {
   isSelected: boolean;       // the selected empty cell in the letter phase
   bot: boolean;              // on the highlighted path of the computer's move
   botNew: boolean;           // the letter cell added by the computer
+  disabled?: boolean;        // an empty cell with no letters around — not a legal spot
   onClick: () => void;
 }
 
-export function Cell({ letter, inTrack, trackNumber, isNew, isSelected, bot, botNew, onClick }: CellProps) {
+export function Cell({ letter, inTrack, trackNumber, isNew, isSelected, bot, botNew, disabled, onClick }: CellProps) {
   const classes = ['cell'];
   if (bot) classes.push('bot');
   if (botNew) classes.push('bot-new');
@@ -19,7 +20,7 @@ export function Cell({ letter, inTrack, trackNumber, isNew, isSelected, bot, bot
   if (isNew) classes.push('add');
   if (isSelected) classes.push('selected');
   return (
-    <button type="button" className={classes.join(' ')} onClick={onClick}>
+    <button type="button" className={classes.join(' ')} onClick={onClick} disabled={disabled}>
       {letter}
       {trackNumber !== null && <span className="cell-num">{trackNumber}</span>}
     </button>

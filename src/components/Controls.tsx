@@ -1,10 +1,12 @@
-// Control buttons: the submit, ⌫, cancel, and a demoted restart.
+// Control buttons: cancel, the submit, ⌫, and a demoted restart — the word
+// phase's main row is «Отмена» — «Готово» — «⌫».
 // The submit button (the original's validate) is the single large primary
 // action and is enabled only while a word path is being built, so pressing it
-// can no longer produce the "no word yet" errors; «⌫» removes the last path
-// cell and, once the path is empty, reopens the letter keyboard; the cancel
-// shows only in the word phase — in the letter phase it lives on the keyboard
-// panel. The restart wipes the whole game, so it is small, visually
+// can no longer produce the "no word yet" errors; until a letter is chosen it
+// names the missing step («Добавьте букву») instead of «Готово»; «⌫» removes
+// the last path cell and, once the path is empty, reopens the letter
+// keyboard; the cancel shows only in the word phase — in the letter phase it
+// lives on the keyboard panel. The restart wipes the whole game, so it is small, visually
 // secondary, sits on a row of its own away from the submit, and needs a
 // second confirming tap: the first tap arms it («Точно?»/«Sure?») for a few
 // seconds, only then it restarts. All labels come from i18n (texts.controls).
@@ -41,9 +43,25 @@ export function Controls({ phase, canSubmit, texts, onRestart, onSubmit, onBack,
   }, [armed]);
 
   const c = texts.controls;
+  // until a letter is chosen the primary button names the missing step
+  const submitLabel = phase === 'idle' || phase === 'letter' ? c.addLetter : c.submit;
   return (
     <div className="controls">
       <div className="controls-main">
+        {phase === 'word' && (
+          <button type="button" id="cancel" className="btn-secondary" onClick={onCancel}>
+            {c.cancel}
+          </button>
+        )}
+        <button
+          type="button"
+          id="test"
+          className="btn-primary"
+          onClick={onSubmit}
+          disabled={!canSubmit}
+        >
+          {submitLabel}
+        </button>
         {phase === 'word' && (
           <button
             type="button"
@@ -68,20 +86,6 @@ export function Controls({ phase, canSubmit, texts, onRestart, onSubmit, onBack,
                 strokeLinecap="round"
               />
             </svg>
-          </button>
-        )}
-        <button
-          type="button"
-          id="test"
-          className="btn-primary"
-          onClick={onSubmit}
-          disabled={!canSubmit}
-        >
-          {c.submit}
-        </button>
-        {phase === 'word' && (
-          <button type="button" id="cancel" className="btn-secondary" onClick={onCancel}>
-            {c.cancel}
           </button>
         )}
       </div>

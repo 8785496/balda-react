@@ -184,9 +184,17 @@ assert(s.phase === 'idle' && s.usedWords.length === 1 && s.board[10] === 'б',
   'the game starts immediately: the starting word is in the middle row');
 assert(gameReducer(s, { type: 'NEW_GAME' }).usedWords.length === 1, 'NEW_GAME restarts the game');
 
+// an empty cell with no letters around it (cell 0 on the starting board)
+// cannot be chosen for the new letter
+s = gameReducer(s, { type: 'CLICK_CELL', index: 0 });
+assert(s.phase === 'idle' && s.selectedCell === null,
+  'an isolated empty cell cannot be selected');
+
 // the player plays "фалда", the computer replies "халда" (a constructed move)
 s = gameReducer(s, { type: 'CLICK_CELL', index: 6 });
 assert(s.phase === 'letter' && s.selectedCell === 6, 'a click on an empty cell opens letter input');
+s = gameReducer(s, { type: 'CLICK_CELL', index: 0 });
+assert(s.selectedCell === 6, 'the pending letter cannot be re-targeted to an isolated cell');
 s = gameReducer(s, { type: 'CLICK_CELL', index: 18 });
 assert(s.phase === 'letter' && s.selectedCell === 18,
   'in the letter phase a tap on another empty cell moves the pending letter there');
