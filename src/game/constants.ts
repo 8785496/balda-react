@@ -1,11 +1,7 @@
-// Game alphabet: 32 letters, no "ё" (as in the original)
-export const ALPHABET = 'абвгдежзийклмнопрстуфхцчшщъыьэюя';
-
+// Language-independent game constants. The per-language ones — the alphabet
+// and the starting word — live in lang.ts, switched by the footer control.
 // Board of SIZE × SIZE cells
 export const SIZE = 5;
-
-// Starting word placed in the middle row
-export const START_WORD = 'балда';
 
 // The game ends when this many words have been played (including the starting one)
 export const MAX_WORDS = 21;

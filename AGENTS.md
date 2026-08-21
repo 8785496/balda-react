@@ -2,6 +2,8 @@
 
 The "Balda" word game (human vs computer) on **Vite + React + TypeScript**. A port of the ES5 original (`../balda`) preserving game logic and behavior 1:1. No state management libraries — `useReducer`. Dependencies: `react`, `react-dom`, `vite`, `@vitejs/plugin-react`, `typescript` + types. Node.js ≥ 20.19.
 
+Beyond the original: the footer switches the **game language** (RUS | ENG — each with its own alphabet, dictionary and starting word) and the **bot difficulty** (легко/средне/сложно; "hard" is the original's always-longest-word bot).
+
 ## Running and commands
 
 ```bash
@@ -12,7 +14,7 @@ npm run preview  # production preview
 npm run check    # node logic-check script (compiles scripts/check.ts into .tmp-check and runs it)
 ```
 
-There is no test framework — correctness of the logic is verified by `npm run check` and the manual checklist from PLAN.md.
+There is no test framework — correctness of the logic is verified by `npm run check` and the manual checklist in "Browser testing" below.
 
 ## Browser testing
 
@@ -33,17 +35,22 @@ GUI changes (layout, highlights, statuses) can additionally be verified in a rea
 |------|------|
 | `index.html` | Skeleton: `<div id="root">`, Play / Open Sans fonts via an https `<link>` |
 | `src/main.tsx` | Entry point (StrictMode) |
-| `src/App.tsx` | `useReducer(gameReducer)`, the bot turn effect, physical keyboard keydown |
+| `src/App.tsx` | `useReducer(gameReducer)`, the bot turn effect, physical keyboard keydown, the footer switchers (language, difficulty, theme) |
 | `src/styles/index.css` | Styles based on the original's `css/style.css`; all colors are CSS variables, board themes are `[data-theme='…']` blocks (wood/paper/night/neon; `:root` keeps the original's classic palette as the base fallback — no longer selectable) |
-| `src/theme.ts` | Board color themes: ids, Russian names, swatch colors, localStorage persistence |
-| `src/game/constants.ts` | ALPHABET (32 letters, no "ё"), SIZE=5, START_WORD='балда', MAX_WORDS=21, START_ROW |
-| `src/game/dictionary.ts` | Dictionary of ~16,000 words (~290 KB, one line) — converted from the original's `out3.js` |
-| `src/game/dic.ts` | From `dictionary2.js`: base-32 hashes + binary search; `findWord()`, `hasPrefix()` |
-| `src/game/finder.ts` | From `track2.js`: `findBestMove(board, usedWords)` |
-| `src/state/types.ts` | `GameState`, `Phase`, `Action`, `BotMove` |
+| `src/theme.ts` | Board color themes: ids, swatch colors, localStorage persistence (display names live in `i18n.ts`) |
+| `src/i18n.ts` | All UI texts of both languages (`TEXTS[lang]`), including the localized renderings of validation errors and bot statuses |
+| `src/lang.ts` | Language switcher state: ids/labels + localStorage persistence |
+| `src/difficulty.ts` | Difficulty ids + localStorage persistence |
+| `src/game/constants.ts` | Language-independent constants: SIZE=5, MAX_WORDS=21, START_ROW |
+| `src/game/lang.ts` | Per-language game config: `Lang` type, alphabet, starting word ('балда'/'crane'), dictionary binding; `dicFor(lang)` builds and caches the hashes |
+| `src/game/dictionary.ts` | Russian dictionary of ~16,000 words (~290 KB, one line) — converted from the original's `out3.js` |
+| `src/game/dictionary-en.ts` | English dictionary of ~22,900 common words (~225 KB, one line) — from dolph/dictionary `popular.txt` (regeneration command in the file header) |
+| `src/game/dic.ts` | From `dictionary2.js`: `createDic(words, alphabet)` builds base-32 hashes + binary search; `findWord()`, `hasPrefix()` |
+| `src/game/finder.ts` | From `track2.js`: `findBestMove(board, usedWords, lang, difficulty)` — records every found word (deduplicated), picks by difficulty |
+| `src/state/types.ts` | `GameState`, `Phase`, `Action`, `BotMove`, structured `GameError`/`Status` |
 | `src/state/gameReducer.ts` | All move and validation logic (from `events.js`) |
 | `src/state/helpers.ts` | `neighbors`, `areAdjacent`, `wordFromTrack`, `hasFilledNeighbor` |
-| `src/components/` | Board, Cell, Keyboard, Controls, ScorePanel, StatusBar, EndPanel, ThemePicker |
+| `src/components/` | Board, Cell, Keyboard, Controls, ScorePanel, StatusBar, EndPanel, ThemePicker, LangPicker, DifficultyPicker |
 | `scripts/check.ts` | Logic check script |
 
 ## Architecture
@@ -53,27 +60,31 @@ GUI changes (layout, highlights, statuses) can additionally be verified in a rea
 - **Bot's turn**: `useEffect` in App when `phase === 'bot'`; the result arrives as the `BOT_MOVED` action (`null` = no move, skip).
 - **Physical keyboard**: in the `letter` phase a letter (ё → е) enters it, `Escape` cancels the move, `Enter` in the `word` phase submits, `Backspace` steps the move back (the last path cell, then the letter).
 - **Board themes**: the palette is a set of CSS custom properties; `data-theme` on `<html>` (set from App, persisted in localStorage; `index.html` hardcodes `neon` for the first paint) switches it. Default: `neon` (`DEFAULT_THEME`); empty cells are styled via `.cell:empty`. A saved id that is no longer in `THEMES` falls back to the default. The ThemePicker swatches and the rules icon-link live in the page footer (`App.tsx`).
+- **Game language**: `GameState.lang` (set at `freshGame(lang)`, kept by a plain `NEW_GAME`) carries the alphabet, dictionary and starting word in use (`game/lang.ts`). The footer LangPicker restarts the game in the other language — with the same two-tap confirmation as «Заново» when the game has progress, immediately otherwise. All rendered texts come from `TEXTS[lang]` (`i18n.ts`); validation errors and bot statuses are stored in the state as structured codes (`GameError`, `Status`) and localized on render, so no game text is hardcoded in components.
+- **Bot difficulty**: `findBestMove` records every word the bot could play (deduplicated by word) and `pickMove` chooses: hard — the longest (the original's behavior, first found among equals); easy/medium — a random word from the shortest/middle third of the moves by length. Switching difficulty applies from the bot's next turn, without a restart. Default: `hard` (`DEFAULT_DIFFICULTY`).
 
 ### Game model (as in the original)
 
-- The starting word "балда" in the middle row (cells 10–14); points = the total length of composed words (1 per letter); the game lasts until 21 words are in `usedWords`.
-- Submit validation is a port of `events.validate` with the same error texts: «Слово должно содержать добавленную букву», «Слово "…" уже использовано», «Слово "…" не найдено», «Добавьте букву», «Выберите слово».
-- Dictionary: base-32 hash (letter position + 1) × 32^i; sorted arrays of the full dictionary and prefixes of length 2–9; words longer than 10 letters never make it into the hashes (the original's filter). Binary search.
+- The starting word in the middle row (cells 10–14): "балда" in Russian, "crane" in English; points = the total length of composed words (1 per letter); the game lasts until 21 words are in `usedWords`.
+- Submit validation is a port of `events.validate` with the same checks in the same order; the error texts live in `i18n.ts` as the Russian renderings of the codes `noAddedLetter` («Слово должно содержать добавленную букву»), `wordUsed` («Слово "…" уже использовано»), `wordNotFound` («Слово "…" не найдено»), `addLetter` («Добавьте букву»), `chooseWord` («Выберите слово»).
+- Dictionary: base-32 hash (letter position + 1) × 32^i over the language's alphabet; sorted arrays of the full dictionary and prefixes of length 2–9; words longer than 10 letters never make it into the hashes (the original's filter). Binary search.
 
 ## Conventions
 
 - TypeScript strict, ES modules.
-- **Language: files (code, docs), code comments and commit messages — in English.** Game-facing texts (UI, validation messages, dictionary) stay in Russian — they are part of the game logic and parity with the original.
-- UTF-8 encoding; the dictionary in `src/game/dictionary.ts` is encoding-critical (`<meta charset="UTF-8">` is declared in `index.html`).
-- The algorithms in `dic.ts` / `finder.ts` are ported from the original; do not change their structure without need.
+- **Language: files (code, docs), code comments and commit messages — in English.** Game-facing texts live in `src/i18n.ts` — the Russian set preserves the original's wording (parity), the English set is its translation; do not hardcode game texts in components. Dictionaries stay in their own languages by definition.
+- UTF-8 encoding; the dictionaries in `src/game/dictionary*.ts` are encoding-critical (`<meta charset="UTF-8">` is declared in `index.html`).
+- The algorithms in `dic.ts` / `finder.ts` are ported from the original; do not change their structure without need (the difficulty selection in `pickMove` and the all-moves collection are deliberate extensions).
 
 ## Typical tasks
 
 - **Change game rules/logic** — `src/state/gameReducer.ts` (and `src/state/types.ts`).
 - **Speed up the move search** — `src/game/finder.ts` (the search) and `src/game/dic.ts` (word checks).
-- **Replace/extend the dictionary** — only the contents of the `dictionary` array in `src/game/dictionary.ts` (words ≤ 10 letters take part in the search, no "ё", lowercase; hashes are built on load).
+- **Replace/extend the dictionary** — only the contents of the `dictionary` array: Russian in `src/game/dictionary.ts` (words ≤ 10 letters take part in the search, no "ё", lowercase), English in `src/game/dictionary-en.ts` (a–z only; the regeneration command is in its header). Hashes are built per language on first use.
+- **Change UI texts / add a translation** — `src/i18n.ts` only (both languages side by side).
+- **Tune the difficulty levels** — `pickMove` in `src/game/finder.ts`.
 - **UI/layout** — `src/components/` + `src/styles/index.css`.
-- **Add/recolor a board theme** — a `[data-theme='…']` variable block in `src/styles/index.css` + an entry in `THEMES` (`src/theme.ts`); no other places.
+- **Add/recolor a board theme** — a `[data-theme='…']` variable block in `src/styles/index.css` + an entry in `THEMES` (`src/theme.ts`) + its names in `i18n.ts`; no other places.
 
 ## Known fixes relative to the original
 
@@ -83,3 +94,4 @@ GUI changes (layout, highlights, statuses) can additionally be verified in a rea
 4. The hidden `#time` and `#emulator` ("Help") were not ported.
 5. UI cleanups: the «Старт» screen is dropped (the game starts immediately); the submit button is «Готово» (was «Ход»), is disabled until a word path exists and is the single large primary button, while «Заново» is a small secondary button on its own row with a two-tap confirmation («Точно?», 3 s) — a stray tap next to «Готово» can no longer destroy the game; the letter keyboard floats anchored to the selected cell (below it in the top half of the board, above in the bottom half — `Keyboard.tsx` measures the cell and positions the panel in `.board-wrap`) instead of the original's top-of-screen overlay, so it opens where the click/tap happened and neither the cursor nor the thumb travels far (the board stays interactive around it; «Отмена» lives on the keyboard panel in the `letter` phase, and a tap on another empty cell moves the pending letter there — the panel follows); the theme picker and the rules link live in the footer.
 6. Path editing (the original offered none): a validation error keeps the `track` instead of clearing it; a click on the last path cell — or `Backspace`/the «⌫» button — removes that cell; a click on the added letter already in the path, or `Backspace` with an empty path, reopens the keyboard to change the letter without dropping the move (the `word → letter` back-transition; canceling there returns to `word`). The added-letter cell itself must stay normally clickable so the letter can enter the path — hence the click-to-edit only in the mid-path case.
+7. Additions beyond the original: the language switcher (RUS | ENG — a second alphabet/dictionary/starting word, all texts localized via `i18n.ts`; switching restarts the game, two-tap-confirmed when in progress) and the difficulty switcher (easy/medium pick from the shortest/middle third of the bot's found moves, hard = the original's longest word).

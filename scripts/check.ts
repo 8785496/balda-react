@@ -1,12 +1,18 @@
-// Checks the ported logic without a test framework (see PLAN.md):
-// the dictionary, board geometry, and the best-move search on reference
-// positions. Run: npm run check
+// Checks the ported logic without a test framework (see AGENTS.md):
+// the dictionaries, board geometry, the move search on reference positions
+// (both languages, all difficulties) and the reducer state machine.
+// Run: npm run check
 import { dictionary } from '../src/game/dictionary';
-import { dic } from '../src/game/dic';
+import { dictionary as dictionaryEn } from '../src/game/dictionary-en';
 import { findBestMove } from '../src/game/finder';
-import { SIZE, START_ROW, START_WORD, ALPHABET, MAX_WORDS } from '../src/game/constants';
+import { alphabetFor, dicFor, startWordFor } from '../src/game/lang';
+import { SIZE, START_ROW, MAX_WORDS } from '../src/game/constants';
 import { neighbors, areAdjacent, wordFromTrack } from '../src/state/helpers';
 import { gameReducer, initialState } from '../src/state/gameReducer';
+
+const dic = dicFor('ru');
+const ALPHABET = alphabetFor('ru');
+const START_WORD = startWordFor('ru');
 
 let failures = 0;
 
@@ -61,6 +67,61 @@ if (move !== null) {
   assert(wordFromTrack(botBoard, move.track) === move.word, "the bot's track spells its word on the board");
   assert(move.track.indexOf(move.index) !== -1, "the bot's track contains the added letter cell");
 }
+
+// --- difficulty: which of the found moves the bot plays ---
+
+const lenByDiff: Record<string, number> = {};
+for (const d of ['easy', 'medium', 'hard'] as const) {
+  const m = findBestMove(board, [START_WORD], 'ru', d);
+  assert(m !== null, 'difficulty ' + d + ': a move is found on the starting position');
+  if (m !== null) {
+    lenByDiff[d] = m.word.length;
+    const diffBoard = board.slice();
+    diffBoard[m.index] = m.char;
+    assert(dic.findWord(m.word) === true, 'difficulty ' + d + ': the word exists in the dictionary');
+    assert(wordFromTrack(diffBoard, m.track) === m.word, 'difficulty ' + d + ': the track spells the word');
+    assert(m.track.indexOf(m.index) !== -1, 'difficulty ' + d + ': the track contains the added letter cell');
+  }
+}
+if (lenByDiff.easy !== undefined && lenByDiff.medium !== undefined && lenByDiff.hard !== undefined) {
+  console.log('     word lengths by difficulty: easy ' + lenByDiff.easy +
+    ', medium ' + lenByDiff.medium + ', hard ' + lenByDiff.hard);
+  assert(lenByDiff.easy <= lenByDiff.medium && lenByDiff.medium <= lenByDiff.hard,
+    'the easy move is not longer than medium, medium not longer than hard');
+}
+
+// --- english language ---
+
+const dicEn = dicFor('en');
+const startEn = startWordFor('en');
+assert(dictionaryEn.length > 15000, 'english dictionary loaded: ' + dictionaryEn.length + ' words');
+assert(alphabetFor('en').length === 26, 'english alphabet: 26 letters');
+assert(dicEn.findWord(startEn) === true, 'the english starting word "' + startEn + '" is in the dictionary');
+assert(dicEn.findWord('zzzq') === false, 'findWord("zzzq") === false (en)');
+assert(dicEn.hasPrefix('cr') === true && dicEn.hasPrefix('zz') === false, 'hasPrefix works for english');
+
+const enBoard: string[] = new Array(SIZE * SIZE).fill('');
+for (let i = 0; i < startEn.length; i++)
+  enBoard[START_ROW + i] = startEn[i];
+const enStarted = Date.now();
+const enMove = findBestMove(enBoard, [startEn], 'en');
+assert(enMove !== null, 'en: a move is found on the starting position');
+if (enMove !== null) {
+  console.log('     en starting move: ' + enMove.word + ' (letter "' + enMove.char + '" at cell ' +
+    enMove.index + '), time ' + ((Date.now() - enStarted) / 1000) + ' s');
+  assert(dicEn.findWord(enMove.word) === true, "the bot's english word exists in the dictionary");
+  assert(enMove.word.indexOf(enMove.char) !== -1, 'en: the word contains the added letter');
+  const enBot = enBoard.slice();
+  enBot[enMove.index] = enMove.char;
+  assert(wordFromTrack(enBot, enMove.track) === enMove.word, "the bot's track spells its word on the board (en)");
+}
+
+// the reducer restarts into the other language and stays in it
+const gEn = gameReducer(initialState, { type: 'NEW_GAME', lang: 'en' });
+assert(gEn.usedWords[0] === startEn && gEn.board[START_ROW] === startEn[0],
+  'NEW_GAME with lang switches the starting word');
+assert(gameReducer(gEn, { type: 'NEW_GAME' }).usedWords[0] === startEn,
+  'a plain NEW_GAME keeps the current language');
 
 // --- a position with no moves: a full board ---
 
@@ -137,10 +198,11 @@ const faldaPath = [6, 11, 12, 13, 14];
 for (const c of faldaPath) s = gameReducer(s, { type: 'CLICK_CELL', index: c });
 assert(wordFromTrack(s.board, s.track) === 'фалда', 'the path builds the word "фалда"');
 s = gameReducer(s, { type: 'SUBMIT_MOVE' });
-assert(s.phase === 'bot' && s.playerWords.length === 1 && s.error === '', 'a successful move switches to the bot phase');
+assert(s.phase === 'bot' && s.playerWords.length === 1 && s.error === null, 'a successful move switches to the bot phase');
 s = gameReducer(s, { type: 'BOT_MOVED', move: { word: 'халда', char: 'х', index: 16, track: [16, 17, 12, 13, 14] } });
 assert(s.phase === 'idle' && s.board[16] === 'х' && s.botWords.length === 1, 'BOT_MOVED writes the letter and the word');
-assert(s.status === 'Компьютер: «халда» (+5)', 'BOT_MOVED reports the word in the status line');
+assert(s.status !== null && s.status.kind === 'botMove' && s.status.word === 'халда',
+  'BOT_MOVED reports the word in the status (structured, localized on render)');
 
 // "word already used": a new "а" at cell 17, path х(16)-а(17)-л(12)-д(13)-а(14)
 s = gameReducer(s, { type: 'CLICK_CELL', index: 17 });
@@ -148,8 +210,8 @@ s = gameReducer(s, { type: 'SET_LETTER', char: 'а' });
 for (const c of [16, 17, 12, 13, 14]) s = gameReducer(s, { type: 'CLICK_CELL', index: c });
 assert(wordFromTrack(s.board, s.track) === 'халда', 'the path builds the word "халда"');
 s = gameReducer(s, { type: 'SUBMIT_MOVE' });
-assert(s.error === 'Слово "халда" уже использовано' && s.phase === 'word',
-  'a repeated word is rejected with the original text');
+assert(s.error !== null && s.error.code === 'wordUsed' && s.error.word === 'халда' && s.phase === 'word',
+  'a repeated word is rejected with the wordUsed error');
 assert(s.track.length === 5, 'a validation error keeps the path for editing');
 
 // a click on the last path cell and BACKSPACE remove it from the path
@@ -190,7 +252,7 @@ assert(s.phase === 'word' && s.board[17] === 'а' && s.track.length === 0,
 s = gameReducer(s, { type: 'CANCEL_MOVE' });
 assert(s.phase === 'idle' && s.board[17] === '' && s.numChar === null, 'cancel rolls back the letter and numChar');
 s = gameReducer(s, { type: 'SUBMIT_MOVE' });
-assert(s.error === 'Добавьте букву', 'a move without a letter yields "Добавьте букву"');
+assert(s.error !== null && s.error.code === 'addLetter', 'a move without a letter yields the addLetter error');
 
 // the bot skipping its turn (the original crashed here): a successful player move, then a bot with no move
 const mv2 = findBestMove(s.board, s.usedWords);
@@ -207,7 +269,7 @@ if (mv2 === null) {
   s = gameReducer(s, { type: 'SUBMIT_MOVE' });
   assert(s.phase === 'bot', "the player's move is accepted (bot phase)");
   s = gameReducer(s, { type: 'BOT_MOVED', move: null });
-  assert(s.phase === 'idle' && s.status !== '', 'no move for the bot — the turn is skipped without a crash');
+  assert(s.phase === 'idle' && s.status !== null, 'no move for the bot — the turn is skipped without a crash');
 }
 
 // --- a full game to the end through the reducer (both sides play the best move) ---

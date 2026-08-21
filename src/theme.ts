@@ -1,12 +1,12 @@
-// Board color themes. The palettes themselves live in index.css as
-// [data-theme='…'] blocks; this module only knows the ids, Russian display
-// names and swatch colors for the picker, plus localStorage persistence.
+// Board color themes. The palettes live in index.css as [data-theme='…']
+// blocks; this module knows the ids and swatch colors for the picker, plus
+// localStorage persistence. The display names are per-language (i18n.ts).
 
 export const THEMES = [
-  { id: 'wood', name: 'Дерево', swatch: '#a9713d' },
-  { id: 'paper', name: 'Бумага', swatch: '#ffffff' },
-  { id: 'night', name: 'Ночь', swatch: '#262e3a' },
-  { id: 'neon', name: 'Неон', swatch: '#7c3aed' },
+  { id: 'wood', swatch: '#a9713d' },
+  { id: 'paper', swatch: '#ffffff' },
+  { id: 'night', swatch: '#262e3a' },
+  { id: 'neon', swatch: '#7c3aed' },
 ] as const;
 
 export type ThemeId = (typeof THEMES)[number]['id'];

@@ -329,15 +329,73 @@ a:hover {
   margin-right: auto;
 }
 
+/* --- footer switchers: the language and difficulty segmented controls --- */
+
+/* a pill group of small toggle buttons; .active is the current choice, .armed
+   is the language switch awaiting its confirming second tap */
+.seg {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: var(--btn-border);
+  border-radius: 999px;
+}
+
+.seg-btn {
+  min-width: 0;
+  margin: 0;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  border: none;
+  border-radius: 999px;
+  box-shadow: none;
+  background: transparent;
+  color: var(--text);
+}
+
+.seg-btn:hover:not(.active) {
+  border: none;
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+  color: var(--text);
+}
+
+.seg-btn:active:not(.active) {
+  border: none;
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+  color: var(--text);
+}
+
+/* must repeat the colors on :hover — the generic button:hover wins over the
+   plain class (same as .btn-primary above) */
+.seg-btn.active,
+.seg-btn.active:hover {
+  border: none;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+}
+
+/* the armed language switch — tinted with the theme's error color, like the
+   armed «Точно?» of the restart button */
+.seg-btn.armed,
+.seg-btn.armed:hover {
+  border: none;
+  color: var(--error);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+}
+
 /* --- theme picker --- */
 
-/* --- footer: the rules link and the theme picker --- */
+/* --- footer: the rules link and the switchers (language, difficulty, theme) --- */
 
 .footer {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 10px 14px;
   margin-top: 14px;
 }
 
@@ -725,6 +783,7 @@ button:disabled {
 .cell:focus-visible,
 .keyboard button:focus-visible,
 .rules-icon:focus-visible,
+.seg-btn:focus-visible,
 .theme-swatch:focus-visible {
   outline: 2px solid var(--focus-color);
   outline-offset: 1px;

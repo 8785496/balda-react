@@ -1,5 +1,7 @@
 // Score columns: points and word lists for the player and the computer,
 // with the game progress counter above them.
+import type { Texts } from '../i18n';
+
 function score(words: string[]): number {
   let n = 0;
   for (let i = 0; i < words.length; i++)
@@ -12,15 +14,16 @@ interface ScorePanelProps {
   botWords: string[];
   usedCount: number; // words played so far, the starting word included
   maxWords: number;
+  texts: Texts;
 }
 
-export function ScorePanel({ playerWords, botWords, usedCount, maxWords }: ScorePanelProps) {
+export function ScorePanel({ playerWords, botWords, usedCount, maxWords, texts }: ScorePanelProps) {
   return (
     <div className="score-panel">
-      <div className="words-progress">Слово {usedCount} из {maxWords}</div>
+      <div className="words-progress">{texts.score.progress(usedCount, maxWords)}</div>
       <div className="score-columns">
         <div className="column-left">
-          <strong>Игрок: {score(playerWords)}</strong>
+          <strong>{texts.score.player}: {score(playerWords)}</strong>
           <div className="words">
             {playerWords.map((word, i) => (
               <div key={i}>{word} ({word.length})</div>
@@ -28,7 +31,7 @@ export function ScorePanel({ playerWords, botWords, usedCount, maxWords }: Score
           </div>
         </div>
         <div className="column-right">
-          <strong>Компьютер: {score(botWords)}</strong>
+          <strong>{texts.score.computer}: {score(botWords)}</strong>
           <div className="words">
             {botWords.map((word, i) => (
               <div key={i}>{word} ({word.length})</div>

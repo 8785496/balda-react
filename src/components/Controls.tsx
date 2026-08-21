@@ -1,18 +1,21 @@
-// Control buttons: Готово, ⌫, Отмена, and a demoted Заново.
-// «Готово» (the original's validate) is the single large primary action and is
-// enabled only while a word path is being built, so pressing it can no longer
-// produce the "no word yet" errors; «⌫» removes the last path cell and, once
-// the path is empty, reopens the letter keyboard; «Отмена» shows only in the
-// word phase — in the letter phase it lives on the keyboard panel.
-// «Заново» wipes the whole game, so it is small, visually secondary, sits on
-// a row of its own away from «Готово», and needs a second confirming tap:
-// the first tap arms it («Точно?») for a few seconds, only then it restarts.
+// Control buttons: the submit, ⌫, cancel, and a demoted restart.
+// The submit button (the original's validate) is the single large primary
+// action and is enabled only while a word path is being built, so pressing it
+// can no longer produce the "no word yet" errors; «⌫» removes the last path
+// cell and, once the path is empty, reopens the letter keyboard; the cancel
+// shows only in the word phase — in the letter phase it lives on the keyboard
+// panel. The restart wipes the whole game, so it is small, visually
+// secondary, sits on a row of its own away from the submit, and needs a
+// second confirming tap: the first tap arms it («Точно?»/«Sure?») for a few
+// seconds, only then it restarts. All labels come from i18n (texts.controls).
 import { useEffect, useState } from 'react';
+import type { Texts } from '../i18n';
 import type { Phase } from '../state/types';
 
 interface ControlsProps {
   phase: Phase;
   canSubmit: boolean;
+  texts: Texts;
   onRestart: () => void;
   onSubmit: () => void;
   onBack: () => void;
@@ -22,7 +25,7 @@ interface ControlsProps {
 // how long the restart confirmation stays armed without the second tap
 const RESTART_ARM_MS = 3000;
 
-export function Controls({ phase, canSubmit, onRestart, onSubmit, onBack, onCancel }: ControlsProps) {
+export function Controls({ phase, canSubmit, texts, onRestart, onSubmit, onBack, onCancel }: ControlsProps) {
   const [armed, setArmed] = useState(false);
 
   // any phase change (the restart itself included) disarms the confirmation
@@ -37,6 +40,7 @@ export function Controls({ phase, canSubmit, onRestart, onSubmit, onBack, onCanc
     return () => clearTimeout(timer);
   }, [armed]);
 
+  const c = texts.controls;
   return (
     <div className="controls">
       <div className="controls-main">
@@ -45,8 +49,8 @@ export function Controls({ phase, canSubmit, onRestart, onSubmit, onBack, onCanc
             type="button"
             id="back"
             onClick={onBack}
-            title="Убрать последнюю букву пути; с пустым путём — сменить добавленную букву"
-            aria-label="Убрать последнюю букву пути"
+            title={c.backTitle}
+            aria-label={c.backLabel}
           >
             <svg viewBox="0 0 24 24" width="1.2em" height="1.2em" aria-hidden="true" focusable="false">
               <path
@@ -73,11 +77,11 @@ export function Controls({ phase, canSubmit, onRestart, onSubmit, onBack, onCanc
           onClick={onSubmit}
           disabled={!canSubmit}
         >
-          Готово
+          {c.submit}
         </button>
         {phase === 'word' && (
           <button type="button" id="cancel" className="btn-secondary" onClick={onCancel}>
-            Отмена
+            {c.cancel}
           </button>
         )}
       </div>
@@ -94,9 +98,9 @@ export function Controls({ phase, canSubmit, onRestart, onSubmit, onBack, onCanc
               setArmed(true);
             }
           }}
-          title={armed ? 'Нажмите ещё раз — игра начнётся заново' : 'Начать игру заново'}
+          title={armed ? c.restartArmedTitle : c.restartTitle}
         >
-          {armed ? 'Точно?' : 'Заново'}
+          {armed ? c.confirm : c.restart}
         </button>
       </div>
     </div>
