@@ -22,10 +22,11 @@ import { alphabetFor, dicFor, startWordFor, type Lang } from '../game/lang';
 import { areAdjacent, hasFilledNeighbor, wordFromTrack } from './helpers';
 import type { Action, GameState } from './types';
 
-// a new game: an empty board with the starting word in the middle row.
-// The game starts immediately — the original's "Старт" screen was dropped.
-export function freshGame(lang: Lang): GameState {
-  const startWord = startWordFor(lang);
+// a new game: an empty board with the starting word in the middle row —
+// a random 5-letter dictionary word, unless one is forced (check.ts pins
+// a fixed word for its reference positions). The game starts immediately —
+// the original's "Старт" screen was dropped.
+export function freshGame(lang: Lang, startWord = startWordFor(lang)): GameState {
   const board: string[] = new Array(SIZE * SIZE).fill('');
   for (let i = 0; i < startWord.length; i++)
     board[START_ROW + i] = startWord[i];

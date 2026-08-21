@@ -8,11 +8,13 @@ import { findBestMove } from '../src/game/finder';
 import { alphabetFor, dicFor, startWordFor } from '../src/game/lang';
 import { SIZE, START_ROW, MAX_WORDS } from '../src/game/constants';
 import { neighbors, areAdjacent, wordFromTrack } from '../src/state/helpers';
-import { gameReducer, initialState } from '../src/state/gameReducer';
+import { gameReducer, freshGame, initialState } from '../src/state/gameReducer';
 
 const dic = dicFor('ru');
 const ALPHABET = alphabetFor('ru');
-const START_WORD = startWordFor('ru');
+// the starting word is random (see below); the reference positions here are
+// checked against a fixed word, as they were before randomization
+const START_WORD = 'балда';
 
 let failures = 0;
 
@@ -35,6 +37,12 @@ assert(dic.findWord('ясновидящий') === false, 'a word longer than 10 
 assert(dic.findWord('щщщ') === false, 'findWord("щщщ") === false');
 assert(dic.hasPrefix('бал') === true, 'hasPrefix("бал") === true');
 assert(dic.hasPrefix('щщ') === false, 'hasPrefix("щщ") === false');
+
+// --- the random starting word ---
+
+const rndStart = startWordFor('ru');
+assert(rndStart.length === SIZE && dic.findWord(rndStart) === true,
+  'the russian starting word is a random 5-letter dictionary word (got "' + rndStart + '")');
 
 // --- board geometry ---
 
@@ -93,7 +101,11 @@ if (lenByDiff.easy !== undefined && lenByDiff.medium !== undefined && lenByDiff.
 // --- english language ---
 
 const dicEn = dicFor('en');
-const startEn = startWordFor('en');
+// fixed reference word — the real starting word is random (checked below)
+const startEn = 'crane';
+const rndStartEn = startWordFor('en');
+assert(rndStartEn.length === SIZE && dicEn.findWord(rndStartEn) === true,
+  'the english starting word is a random 5-letter dictionary word (got "' + rndStartEn + '")');
 assert(dictionaryEn.length > 15000, 'english dictionary loaded: ' + dictionaryEn.length + ' words');
 assert(alphabetFor('en').length === 26, 'english alphabet: 26 letters');
 assert(dicEn.findWord(startEn) === true, 'the english starting word "' + startEn + '" is in the dictionary');
@@ -116,11 +128,13 @@ if (enMove !== null) {
   assert(wordFromTrack(enBot, enMove.track) === enMove.word, "the bot's track spells its word on the board (en)");
 }
 
-// the reducer restarts into the other language and stays in it
+// the reducer restarts into the other language and stays in it (the starting
+// word is random, so assert on its length, dictionary membership and placement)
 const gEn = gameReducer(initialState, { type: 'NEW_GAME', lang: 'en' });
-assert(gEn.usedWords[0] === startEn && gEn.board[START_ROW] === startEn[0],
-  'NEW_GAME with lang switches the starting word');
-assert(gameReducer(gEn, { type: 'NEW_GAME' }).usedWords[0] === startEn,
+assert(gEn.usedWords[0].length === SIZE && dicEn.findWord(gEn.usedWords[0]) === true &&
+  gEn.board.slice(START_ROW, START_ROW + SIZE).join('') === gEn.usedWords[0],
+  'NEW_GAME with lang lays out a random english starting word');
+assert(dicEn.findWord(gameReducer(gEn, { type: 'NEW_GAME' }).usedWords[0]) === true,
   'a plain NEW_GAME keeps the current language');
 
 // --- a position with no moves: a full board ---
@@ -179,7 +193,8 @@ function findWordPath(board: string[], word: string, mustInclude: number): numbe
   return null;
 }
 
-let s = initialState;
+// the фалда sequence below is pinned to a fixed starting word
+let s = freshGame('ru', 'балда');
 assert(s.phase === 'idle' && s.usedWords.length === 1 && s.board[10] === 'б',
   'the game starts immediately: the starting word is in the middle row');
 assert(gameReducer(s, { type: 'NEW_GAME' }).usedWords.length === 1, 'NEW_GAME restarts the game');
@@ -281,8 +296,8 @@ if (mv2 === null) {
 }
 
 // --- a full game to the end through the reducer (both sides play the best move) ---
-
-let g = initialState;
+// a fixed starting word keeps this run deterministic
+let g = freshGame('ru', 'балда');
 let guard = 0;
 let simError = '';
 while (g.phase !== 'over' && guard++ < 100 && !simError) {
