@@ -2,3 +2,4 @@ node_modules
 dist
 .tmp-check
 .design-shots/
+.zcode
