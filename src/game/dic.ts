@@ -1,105 +1,120 @@
-// Dictionary and word lookup — a TypeScript port of js/dictionary2.js.
-// A string is hashed as a base-32 number: (letter position in the alphabet + 1) × 32^i,
-// where i counts from the end of the string. On creation, sorted hash arrays are built:
-// the full dictionary and prefix arrays of lengths 2–9; lookup is a classic binary search.
-// Turned into a factory: the game ships two dictionaries (Russian/English, see lang.ts),
-// each getting its own hash arrays built once, on first use.
+// Dictionary and word lookup — a rework of js/dictionary2.js.
+// The original hashed words into sorted number arrays — the whole dictionary
+// plus prefixes of lengths 2–9 — and looked them up with binary search; a
+// hash was a base-32 number, (letter position in the alphabet + 1) × 32^i,
+// recomputed for every lookup. Here the dictionary is a prefix tree (trie):
+// a node per prefix, children indexed by the letter's position in the
+// language alphabet. A lookup is a single walk from the root, and the move
+// search (finder.ts) steps the tree one letter at a time as the board path
+// grows, pruning a branch the moment no dictionary word continues the
+// current prefix. Still a factory: the game ships two dictionaries
+// (Russian/English, see lang.ts), each getting its own tree built once, on
+// first use.
 
-// Maximum word length in the hashes: longer dictionary words are ignored (as in the original)
+// Maximum word length in the tree: longer dictionary words are ignored (as in the original)
 const MAX_WORD_LEN = 10;
+
+// char-code table size: covers the latin and russian (а..я, up to U+044F) lowercase
+const CODE_TABLE_SIZE = 0x450;
+
+export interface TrieNode {
+  // some dictionary word ends at this node
+  word: boolean;
+  // children indexed by the letter's position in the alphabet; null while
+  // childless — no dictionary word continues through this node
+  children: (TrieNode | undefined)[] | null;
+}
 
 export interface Dic {
   // look up a whole word in the dictionary
   findWord(word: string): boolean;
-  // look up a word part: whether any word starts with the given prefix
+  // look up a word part: whether any longer word starts with the given prefix
   hasPrefix(req: string): boolean;
+  // the tree root — where the one-letter stepping of the move search starts
+  root: TrieNode;
+  // one letter of the walk: the child of node by char,
+  // or null when no dictionary word continues with this letter
+  step(node: TrieNode, char: string): TrieNode | null;
 }
 
 export function createDic(dictionary: string[], alphabet: string): Dic {
-  // hash of a string as a base-32 number
-  function str2hash(str: string): number {
-    let id = 0;
-    const len = str.length;
-    for (let i = 0; i < len; i++) {
-      const sym = str[len - i - 1];
-      id += (alphabet.indexOf(sym) + 1) * Math.pow(32, i);
+  // char code → alphabet position, -1 outside the alphabet
+  const codeIndex = new Int8Array(CODE_TABLE_SIZE).fill(-1);
+  for (let i = 0; i < alphabet.length; i++)
+    codeIndex[alphabet.charCodeAt(i)] = i;
+
+  const root: TrieNode = { word: false, children: null };
+
+  function letterIndex(ch: string): number {
+    const code = ch.charCodeAt(0);
+    return code < CODE_TABLE_SIZE ? codeIndex[code] : -1;
+  }
+
+  // build the tree: words of 2..10 alphabet letters, as in the original's hashes
+  for (const word of dictionary) {
+    if (word.length < 2 || word.length > MAX_WORD_LEN)
+      continue;
+    let inAlphabet = true;
+    for (let i = 0; i < word.length; i++)
+      if (letterIndex(word[i]) < 0) {
+        inAlphabet = false;
+        break;
+      }
+    if (!inAlphabet)
+      continue;
+    // insert the word as a chain of nodes, marking the last one
+    let node = root;
+    for (let i = 0; i < word.length; i++) {
+      if (node.children === null)
+        node.children = new Array<TrieNode | undefined>(alphabet.length).fill(undefined);
+      const idx = letterIndex(word[i]);
+      let next = node.children[idx];
+      if (next === undefined) {
+        next = { word: false, children: null };
+        node.children[idx] = next;
+      }
+      node = next;
     }
-    return id;
+    node.word = true;
   }
 
-  // classic binary search (ported from the original)
-  function findHash(searchKey: number, hash: number[]): boolean {
-    let lowerBound = 0;
-    let upperBound = hash.length - 1;
-    let curIn: number;
-    while (true) {
-      curIn = Math.floor((lowerBound + upperBound) / 2);
-      if (hash[curIn] === searchKey)
-        return true; // element found
-      else if (lowerBound > upperBound)
-        return false; // element not found
-      // divide the range
-      if (hash[curIn] < searchKey)
-        lowerBound = curIn + 1; // in the upper half
-      else
-        upperBound = curIn - 1; // in the lower half
+  function step(node: TrieNode, char: string): TrieNode | null {
+    const children = node.children;
+    if (children === null)
+      return null;
+    const idx = letterIndex(char);
+    if (idx < 0)
+      return null;
+    const next = children[idx];
+    return next === undefined ? null : next;
+  }
+
+  // walk the tree along the whole string; null where no word shares it
+  function walk(str: string): TrieNode | null {
+    let node: TrieNode | null = root;
+    for (let i = 0; i < str.length; i++) {
+      node = step(node, str[i]);
+      if (node === null)
+        return null;
     }
+    return node;
   }
-
-  // full dictionary (words of length 2..10)
-  const dic_hash: number[] = [];
-  // prefix arrays: prefix_hash[n - 2] holds length-n prefixes of longer words
-  const prefix_hash: number[][] = [];
-  for (let n = 2; n <= 9; n++) prefix_hash.push([]);
-
-  // hash the dictionary
-  for (let i = 0; i < dictionary.length; i++) {
-    if (dictionary[i].length > MAX_WORD_LEN) continue;
-    if (dictionary[i].length > 1)
-      dic_hash.push(str2hash(dictionary[i]));
-    for (let n = 2; n <= 9; n++) {
-      if (dictionary[i].length > n)
-        prefix_hash[n - 2].push(str2hash(dictionary[i].substr(0, n)));
-    }
-  }
-
-  // sort the arrays and drop adjacent duplicates
-  function compareNumbers(a: number, b: number): number {
-    return a - b;
-  }
-
-  function sortUnique(hash: number[]): number[] {
-    hash.sort(compareNumbers);
-    const res: number[] = [];
-    for (let i = 0; i < hash.length; i++)
-      if (res.length === 0 || res[res.length - 1] !== hash[i])
-        res.push(hash[i]);
-    return res;
-  }
-
-  const dicSorted = sortUnique(dic_hash);
-  const prefixSorted = prefix_hash.map(sortUnique);
 
   return {
     findWord(word: string): boolean {
-      return findHash(str2hash(word), dicSorted);
+      // the tree holds words of 2..MAX_WORD_LEN letters — as in the original,
+      // a longer word is not looked up at all
+      if (word.length < 2 || word.length > MAX_WORD_LEN)
+        return false;
+      const node = walk(word);
+      return node !== null && node.word;
     },
     hasPrefix(req: string): boolean {
-      switch (req.length) {
-        case 1:
-          return alphabet.indexOf(req) !== -1;
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-          return findHash(str2hash(req), prefixSorted[req.length - 2]);
-        default:
-          return false;
-      }
+      const node = walk(req);
+      // a childless node ends every word beneath it — the prefix cannot grow
+      return node !== null && node.children !== null;
     },
+    root,
+    step,
   };
 }

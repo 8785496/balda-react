@@ -44,7 +44,7 @@ export function startWordFor(lang: Lang): string {
   return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
-// the hash arrays are built once per language, on first use
+// the dictionary trees are built once per language, on first use
 const dicCache = new Map<Lang, Dic>();
 
 export function dicFor(lang: Lang): Dic {

@@ -43,10 +43,10 @@ GUI changes (layout, highlights, statuses) can additionally be verified in a rea
 | `src/lang.ts` | Language switcher state: ids/labels + localStorage persistence |
 | `src/difficulty.ts` | Difficulty ids + localStorage persistence |
 | `src/game/constants.ts` | Language-independent constants: SIZE=5, MAX_WORDS=21, START_ROW |
-| `src/game/lang.ts` | Per-language game config: `Lang` type, alphabet, random starting word (`startWordFor` picks a 5-letter dictionary word), dictionary binding; `dicFor(lang)` builds and caches the hashes |
+| `src/game/lang.ts` | Per-language game config: `Lang` type, alphabet, random starting word (`startWordFor` picks a 5-letter dictionary word), dictionary binding; `dicFor(lang)` builds and caches the dictionary trees |
 | `src/game/dictionary.ts` | Russian dictionary of ~35,600 common nouns (~640 KB, one line) — from Harrix/Russian-Nouns `dist/russian_nouns.txt`, MIT (regeneration command in the file header); replaces the original's smaller `out3.js` list (~16,000 words) |
 | `src/game/dictionary-en.ts` | English dictionary of ~22,900 common words (~225 KB, one line) — from dolph/dictionary `popular.txt` (regeneration command in the file header) |
-| `src/game/dic.ts` | From `dictionary2.js`: `createDic(words, alphabet)` builds base-32 hashes + binary search; `findWord()`, `hasPrefix()` |
+| `src/game/dic.ts` | The dictionary as a prefix tree (trie; a rework of `dictionary2.js`'s base-32 hash arrays + binary search): `createDic(words, alphabet)`; `findWord()`, `hasPrefix()` are root-to-node walks, `root`/`step()` let the move search advance one letter at a time |
 | `src/game/finder.ts` | From `track2.js`: `findBestMove(board, usedWords, lang, difficulty)` — records every found word (deduplicated), picks by difficulty |
 | `src/state/types.ts` | `GameState`, `Phase`, `Action`, `BotMove`, structured `GameError`/`Status` |
 | `src/state/gameReducer.ts` | All move and validation logic (from `events.js`) |
@@ -56,7 +56,7 @@ GUI changes (layout, highlights, statuses) can additionally be verified in a rea
 
 ## Architecture
 
-- **State is the source of truth, not the DOM**: the board is `board: string[25]` (25 cells, `''` = empty) in `useReducer`; cells are `<button class="cell">`. The dictionary is bundled as an ES module; hashes are built on load.
+- **State is the source of truth, not the DOM**: the board is `board: string[25]` (25 cells, `''` = empty) in `useReducer`; cells are `<button class="cell">`. The dictionary is bundled as an ES module; a prefix tree (trie) per language is built on load.
 - **A state machine** instead of the original's attaching of listeners: `phase: 'idle' | 'letter' | 'word' | 'bot' | 'over'` — the game starts immediately in `idle` (the original's «Старт»/menu screen is dropped). Cycle: `idle` (choosing an empty cell that adjoins existing letters) → `letter` (the letter keyboard floats at the selected cell) → `word` (clicks or drags over adjacent cells build the `track`) → `SUBMIT_MOVE` → `bot` (an effect in App calls `findBestMove` via `setTimeout`) → `idle`; with 21 words in `usedWords` — `over` (EndPanel instead of `alert()`). `word` → `letter` is a back-transition: the keyboard reappears at the added-letter cell to change the letter of an existing move.
 - **Bot's turn**: `useEffect` in App when `phase === 'bot'`; the result arrives as the `BOT_MOVED` action (`null` = no move, skip).
 - **Physical keyboard**: in the `letter` phase a letter (ё → е) enters it, `Escape` cancels the move, `Enter` in the `word` phase submits, `Backspace` steps the move back (the last path cell, then the letter).
@@ -69,20 +69,20 @@ GUI changes (layout, highlights, statuses) can additionally be verified in a rea
 
 - The starting word in the middle row (cells 10–14) is drawn at random from the language's 5-letter dictionary words (`startWordFor` in `game/lang.ts`, a different word each game — the original always used "балда"); it is the first entry of `usedWords`; points = the total length of composed words (1 per letter); the game lasts until 21 words are in `usedWords`. `freshGame(lang, startWord?)` accepts a forced word — used by `scripts/check.ts` to keep its reference positions deterministic.
 - Submit validation is a port of `events.validate` with the same checks in the same order; the error texts live in `i18n.ts` as the Russian renderings of the codes `noAddedLetter` («Слово должно содержать добавленную букву»), `wordUsed` («Слово "…" уже использовано»), `wordNotFound` («Слово "…" не найдено»), `addLetter` («Добавьте букву»), `chooseWord` («Выберите слово»).
-- Dictionary: base-32 hash (letter position + 1) × 32^i over the language's alphabet; sorted arrays of the full dictionary and prefixes of length 2–9; words longer than 10 letters never make it into the hashes (the original's filter). Binary search.
+- Dictionary: a prefix tree (trie) — a node per prefix, children indexed by the letter's position in the language's alphabet; `findWord`/`hasPrefix` are single root-to-node walks, and the move search (`finder.ts`) carries the current node through its recursion, stepping the tree one letter per board cell instead of re-hashing the whole prefix and binary-searching it at every step (a branch dies the moment no word continues the prefix; a childless node means the prefix cannot grow, which also caps paths at 10 letters — the original's filter, words longer than 10 never enter the tree).
 
 ## Conventions
 
 - TypeScript strict, ES modules.
 - **Language: files (code, docs), code comments and commit messages — in English.** Game-facing texts live in `src/i18n.ts` — the Russian set preserves the original's wording (parity), the English set is its translation; do not hardcode game texts in components. Dictionaries stay in their own languages by definition.
 - UTF-8 encoding; the dictionaries in `src/game/dictionary*.ts` are encoding-critical (`<meta charset="UTF-8">` is declared in `index.html`).
-- The algorithms in `dic.ts` / `finder.ts` are ported from the original; do not change their structure without need (the difficulty selection in `pickMove` and the all-moves collection are deliberate extensions).
+- The algorithms in `dic.ts` / `finder.ts` are ported from the original; do not change their structure without need (the difficulty selection in `pickMove` and the all-moves collection are deliberate extensions; so is the trie that replaced the original's hash arrays as the lookup structure — the found words, their order and the pruning semantics are unchanged).
 
 ## Typical tasks
 
 - **Change game rules/logic** — `src/state/gameReducer.ts` (and `src/state/types.ts`).
 - **Speed up the move search** — `src/game/finder.ts` (the search) and `src/game/dic.ts` (word checks).
-- **Replace/extend the dictionary** — only the contents of the `dictionary` array: Russian in `src/game/dictionary.ts` (words ≤ 10 letters take part in the search, no "ё", lowercase), English in `src/game/dictionary-en.ts` (a–z only; the regeneration command is in its header). Hashes are built per language on first use.
+- **Replace/extend the dictionary** — only the contents of the `dictionary` array: Russian in `src/game/dictionary.ts` (words ≤ 10 letters take part in the search, no "ё", lowercase), English in `src/game/dictionary-en.ts` (a–z only; the regeneration command is in its header). The trie is built per language on first use.
 - **Change UI texts / add a translation** — `src/i18n.ts` only (both languages side by side).
 - **Tune the difficulty levels** — `pickMove` in `src/game/finder.ts`.
 - **UI/layout** — `src/components/` + `src/styles/index.css`.
@@ -100,3 +100,4 @@ GUI changes (layout, highlights, statuses) can additionally be verified in a rea
 8. An empty cell with no letters around it cannot be chosen for the new letter — in `idle` and in the `letter` re-target (`hasFilledNeighbor` in `gameReducer.ts`); such cells are dimmed and unclickable in the choosing phases (`disabled` in `Board.tsx`). The original allowed any empty cell, and a letter placed in isolation could enter no word, dead-ending the move until «Отмена».
 9. The Russian dictionary is replaced: ~35,600 common nouns from Harrix/Russian-Nouns (MIT; nouns/lemmas only, like the original's list) instead of the original's ~16,000-word `out3.js` list. Same filtering rules as the English dictionary: lowercase, "ё" → "е", length 2–10; the regeneration command is in the file header.
 10. Drag word selection (addition): the path can be drawn with one pointer trajectory instead of cell-by-cell clicks — press + drag builds it live (highlight, numbers, the word in the status bar), dragging back unwinds it, and releasing submits the word (word-search style; a 1-cell path is kept rather than erroring). Implemented as the `DRAG_START`/`DRAG_CELL` reducer actions plus the `useWordDrag` gesture hook in `Board.tsx` — click vs drag is decided by whether the pointer ever entered another cell, so plain clicks keep their exact behavior.
+11. The lookup structure is replaced: a prefix tree (trie) instead of the original's base-32 hash arrays with binary search (`dic.ts`); the move search steps the tree along the path (`finder.ts`). Same found words in the same order (verified by identical games in `npm run check`), roughly 5–9× faster on filled boards. Two strictness improvements over the old hashing: a word containing a letter outside the alphabet used to hash as if the letter were absent (so `findWord("аё…")` could alias a real word) — now it is simply not found; and `hasPrefix` of a single letter that starts no dictionary word used to return true — now false (no caller relied on either quirk).

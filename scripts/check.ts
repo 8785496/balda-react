@@ -27,7 +27,7 @@ function assert(cond: boolean, msg: string): void {
   }
 }
 
-// --- dictionary and hashes ---
+// --- dictionary and prefix tree ---
 
 assert(dictionary.length > 15000, 'dictionary loaded: ' + dictionary.length + ' words');
 assert(ALPHABET.length === 32 && ALPHABET.indexOf('ё') === -1, 'alphabet: 32 letters without "ё"');

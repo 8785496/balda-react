@@ -6,13 +6,16 @@
 // Returns a word that contains the added letter and has not been used before.
 // Differences from the original: the board is passed as an array (no DOM
 // reads), the top-neighbor check is fixed (i > 5 → i >= 5), when no move
-// exists null is returned instead of crashing, and instead of tracking only
+// exists null is returned instead of crashing, instead of tracking only
 // the longest word every found word is recorded (deduplicated by word) so
 // that the difficulty can choose among them (hard keeps the original's
-// longest-word behavior).
+// longest-word behavior), and the prefix check walks the dictionary tree
+// (dic.ts) one letter per step instead of re-hashing the whole prefix and
+// binary-searching it from scratch at every cell.
 import { alphabetFor, dicFor, type Lang } from './lang';
 import { SIZE } from './constants';
 import type { Difficulty } from '../difficulty';
+import type { TrieNode } from './dic';
 
 export interface BotMove {
   word: string;
@@ -35,40 +38,44 @@ export function findBestMove(
 
   // recursive path search
   // arrData — board data, arrWord — path coordinates,
-  // cur — index of the current cell, ins — index of the cell with the substituted letter
-  function findTrack(arrData: string[], arrWord: number[], cur: number, ins: number): void {
+  // cur — index of the current cell, ins — index of the cell with the substituted letter,
+  // node — the dictionary tree node of the path before the current cell's letter
+  function findTrack(arrData: string[], arrWord: number[], cur: number, ins: number, node: TrieNode): void {
     if (arrData[cur] === '') // the current cell is empty
       return;
     // a path must not cross itself
     if (arrWord.length > 0 && arrWord.indexOf(cur) !== -1)
       return;
+    // step the tree with the current cell's letter
+    const next = dic.step(node, arrData[cur]);
+    if (next === null) // no dictionary word continues with this letter
+      return;
     // add the current cell to the path
     arrWord.push(cur);
-    if (arrWord.length > 1) {
+    // the path contains the added letter and spells a dictionary word
+    if (next.word && arrWord.indexOf(ins) !== -1) {
       let word = '';
       for (let k = 0; k < arrWord.length; k++)
         word += arrData[arrWord[k]];
-      // the path contains the added letter, the word is valid and not used yet
-      if (arrWord.indexOf(ins) !== -1)
-        if (!seenWords.has(word))
-          if (dic.findWord(word))
-            if (usedWords.indexOf(word) === -1) {
-              seenWords.add(word);
-              found.push({ word, char: arrData[ins], index: ins, track: arrWord.slice() });
-            }
-      // no point in searching further: no words share this prefix
-      if (!dic.hasPrefix(word))
-        return;
+      // the word has not been played yet
+      if (!seenWords.has(word))
+        if (usedWords.indexOf(word) === -1) {
+          seenWords.add(word);
+          found.push({ word, char: arrData[ins], index: ins, track: arrWord.slice() });
+        }
     }
+    // no point in searching further: no longer word shares this prefix
+    if (next.children === null)
+      return;
     // recurse in 4 directions
     if (cur < SIZE * (SIZE - 1))
-      findTrack(arrData, arrWord.slice(), cur + SIZE, ins);
+      findTrack(arrData, arrWord.slice(), cur + SIZE, ins, next);
     if (cur >= SIZE)
-      findTrack(arrData, arrWord.slice(), cur - SIZE, ins);
+      findTrack(arrData, arrWord.slice(), cur - SIZE, ins, next);
     if (cur % SIZE < SIZE - 1)
-      findTrack(arrData, arrWord.slice(), cur + 1, ins);
+      findTrack(arrData, arrWord.slice(), cur + 1, ins, next);
     if (cur % SIZE > 0)
-      findTrack(arrData, arrWord.slice(), cur - 1, ins);
+      findTrack(arrData, arrWord.slice(), cur - 1, ins, next);
   }
 
   // substitution loop
@@ -86,7 +93,7 @@ export function findBestMove(
         // search paths starting from non-empty cells
         for (let j = 0; j < board.length; j++)
           if (arrTemp[j] !== '')
-            findTrack(arrTemp, [], j, i);
+            findTrack(arrTemp, [], j, i, dic.root);
       }
     }
   }
