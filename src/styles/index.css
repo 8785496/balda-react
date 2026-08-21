@@ -377,13 +377,78 @@ a:hover {
   min-height: 3em;
 }
 
+/* the badge and the word being built share one row; the word reserves its
+   line so the board below does not jump as letters are typed */
+.status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+}
+
+/* whose turn it is — a permanent badge to the left of the word */
+.turn {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  min-width: calc(14ch + 22px); /* fits «Ход: компьютер» — the word's start does not move */
+  text-align: center;
+}
+
+.turn-player {
+  color: var(--player-color);
+}
+
+.turn-bot {
+  color: var(--bot-color);
+}
+
 .result {
   font-size: 18px;
+  min-height: 1.4em;
 }
 
 .error {
   color: var(--error);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
   min-height: 1.4em;
+  padding: 5px 12px;
+  border-radius: 6px;
+}
+
+/* a shown error becomes a tinted chip fading in; the empty line keeps the
+   same box (padding included), so the layout below does not move */
+.error.show {
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  animation: error-in 0.25s ease-out;
+}
+
+.error-icon {
+  flex-shrink: 0;
+}
+
+@keyframes error-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error.show {
+    animation: none;
+  }
 }
 
 /* --- buttons (controls, keyboard) --- */
@@ -421,8 +486,27 @@ button:disabled {
   cursor: default;
 }
 
+/* equal heights for text and icon buttons: the row stretches every button
+   to the tallest one, and each button centers its own content */
 .controls {
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.controls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.4;
+}
+
+/* the backspace button: the ⌫ glyph is missing from the Play/Open Sans
+   fonts, so the button carries an SVG icon instead of a character */
+#back svg {
+  width: 1.4em;
+  height: 1.4em;
 }
 
 /* --- board --- */
@@ -453,6 +537,7 @@ button:disabled {
   align-items: center;
   justify-content: center;
   text-align: center;
+  position: relative;
   background: var(--cell-bg);
   border: var(--cell-border);
   border-radius: var(--cell-radius);
@@ -474,8 +559,22 @@ button:disabled {
   color: var(--cell-color);
 }
 
-/* the order matters: state highlights below override :hover, and .add
-   (the new letter) wins over .select when both apply */
+/* the computer's last move — its word path and the added letter, tinted with
+   the theme's bot accent and shown for a few seconds after the move */
+.cell.bot {
+  background: color-mix(in srgb, var(--bot-color) 25%, var(--card-bg));
+  border: 1px solid var(--bot-color);
+}
+
+.cell.bot-new {
+  background: var(--bot-color);
+  color: var(--card-bg);
+  border: 1px solid var(--bot-color);
+}
+
+/* the order matters: state highlights below override :hover, .add
+   (the new letter) wins over .select when both apply, and the player's own
+   .select/.add win over the fading bot highlight */
 .cell.select {
   background: var(--cell-select-bg);
   color: var(--cell-select-color);
@@ -493,6 +592,18 @@ button:disabled {
 .cell.selected {
   background: var(--cell-selected-bg);
   border: var(--cell-selected-border);
+}
+
+/* the path order number in the top-left corner of a path cell */
+.cell-num {
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: clamp(9px, 2.6vw, 12px);
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
 }
 
 /* the added letter reopened for editing (.add and .selected together):
@@ -515,9 +626,18 @@ button:disabled {
 /* --- score --- */
 
 .score-panel {
+  margin-top: 12px;
+}
+
+.words-progress {
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.score-columns {
   display: flex;
   gap: 16px;
-  margin-top: 12px;
 }
 
 .column-left,
@@ -525,6 +645,12 @@ button:disabled {
   flex: 1 1 50%;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+/* the computer's column mirrors the player's: its header and words
+   hang off the right edge */
+.column-right {
+  text-align: right;
 }
 
 .column-left strong {
@@ -604,7 +730,7 @@ button:disabled {
     padding: 4px;
   }
 
-  .score-panel {
+  .score-columns {
     gap: 8px;
   }
 }

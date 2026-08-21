@@ -56,6 +56,10 @@ if (move !== null) {
   assert(move.word.indexOf(move.char) !== -1, 'the word contains the added letter');
   assert(move.word !== START_WORD, 'the word differs from the starting one');
   assert(move.word.length >= 4, 'a word of at least 4 letters is found on the starting position');
+  const botBoard = board.slice();
+  botBoard[move.index] = move.char;
+  assert(wordFromTrack(botBoard, move.track) === move.word, "the bot's track spells its word on the board");
+  assert(move.track.indexOf(move.index) !== -1, "the bot's track contains the added letter cell");
 }
 
 // --- a position with no moves: a full board ---
@@ -129,8 +133,9 @@ for (const c of faldaPath) s = gameReducer(s, { type: 'CLICK_CELL', index: c });
 assert(wordFromTrack(s.board, s.track) === 'фалда', 'the path builds the word "фалда"');
 s = gameReducer(s, { type: 'SUBMIT_MOVE' });
 assert(s.phase === 'bot' && s.playerWords.length === 1 && s.error === '', 'a successful move switches to the bot phase');
-s = gameReducer(s, { type: 'BOT_MOVED', move: { word: 'халда', char: 'х', index: 16 } });
+s = gameReducer(s, { type: 'BOT_MOVED', move: { word: 'халда', char: 'х', index: 16, track: [16, 17, 12, 13, 14] } });
 assert(s.phase === 'idle' && s.board[16] === 'х' && s.botWords.length === 1, 'BOT_MOVED writes the letter and the word');
+assert(s.status === 'Компьютер: «халда» (+5)', 'BOT_MOVED reports the word in the status line');
 
 // "word already used": a new "а" at cell 17, path х(16)-а(17)-л(12)-д(13)-а(14)
 s = gameReducer(s, { type: 'CLICK_CELL', index: 17 });

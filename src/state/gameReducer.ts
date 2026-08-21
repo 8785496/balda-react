@@ -197,6 +197,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
         usedWords,
         botWords: state.botWords.concat([action.move.word]),
         lastBotMove: action.move,
+        // report what the computer played — until the player's next action
+        status: 'Компьютер: «' + action.move.word + '» (+' + action.move.word.length + ')',
         phase: usedWords.length >= MAX_WORDS ? 'over' : 'idle',
       };
     }

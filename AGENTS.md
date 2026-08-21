@@ -14,6 +14,19 @@ npm run check    # node logic-check script (compiles scripts/check.ts into .tmp-
 
 There is no test framework — correctness of the logic is verified by `npm run check` and the manual checklist from PLAN.md.
 
+## Browser testing
+
+GUI changes (layout, highlights, statuses) can additionally be verified in a real browser. **Never start it on your own — ask the user first and wait for an explicit go-ahead.** When the user approves, offer to switch this work to the cheap model (**GLM-5-Turbo**, a subagent or a separate session) instead of the main model: it is routine, screenshot-heavy work. Run it on the main model only if the user declines the switch.
+
+1. `npm run dev` in the background; open the printed URL (the port shifts from 5173 when busy; the base path is `/balda-react/`).
+2. Drive the page with the session's browser automation. Stable hooks: `.board .cell` (25 buttons in board order), `.keyboard`, `.turn`, `.result`, `.error`, `.words-progress`.
+3. One full round: click the empty cell above the «а» of «балда» (`.nth(6)`) → enter «ф» on the keyboard → click the path **including the added-letter cell** — cells 6, 11, 12, 13, 14 → «Готово» (gives «фалда»; without the letter cell the word stays «алда» and submit fails). Check:
+   - the turn badge flips «Ход: игрок» → «Ход: компьютер» → «Ход: игрок»;
+   - path cells carry `.cell-num` numbers 1..n while building;
+   - after the reply `.result` shows «Компьютер: «слово» (+N)» and the bot's cells carry `.bot`/`.bot-new` — for ~3 s only (`BOT_MOVE_HIGHLIGHT_MS` in `App.tsx`); assert the classes while the badge is back at «Ход: игрок», then again after ~3.5 s (must be gone);
+   - `.words-progress` grows («Слово 3 из 21» after this round).
+4. Worth an occasional pass: a validation error keeps the path; «Отмена»/Escape rolls the move back; Backspace unwinds the path and, once it is empty, reopens the keyboard.
+
 ## Structure
 
 | File | Role |

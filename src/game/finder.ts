@@ -15,6 +15,7 @@ export interface BotMove {
   word: string;
   char: string;
   index: number;
+  track: number[]; // the word's path on the board — for the move highlight
 }
 
 export function findBestMove(board: string[], usedWords: string[]): BotMove | null {
@@ -22,6 +23,7 @@ export function findBestMove(board: string[], usedWords: string[]): BotMove | nu
   let gWord = '';
   let gChar = '';
   let gIndex = -1;
+  let gTrack: number[] = [];
 
   // recursive path search
   // arrData — board data, arrWord — path coordinates,
@@ -46,6 +48,7 @@ export function findBestMove(board: string[], usedWords: string[]): BotMove | nu
               gWord = word;
               gChar = arrData[ins];
               gIndex = ins;
+              gTrack = arrWord.slice();
             }
       // no point in searching further: no words share this prefix
       if (!dic.hasPrefix(word))
@@ -82,5 +85,5 @@ export function findBestMove(board: string[], usedWords: string[]): BotMove | nu
     }
   }
 
-  return gWord !== '' ? { word: gWord, char: gChar, index: gIndex } : null;
+  return gWord !== '' ? { word: gWord, char: gChar, index: gIndex, track: gTrack } : null;
 }

@@ -12,6 +12,7 @@ export interface BotMove {
   word: string;
   char: string;
   index: number;
+  track: number[];   // the word's path on the board
 }
 
 export interface GameState {
@@ -26,7 +27,7 @@ export interface GameState {
   boardBackup: string[] | null; // board backup for "Отмена" (the original's bakArr)
   error: string;               // validation error text (the original's #error)
   status: string;              // service messages («Компьютер думает…» etc.)
-  lastBotMove: BotMove | null;
+  lastBotMove: BotMove | null; // shown in the status line and highlighted on the board
 }
 
 export type Action =

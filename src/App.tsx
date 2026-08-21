@@ -6,7 +6,7 @@ import { Keyboard } from './components/Keyboard';
 import { ScorePanel } from './components/ScorePanel';
 import { StatusBar } from './components/StatusBar';
 import { ThemePicker } from './components/ThemePicker';
-import { ALPHABET } from './game/constants';
+import { ALPHABET, MAX_WORDS } from './game/constants';
 import { findBestMove } from './game/finder';
 import { gameReducer, initialState } from './state/gameReducer';
 import { wordFromTrack } from './state/helpers';
@@ -19,6 +19,9 @@ function scoreOf(words: string[]): number {
     n += words[i].length;
   return n;
 }
+
+// how long the computer's move stays highlighted on the board
+const BOT_MOVE_HIGHLIGHT_MS = 3000;
 
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
@@ -42,6 +45,22 @@ export default function App() {
     }, 50);
     return () => clearTimeout(timer);
   }, [state.phase, state.board, state.usedWords]);
+
+  // the computer's move is visible: its word path and the added letter stay
+  // highlighted on the board for a few seconds. Keyed on the move itself, so
+  // the countdown does not restart while the player is already building
+  // their own next word.
+  const [showBotMove, setShowBotMove] = useState(false);
+  const lastBotMove = state.lastBotMove;
+  useEffect(() => {
+    if (lastBotMove === null) {
+      setShowBotMove(false);
+      return;
+    }
+    setShowBotMove(true);
+    const timer = setTimeout(() => setShowBotMove(false), BOT_MOVE_HIGHLIGHT_MS);
+    return () => clearTimeout(timer);
+  }, [lastBotMove]);
 
   // physical keyboard: a letter (ё → е) in the letter phase,
   // Escape — cancel, Enter in the word phase — submit,
@@ -77,7 +96,7 @@ export default function App() {
         result={wordFromTrack(state.board, state.track)}
         error={state.error}
         status={state.status}
-        botThinking={state.phase === 'bot'}
+        phase={state.phase}
       />
       <div className="board-wrap">
         <Board
@@ -86,6 +105,7 @@ export default function App() {
           numChar={state.numChar}
           selectedCell={state.selectedCell}
           phase={state.phase}
+          botMove={showBotMove ? lastBotMove : null}
           onCellClick={(index) => dispatch({ type: 'CLICK_CELL', index })}
         />
         {state.phase === 'over' && (
@@ -104,7 +124,12 @@ export default function App() {
         onBack={() => dispatch({ type: 'BACKSPACE' })}
         onCancel={() => dispatch({ type: 'CANCEL_MOVE' })}
       />
-      <ScorePanel playerWords={state.playerWords} botWords={state.botWords} />
+      <ScorePanel
+        playerWords={state.playerWords}
+        botWords={state.botWords}
+        usedCount={state.usedWords.length}
+        maxWords={MAX_WORDS}
+      />
       <footer className="footer">
         <a
           className="rules-icon"
