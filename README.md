@@ -2,7 +2,7 @@
 
 **Demo: <https://8785496.github.io/balda-react/>** (GitHub Pages, rebuilt on every push to `main`)
 
-The "Balda" word game (human vs computer) — a port of the plain-JavaScript original to **Vite + React + TypeScript**. Game logic and behavior are ported 1:1; the Russian dictionary is the original's (~16,000 words). The footer switches the game language (**RUS | ENG**, each with its own alphabet/dictionary/starting word — «балда» / «crane») and the bot difficulty (**easy | medium | hard**; hard is the original's always-longest-word bot). Everything is bundled — no external requests except Google Fonts.
+The "Balda" word game (human vs computer) — a port of the plain-JavaScript original to **Vite + React + TypeScript**. Game logic and behavior are ported 1:1; the Russian dictionary is an MIT-licensed list of ~35,600 common nouns (Harrix/Russian-Nouns) that replaces the original's ~16,000-word list. The footer switches the game language (**RUS | ENG**, each with its own alphabet/dictionary/starting word — «балда» / «crane») and the bot difficulty (**easy | medium | hard**; hard is the original's always-longest-word bot). Everything is bundled — no external requests except Google Fonts.
 
 ## Running
 
@@ -27,7 +27,7 @@ npm run check    # node logic-check script (dictionary, move search)
 | `src/game/` | Pure logic, no React or DOM |
 | `src/game/constants.ts` | SIZE=5, MAX_WORDS=21, START_ROW (language-independent) |
 | `src/game/lang.ts` | Per-language config: alphabet, starting word, dictionary; `dicFor(lang)` |
-| `src/game/dictionary.ts` | Russian dictionary: `export const dictionary` (~290 KB, converted from `out3.js`) |
+| `src/game/dictionary.ts` | Russian dictionary: `export const dictionary` (~35,600 nouns, see the file header) |
 | `src/game/dictionary-en.ts` | English dictionary (~22,900 common words, see the file header) |
 | `src/game/dic.ts` | From `dictionary2.js`: `createDic(words, alphabet)` — base-32 hashes + binary search; `findWord()`, `hasPrefix()` |
 | `src/game/finder.ts` | From `track2.js`: `findBestMove(board, usedWords, lang, difficulty)` — collects all moves, picks by difficulty |
@@ -54,6 +54,7 @@ npm run check    # node logic-check script (dictionary, move search)
 
 - Responsive layout (grid + `clamp()`), physical keyboard input (a letter, `Escape` — cancel, `Enter` — submit, `Backspace` — step the move back), end of game as a panel instead of `alert()`.
 - Beyond the original: the language switcher (Russian/English with its own dictionary) and the bot difficulty switcher.
+- The Russian dictionary is replaced: ~35,600 common nouns (Harrix/Russian-Nouns, MIT) instead of the original's ~16,000-word list — the game accepts and finds noticeably more words.
 - The game starts immediately — the original's "Старт" screen with an empty board is dropped; the submit button («Готово», the original's «Ход») is disabled until a word path exists; «Отмена» shows only while the path is being built (in the letter phase the keyboard overlay covers the page); the theme picker and the rules link live in the footer.
 - The path can be edited instead of being rebuilt: a validation error no longer clears it; a click on the last path cell (or `Backspace` / the «⌫» button) removes it; a click on the added letter mid-path (or `Backspace` with an empty path) reopens the keyboard to change the letter without canceling the move.
 - Fixed: "Отмена" now also resets the highlight of the added letter (`numChar`).
