@@ -1,97 +1,97 @@
-# Ревью кода — balda-react
+# Code review — balda-react
 
-Дата: 2026-08-21
-Вердикт: **код в хорошем состоянии**. `npm run check` (все 40+ проверок) и `npm run build` проходят. Замечаний уровня Critical и High нет — только Medium (реально ощущаемые, но восстанавливаемые) и Low (гигиена кода).
+Date: 2026-08-21
+Verdict: **the code is in good shape**. `npm run check` (all 40+ checks) and `npm run build` pass. No Critical or High findings — only Medium (real but recoverable) and Low (code hygiene).
 
-Логика сверена с оригиналом `../balda` (`js/events.js`, `js/track2.js`, `js/init.js`): расхождений в поведении, кроме осознанно задокументированных, не найдено. Баги оригинала (`i > 5`, пропуск хода бота) исправлены последовательно в обоих местах (`helpers.ts`, `finder.ts`).
+The logic was compared against the original `../balda` (`js/events.js`, `js/track2.js`, `js/init.js`): no behavioral differences found beyond the deliberately documented ones. The original's bugs (`i > 5`, the bot's crash on no move) are fixed consistently in both places (`helpers.ts`, `finder.ts`).
 
-Итого: **4 Medium, 7 Low**.
+Total: **4 Medium, 7 Low**.
 
 ---
 
-## Critical — нет
+## Critical — none
 
-## High — нет
+## High — none
 
 ## Medium
 
-### M1. Горячие клавиши игнорируют модификаторы — `src/App.tsx:45-49`
+### M1. Keyboard shortcuts ignore modifiers — `src/App.tsx:45-49`
 
-В фазе `letter` обычное Ctrl+С (копировать) или Ctrl+Ф введёт букву: `e.key` с модификатором — всё ещё буква алфавита. Триггерится случайным повседневным действием; последствие отменяется («Отмена»), поэтому Medium, а не High.
+In the `letter` phase, a routine Ctrl+С (copy) or Ctrl+Ф enters a letter: `e.key` with a modifier held is still an alphabet letter. Triggered by an everyday accidental action; the effect is undoable ("Отмена"), hence Medium rather than High.
 
-Фикс — одна строка в начале обработчика:
+Fix — one line at the top of the handler:
 
 ```ts
 if (e.ctrlKey || e.metaKey || e.altKey) return;
 ```
 
-### M2. Ход бота невидим на поле
+### M2. The bot's move is invisible on the board
 
-После `BOT_MOVED` новая буква нигде не подсвечивается — игрок ищет её сравнением поля на глаз. Данные для подсветки уже есть: `lastBotMove` (`src/state/types.ts:30`) записывается, но не читается ни одним компонентом. Касается каждого раунда игры; паритет с оригиналом тут скорее минус.
+After `BOT_MOVED` the new letter is not highlighted anywhere — the player has to spot it by diffing the board by eye. The data for a highlight already exists: `lastBotMove` (`src/state/types.ts:30`) is written but read by no component. Affects every round of the game; parity with the original is a minus here, not a justification.
 
-Фикс — подсветка `.add` на клетке `lastBotMove.index` (или удалить мёртвое поле, см. L1).
+Fix — highlight `.add` on the cell `lastBotMove.index` (or drop the dead field, see L1).
 
-### M3. Тупик без выхода из партии
+### M3. A dead end with no way to finish the game
 
-Если у игрока нет ни одного хода, «Ход» вечно даёт «Добавьте букву»/ошибку — завершить партию можно только «Заново», EndPanel никогда не появится. Редко, но это потеря партии без формального финала. В оригинале скрытый `#emulator` был теоретическим выходом, здесь он сознательно не переносился.
+If the player has no move at all, "Ход" forever yields «Добавьте букву»/an error — the only way out is "Заново"; the EndPanel never appears. Rare, but it is a lost game without a formal finale. In the original the hidden `#emulator` was a theoretical way out; it was deliberately not ported.
 
-Фикс — кнопка «Сдаться/Завершить» (изменение правил — продуктовое решение).
+Fix — a "resign/finish" button (a rules change — a product decision).
 
-### M4. Единственный «тест» проекта проверяется без `--strict`
+### M4. The project's only "test" is checked without `--strict`
 
-`scripts/check.ts` не входит в tsconfig (`include: ["src"]`), а скрипт `check` в `package.json:14` компилирует его без strict — типовые ошибки в проверочном коде никем не ловятся.
+`scripts/check.ts` is not included in tsconfig (`include: ["src"]`), and the `check` script in `package.json:14` compiles it without strict — nobody catches type errors in the checking code.
 
-Проверено: с `--strict --noEmit` скрипт компилируется чисто. Фикс — добавить флаг в команду `check`.
+Verified: with `--strict --noEmit` the script compiles cleanly. Fix — add the flag to the `check` command.
 
 ## Low
 
-### L1. Мёртвый код
+### L1. Dead code
 
-- `hasFilledNeighbor` (`src/state/helpers.ts:30`) не используется нигде — поиск бота инлайнит проверку соседей (`finder.ts:68-73`).
-- `lastBotMove` пишется, но не читается (см. M2).
+- `hasFilledNeighbor` (`src/state/helpers.ts:30`) is used nowhere — the bot search inlines the neighbor check (`finder.ts:68-73`).
+- `lastBotMove` is written but never read (see M2).
 
-### L2. Дублирование
+### L2. Duplication
 
-- `BotMove` объявлен дважды: `src/game/finder.ts:14` и `src/state/types.ts:12` (работает за счёт структурной типизации, но может разъехаться; `types.ts` может импортировать тип из `finder.ts`).
-- Подсчёт очков: `scoreOf` (`src/App.tsx:14`) и `score` (`src/components/ScorePanel.tsx:2`) — вынести в `state/helpers.ts`.
+- `BotMove` is declared twice: `src/game/finder.ts:14` and `src/state/types.ts:12` (works via structural typing, but may drift; `types.ts` could import the type from `finder.ts`).
+- Score computation: `scoreOf` (`src/App.tsx:14`) and `score` (`src/components/ScorePanel.tsx:2`) — move to `state/helpers.ts`.
 
-### L3. Enter двойной выстрел — `src/App.tsx:53`
+### L3. Enter double-fire — `src/App.tsx:53`
 
-При фокусе на кнопке Enter вызывает и `SUBMIT_MOVE`, и click кнопки. Сейчас спасают guards фаз в редьюсере, но `e.preventDefault()` для Enter в фазе `word` снял бы зависимость от порядка событий.
+With focus on a button, Enter triggers both `SUBMIT_MOVE` and the button's click. The phase guards in the reducer currently save the day, but `e.preventDefault()` for Enter in the `word` phase would remove the dependence on event ordering.
 
-### L4. A11y
+### L4. Accessibility
 
-- `role="grid"` без структуры `row`/`gridcell` (`src/components/Board.tsx:17`) — либо убрать роль, либо добавить структуру.
-- Ошибкам/результату нет `aria-live="polite"` (`src/components/StatusBar.tsx`).
-- Пустые клетки — кнопки без имени (можно `aria-label` с координатой).
+- `role="grid"` without `row`/`gridcell` structure (`src/components/Board.tsx:17`) — either drop the role or add the structure.
+- No `aria-live="polite"` for errors/result (`src/components/StatusBar.tsx`).
+- Empty cells are buttons with no accessible name (an `aria-label` with the coordinate would do).
 
-### L5. Легаси-id
+### L5. Legacy id
 
-`id="test"` (`src/components/Controls.tsx:23`) — из оригинала, CSS его не использует; переименовать в `submit` или убрать.
+`id="test"` (`src/components/Controls.tsx:23`) — from the original, unused by the CSS; rename to `submit` or drop.
 
-### L6. Захардкожено `10` в `check.ts:197`
+### L6. Hardcoded `10` in `check.ts:197`
 
-`playerWords.length === 10` сломается при изменении `MAX_WORDS`; вычислять как `(MAX_WORDS - 1) / 2`.
+`playerWords.length === 10` breaks if `MAX_WORDS` changes; compute it as `(MAX_WORDS - 1) / 2`.
 
-### L7. Отмена в фазе клавиатуры малозаметна
+### L7. Cancel is hard to discover in the letter phase
 
-Кнопка «Отмена» из Controls перекрыта оверлеем; остаются Escape и клик мимо панели. Кнопка «Отмена» в самой панели клавиатуры была бы очевиднее.
+The "Отмена" button in Controls is covered by the overlay; what remains is Escape and clicking outside the panel. A cancel button inside the keyboard panel itself would be more obvious.
 
 ---
 
-## Что проверено и подтверждено
+## Verified and confirmed
 
-- **Точность хэшей**: максимум для 10-буквенного слова ≈ 1,2×10¹⁵ < 2⁵³ — целочисленная арифметика дублей точна, коллизий нет.
-- **Бинарный поиск** `findHash` безопасен на граничных случаях (пустой массив, `lowerBound > upperBound`).
-- **`hasPrefix`** корректно обрезает пути длиной 10 (слова длиннее в хэшах нет) — подтверждено полной симуляцией партии до 21 слова в `check.ts`.
-- **Эффект хода бота** (`src/App.tsx:26-34`) безопасен в StrictMode (cleanup таймера); зависимости не вызывают лишних срабатываний — в фазе `bot` ничего не меняет `board`/`usedWords`.
-- **Паритет `#result`**: в оригинале `events.change()` тоже затирает строку результата после каждого validate/cancel, так что «результат как производная от path» — точный перенос.
-- **`setTrack` оригинала** содержал те же баги `i > 5`; порт обошёл их, оставив только проверку `areAdjacent` — эквивалентно и чище.
-- **Редьюсер**: guards фаз корректны во всех экшенах; тексты ошибок и порядок валидации перенесены дословно.
+- **Hash precision**: the maximum for a 10-letter word ≈ 1.2×10¹⁵ < 2⁵³ — double-precision integer arithmetic is exact, no collisions.
+- **Binary search**: `findHash` is safe at edge cases (empty array, `lowerBound > upperBound`).
+- **`hasPrefix`** correctly prunes paths of length 10 (longer words are not in the hashes) — confirmed by the full-game simulation to 21 words in `check.ts`.
+- **The bot turn effect** (`src/App.tsx:26-34`) is StrictMode-safe (timer cleanup); the dependencies cause no extra runs — nothing changes `board`/`usedWords` in the `bot` phase.
+- **`#result` parity**: in the original `events.change()` also wipes the result line after every validate/cancel, so "result derived from the path" is an accurate port.
+- **The original's `setTrack`** contained the same `i > 5` bugs; the port sidesteps them by keeping only the `areAdjacent` check — equivalent and cleaner.
+- **The reducer**: phase guards are correct in every action; error texts and the validation order are ported verbatim.
 
-## Рекомендуемый порядок исправлений
+## Suggested fix order
 
-1. M1, M4 — минутные фиксы.
-2. M2 — самый полезный по эффекту.
-3. M3 — требует продуктового решения.
-4. L1–L7 — одним небольшим коммитом.
+1. M1, M4 — one-line fixes.
+2. M2 — the biggest payoff.
+3. M3 — needs a product decision.
+4. L1–L7 — one small commit.

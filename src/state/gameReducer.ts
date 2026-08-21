@@ -1,11 +1,11 @@
-// Вся логика ходов и валидации — перенос js/events.js на useReducer.
-// Тексты ошибок и порядок проверок перенесены дословно (events.validate):
+// All move and validation logic — a port of js/events.js to useReducer.
+// Error texts and the order of checks are ported verbatim (events.validate):
 //   «Слово должно содержать добавленную букву»
 //   «Слово "…" уже использовано»
 //   «Слово "…" не найдено» / «Добавьте букву» / «Выберите слово»
-// Отличия от оригинала (планомерные исправления):
-//   - «Отмена» сбрасывает numChar (в оригинале оставалась подсветка и ложная ошибка);
-//   - если у компьютера нет хода, ход пропускается (в оригинале падало обращение к undefined).
+// Deliberate differences from the original:
+//   - "Отмена" resets numChar (the original kept the highlight and produced a false validation error);
+//   - if the computer has no move, the turn is skipped (the original crashed on an undefined access).
 import { ALPHABET, SIZE, START_WORD, START_ROW, MAX_WORDS } from '../game/constants';
 import { dic } from '../game/dic';
 import { areAdjacent, wordFromTrack } from './helpers';
@@ -28,7 +28,7 @@ function createInitialState(): GameState {
   };
 }
 
-// новая партия: пустое поле со стартовым словом в средней строке
+// a new game: an empty board with the starting word in the middle row
 function freshGame(): GameState {
   const board: string[] = new Array(SIZE * SIZE).fill('');
   for (let i = 0; i < START_WORD.length; i++)
@@ -52,7 +52,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'CLICK_CELL': {
       const i = action.index;
       if (state.phase === 'idle') {
-        // выбор пустой клетки для новой буквы
+        // choosing an empty cell for the new letter
         if (state.board[i] !== '')
           return state;
         return {
@@ -65,7 +65,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         };
       }
       if (state.phase === 'word') {
-        // задание пути: только непустая клетка, без повторов, смежная с последней
+        // building the path: non-empty cells only, no repeats, adjacent to the last one
         if (state.board[i] === '')
           return state;
         if (state.track.indexOf(i) !== -1)
@@ -92,7 +92,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return {
         ...state,
         board,
-        numChar: state.selectedCell, // подсветка красным
+        numChar: state.selectedCell, // highlighted in red
         selectedCell: null,
         phase: 'word',
       };
@@ -101,7 +101,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'SUBMIT_MOVE': {
       if (state.phase !== 'idle' && state.phase !== 'letter' && state.phase !== 'word')
         return state;
-      // в фазах idle/letter ход невозможен — как в оригинале, «Добавьте букву»
+      // in the idle/letter phases a move is impossible — «Добавьте букву», as in the original
       if (state.numChar !== null && state.track.indexOf(state.numChar) === -1) {
         return {
           ...state,
@@ -131,7 +131,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
           phase: usedWords.length >= MAX_WORDS ? 'over' : 'bot',
         };
       }
-      // слово не найдено
+      // the word is not found
       let error: string;
       if (state.numChar === null)
         error = 'Добавьте букву';
@@ -150,7 +150,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         board: state.boardBackup !== null ? state.boardBackup.slice() : state.board,
         boardBackup: null,
         track: [],
-        numChar: null, // фикс: в оригинале numChar не сбрасывался
+        numChar: null, // fix: the original did not reset numChar
         selectedCell: null,
         phase: 'idle',
         error: '',
@@ -162,7 +162,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (state.phase !== 'bot')
         return state;
       if (action.move === null) {
-        // хода нет — компьютер пропускает (в оригинале здесь было падение)
+        // no move — the computer skips (the original crashed here)
         return {
           ...state,
           phase: 'idle',

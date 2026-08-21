@@ -1,4 +1,4 @@
-// Панель конца партии поверх поля — вместо alert() оригинала.
+// End-of-game panel over the board — instead of the original's alert().
 interface EndPanelProps {
   playerScore: number;
   botScore: number;

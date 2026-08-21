@@ -1,5 +1,5 @@
-// Строка состояния: строящееся слово (#result) и ошибка (#error) оригинала,
-// плюс статус хода компьютера.
+// Status line: the word being built (the original's #result) and #error,
+// plus the computer's turn status.
 interface StatusBarProps {
   result: string;
   error: string;

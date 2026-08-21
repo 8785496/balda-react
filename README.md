@@ -1,55 +1,55 @@
-# Балда (React)
+# Balda (React)
 
-**Демо: <https://8785496.github.io/balda-react/>** (GitHub Pages, пересобирается при каждом push в `main`)
+**Demo: <https://8785496.github.io/balda-react/>** (GitHub Pages, rebuilt on every push to `main`)
 
-Игра «Балда» (человек против компьютера) — перенос [оригинала на чистом JavaScript](https://github.com/) на **Vite + React + TypeScript**. Игровая логика и поведение перенесены 1:1, словарь тот же (~16 000 слов, встроен в бандл — внешних запросов нет, кроме Google Fonts).
+The "Balda" word game (human vs computer) — a port of the plain-JavaScript original to **Vite + React + TypeScript**. Game logic and behavior are ported 1:1; the dictionary is the same (~16,000 words, bundled — no external requests except Google Fonts).
 
-## Запуск
+## Running
 
-Требуется Node.js ≥ 20.19.
+Requires Node.js ≥ 20.19.
 
 ```bash
 npm install
-npm run dev      # dev-сервер
-npm run build    # проверка типов + сборка в dist/
-npm run preview  # предпросмотр собранного
-npm run check    # node-скрипт проверки логики (словарь, поиск хода)
+npm run dev      # dev server
+npm run build    # type check + build into dist/
+npm run preview  # preview of the build
+npm run check    # node logic-check script (dictionary, move search)
 ```
 
-## Структура
+## Structure
 
-| Файл / каталог | Роль |
+| File / directory | Role |
 |------|------|
-| `index.html` | Каркас: `<div id="root">`, шрифты Play / Open Sans через `<link>` |
-| `src/main.tsx` | Точка входа |
-| `src/App.tsx` | `useReducer`, эффект хода бота, обработчик физической клавиатуры |
-| `src/styles/index.css` | Стили на базе `style.css` оригинала |
-| `src/game/` | Чистая логика, без React и DOM |
-| `src/game/constants.ts` | ALPHABET (32 буквы без «ё»), SIZE=5, START_WORD='балда', MAX_WORDS=21 |
-| `src/game/dictionary.ts` | Словарь: `export const dictionary` (~290 КБ, конвертация `out3.js`) |
-| `src/game/dic.ts` | Из `dictionary2.js`: base-32 хэши + бинарный поиск; `findWord()`, `hasPrefix()` |
-| `src/game/finder.ts` | Из `track2.js`: `findBestMove(board, usedWords)` — принимает поле массивом |
+| `index.html` | Skeleton: `<div id="root">`, Play / Open Sans fonts via `<link>` |
+| `src/main.tsx` | Entry point |
+| `src/App.tsx` | `useReducer`, the bot turn effect, physical keyboard handler |
+| `src/styles/index.css` | Styles based on the original's `style.css` |
+| `src/game/` | Pure logic, no React or DOM |
+| `src/game/constants.ts` | ALPHABET (32 letters, no "ё"), SIZE=5, START_WORD='балда', MAX_WORDS=21 |
+| `src/game/dictionary.ts` | Dictionary: `export const dictionary` (~290 KB, converted from `out3.js`) |
+| `src/game/dic.ts` | From `dictionary2.js`: base-32 hashes + binary search; `findWord()`, `hasPrefix()` |
+| `src/game/finder.ts` | From `track2.js`: `findBestMove(board, usedWords)` — takes the board as an array |
 | `src/state/types.ts` | `GameState`, `Phase`, `Action` |
-| `src/state/gameReducer.ts` | Вся логика ходов и валидации (из `events.js`) |
-| `src/state/helpers.ts` | Соседи ячейки, слово из пути, проверка смежности |
+| `src/state/gameReducer.ts` | All move and validation logic (from `events.js`) |
+| `src/state/helpers.ts` | Cell neighbors, word from a path, adjacency check |
 | `src/components/` | Board, Cell, Keyboard, Controls, ScorePanel, StatusBar, EndPanel |
-| `scripts/check.ts` | Проверка логики без тестового фреймворка (`npm run check`) |
+| `scripts/check.ts` | Logic check without a test framework (`npm run check`) |
 
-## Архитектура
+## Architecture
 
-- Состояние, а не DOM: поле — `board: string[25]` в `useReducer`; ячейки — `<button>`.
-- Явная машина состояний `phase`: `menu → idle` (выбор пустой клетки) `→ letter` (ввод буквы) `→ word` (построение пути) `→ SUBMIT → bot → idle`, конец — `over` при 21 слове.
-- Алгоритмы оригинала (словарные хэши, DFS-поиск хода) перенесены без изменений: меняется только оформление (ES-модули, типы) и убрано чтение DOM.
-- Ход бота: после успешного «Хода» `useEffect` вызывает `findBestMove` через `setTimeout`, чтобы UI успел показать слово игрока и статус «Компьютер думает…».
+- State, not DOM: the board is `board: string[25]` in `useReducer`; cells are `<button>`.
+- An explicit `phase` state machine: `menu → idle` (choosing an empty cell) `→ letter` (entering a letter) `→ word` (building the path) `→ SUBMIT → bot → idle`; the game ends with `over` at 21 words.
+- The original's algorithms (dictionary hashes, DFS move search) are ported unchanged: only the packaging changes (ES modules, types) and DOM reads are removed.
+- Bot's turn: after a successful submit, a `useEffect` calls `findBestMove` via `setTimeout`, so the UI has time to show the player's word and the «Компьютер думает…» status.
 
-### Отличия от оригинала (поведение в остальном 1:1)
+### Differences from the original (otherwise behavior is 1:1)
 
-- Адаптивная вёрстка (grid + `clamp()`), ввод с физической клавиатуры (буква, `Escape` — отмена, `Enter` — ход), конец игры панелью вместо `alert()`.
-- Исправлено: «Отмена» теперь сбрасывает подсветку добавленной буквы (`numChar`).
-- Исправлено: проверка соседей `i > 5` → `i >= 5` (клетка 5 «не видела» верхнего соседа).
-- Исправлено: если у компьютера нет хода, ход пропускается (оригинал падал).
-- Не переносились: скрытые элементы `#time` и `#emulator` («Помощь»).
+- Responsive layout (grid + `clamp()`), physical keyboard input (a letter, `Escape` — cancel, `Enter` — submit), end of game as a panel instead of `alert()`.
+- Fixed: "Отмена" now also resets the highlight of the added letter (`numChar`).
+- Fixed: neighbor check `i > 5` → `i >= 5` (cell 5 could not see its top neighbor).
+- Fixed: when the computer has no move, the turn is skipped (the original crashed).
+- Not ported: the hidden `#time` and `#emulator` ("Help") elements.
 
-## Правила
+## Rules
 
-Слово составляется по смежным буквам поля, обязательно содержит добавленную букву, каждое слово — один раз. Очки — по 1 за букву, стартовое слово «балда» в средней строке. [Правила игры](https://ru.wikipedia.org/wiki/%D0%91%D0%B0%D0%BB%D0%B4%D0%B0_%28%D0%B8%D0%B3%D1%80%D0%B0%29)
+A word is composed from adjacent letters on the board, must contain the added letter, and each word counts once. Points — 1 per letter; the starting word is "балда" in the middle row. [Game rules (Russian)](https://ru.wikipedia.org/wiki/%D0%91%D0%B0%D0%BB%D0%B4%D0%B0_%28%D0%B8%D0%B3%D1%80%D0%B0%29)

@@ -1,9 +1,9 @@
-// Геометрия поля и работа с путём. Проверки соседей из оригинала
-// (js/events.js, js/track2.js) собраны здесь; исправлена ошибка
-// i > 5 вместо i >= 5 — клетка 5 «не видела» верхнего соседа.
+// Board geometry and path handling. The neighbor checks from the original
+// (js/events.js, js/track2.js) are collected here; fixed the bug where
+// i > 5 should have been i >= 5 — cell 5 could not see its top neighbor.
 import { SIZE } from '../game/constants';
 
-// индексы смежных ячеек (без диагоналей)
+// indexes of adjacent cells (no diagonals)
 export function neighbors(i: number): number[] {
   const res: number[] = [];
   if (i < SIZE * (SIZE - 1)) res.push(i + SIZE);
@@ -13,12 +13,12 @@ export function neighbors(i: number): number[] {
   return res;
 }
 
-// смежность двух ячеек
+// whether two cells are adjacent
 export function areAdjacent(a: number, b: number): boolean {
   return neighbors(a).indexOf(b) !== -1;
 }
 
-// слово из пути
+// the word built from a path
 export function wordFromTrack(board: string[], track: number[]): string {
   let result = '';
   for (let i = 0; i < track.length; i++)
@@ -26,7 +26,7 @@ export function wordFromTrack(board: string[], track: number[]): string {
   return result;
 }
 
-// есть ли у пустой ячейки непустые соседи
+// whether an empty cell has any non-empty neighbors
 export function hasFilledNeighbor(board: string[], i: number): boolean {
   const nb = neighbors(i);
   for (let k = 0; k < nb.length; k++)

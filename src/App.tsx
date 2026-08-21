@@ -10,7 +10,7 @@ import { findBestMove } from './game/finder';
 import { gameReducer, initialState } from './state/gameReducer';
 import { wordFromTrack } from './state/helpers';
 
-// счёт — сумма длин слов (по 1 очку за букву)
+// score — the sum of word lengths (1 point per letter)
 function scoreOf(words: string[]): number {
   let n = 0;
   for (let i = 0; i < words.length; i++)
@@ -21,8 +21,9 @@ function scoreOf(words: string[]): number {
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
-  // ход компьютера: после успешного «Хода» игрока. setTimeout даёт UI
-  // показать слово игрока и статус «Компьютер думает…» до начала перебора.
+  // the computer's turn: after the player's successful submit. setTimeout lets
+  // the UI show the player's word and the «Компьютер думает…» status before
+  // the search starts.
   useEffect(() => {
     if (state.phase !== 'bot')
       return;
@@ -33,8 +34,8 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [state.phase, state.board, state.usedWords]);
 
-  // физическая клавиатура: буква (ё → е) в фазе letter,
-  // Escape — отмена, Enter в фазе word — «Ход»
+  // physical keyboard: a letter (ё → е) in the letter phase,
+  // Escape — cancel, Enter in the word phase — submit
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (state.phase === 'letter') {

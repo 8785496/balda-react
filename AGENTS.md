@@ -1,66 +1,67 @@
-# Балда (React) — контекст проекта
+# Balda (React) — project context
 
-Игра «Балда» (человек против компьютера) на **Vite + React + TypeScript**. Перенос ES5-оригинала (`../balda`) с сохранением игровой логики и поведения 1:1. Библиотек состояния нет — `useReducer`. Зависимости: `react`, `react-dom`, `vite`, `@vitejs/plugin-react`, `typescript` + типы. Node.js ≥ 20.19.
+The "Balda" word game (human vs computer) on **Vite + React + TypeScript**. A port of the ES5 original (`../balda`) preserving game logic and behavior 1:1. No state management libraries — `useReducer`. Dependencies: `react`, `react-dom`, `vite`, `@vitejs/plugin-react`, `typescript` + types. Node.js ≥ 20.19.
 
-## Запуск и команды
+## Running and commands
 
 ```bash
 npm install
-npm run dev      # dev-сервер
+npm run dev      # dev server
 npm run build    # tsc --noEmit + vite build → dist/
-npm run preview  # предпросмотр сборки
-npm run check    # node-скрипт проверки логики (компилирует scripts/check.ts в .tmp-check и запускает)
+npm run preview  # production preview
+npm run check    # node logic-check script (compiles scripts/check.ts into .tmp-check and runs it)
 ```
 
-Автотестов (тестового фреймворка) нет — корректность логики проверяется `npm run check` и ручным чек-листом из PLAN.md.
+There is no test framework — correctness of the logic is verified by `npm run check` and the manual checklist from PLAN.md.
 
-## Структура
+## Structure
 
-| Файл | Роль |
+| File | Role |
 |------|------|
-| `index.html` | Каркас: `<div id="root">`, шрифты Play / Open Sans через `<link>` по https |
-| `src/main.tsx` | Точка входа (StrictMode) |
-| `src/App.tsx` | `useReducer(gameReducer)`, эффект хода бота, keydown физической клавиатуры |
-| `src/styles/index.css` | Стили на базе `css/style.css` оригинала |
-| `src/game/constants.ts` | ALPHABET (32 буквы без «ё»), SIZE=5, START_WORD='балда', MAX_WORDS=21, START_ROW |
-| `src/game/dictionary.ts` | Словарь ~16 000 слов (~290 КБ, одна строка) — конвертация `out3.js` оригинала |
-| `src/game/dic.ts` | Из `dictionary2.js`: base-32 хэши + бинарный поиск; `findWord()`, `hasPrefix()` |
-| `src/game/finder.ts` | Из `track2.js`: `findBestMove(board, usedWords)` |
+| `index.html` | Skeleton: `<div id="root">`, Play / Open Sans fonts via an https `<link>` |
+| `src/main.tsx` | Entry point (StrictMode) |
+| `src/App.tsx` | `useReducer(gameReducer)`, the bot turn effect, physical keyboard keydown |
+| `src/styles/index.css` | Styles based on the original's `css/style.css` |
+| `src/game/constants.ts` | ALPHABET (32 letters, no "ё"), SIZE=5, START_WORD='балда', MAX_WORDS=21, START_ROW |
+| `src/game/dictionary.ts` | Dictionary of ~16,000 words (~290 KB, one line) — converted from the original's `out3.js` |
+| `src/game/dic.ts` | From `dictionary2.js`: base-32 hashes + binary search; `findWord()`, `hasPrefix()` |
+| `src/game/finder.ts` | From `track2.js`: `findBestMove(board, usedWords)` |
 | `src/state/types.ts` | `GameState`, `Phase`, `Action`, `BotMove` |
-| `src/state/gameReducer.ts` | Вся логика ходов и валидации (из `events.js`) |
+| `src/state/gameReducer.ts` | All move and validation logic (from `events.js`) |
 | `src/state/helpers.ts` | `neighbors`, `areAdjacent`, `wordFromTrack`, `hasFilledNeighbor` |
 | `src/components/` | Board, Cell, Keyboard, Controls, ScorePanel, StatusBar, EndPanel |
-| `scripts/check.ts` | Проверочный скрипт логики |
+| `scripts/check.ts` | Logic check script |
 
-## Архитектура
+## Architecture
 
-- **Источник истины — состояние, а не DOM**: поле — `board: string[25]` (25 клеток, `''` = пустая) в `useReducer`; ячейки — `<button class="cell">`. Словарь бандлится как ES-модуль, хэши строятся при загрузке.
-- **Машина состояний** вместо навешивания слушателей оригинала: `phase: 'menu' | 'idle' | 'letter' | 'word' | 'bot' | 'over'`. Цикл: `idle` (выбор пустой клетки) → `letter` (открыта виртуальная клавиатура) → `word` (клики по смежным клеткам строят `track`) → `SUBMIT_MOVE` → `bot` (эффект в App вызывает `findBestMove` через `setTimeout`) → `idle`; при 21 слове в `usedWords` — `over` (EndPanel вместо `alert()`).
-- **Ход бота**: `useEffect` в App при `phase === 'bot'`; результат приходит экшеном `BOT_MOVED` (`null` = нет хода, пропуск).
-- **Физическая клавиатура**: в фазе `letter` буква (ё → е) вводит её, `Escape` — отмена хода, `Enter` в фазе `word` — «Ход».
+- **State is the source of truth, not the DOM**: the board is `board: string[25]` (25 cells, `''` = empty) in `useReducer`; cells are `<button class="cell">`. The dictionary is bundled as an ES module; hashes are built on load.
+- **A state machine** instead of the original's attaching of listeners: `phase: 'menu' | 'idle' | 'letter' | 'word' | 'bot' | 'over'`. Cycle: `idle` (choosing an empty cell) → `letter` (the virtual keyboard is open) → `word` (clicks on adjacent cells build the `track`) → `SUBMIT_MOVE` → `bot` (an effect in App calls `findBestMove` via `setTimeout`) → `idle`; with 21 words in `usedWords` — `over` (EndPanel instead of `alert()`).
+- **Bot's turn**: `useEffect` in App when `phase === 'bot'`; the result arrives as the `BOT_MOVED` action (`null` = no move, skip).
+- **Physical keyboard**: in the `letter` phase a letter (ё → е) enters it, `Escape` cancels the move, `Enter` in the `word` phase submits.
 
-### Игровая модель (как в оригинале)
+### Game model (as in the original)
 
-- Стартовое слово «балда» в средней строке (клетки 10–14); очки = суммарная длина составленных слов (по 1 за букву); игра до 21 слова в `usedWords`.
-- Валидация «Хода» — перенос `events.validate` с теми же текстами ошибок: «Слово должно содержать добавленную букву», «Слово "…" уже использовано», «Слово "…" не найдено», «Добавьте букву», «Выберите слово».
-- Словарь: base-32 хэш (позиция буквы + 1) × 32^i; отсортированные массивы полного словаря и префиксов длины 2–9; слова длиннее 10 букв в хэши не попадают (фильтр оригинала). Бинарный поиск.
+- The starting word "балда" in the middle row (cells 10–14); points = the total length of composed words (1 per letter); the game lasts until 21 words are in `usedWords`.
+- Submit validation is a port of `events.validate` with the same error texts: «Слово должно содержать добавленную букву», «Слово "…" уже использовано», «Слово "…" не найдено», «Добавьте букву», «Выберите слово».
+- Dictionary: base-32 hash (letter position + 1) × 32^i; sorted arrays of the full dictionary and prefixes of length 2–9; words longer than 10 letters never make it into the hashes (the original's filter). Binary search.
 
-## Соглашения
+## Conventions
 
-- TypeScript strict, ES-модули; комментарии — на русском.
-- Кодировка UTF-8; словарь в `src/game/dictionary.ts` критичен для кодировки (в `index.html` объявлен `<meta charset="UTF-8">`).
-- Алгоритмы `dic.ts` / `finder.ts` — перенесены из оригинала, менять их структуру без нужды не следует.
+- TypeScript strict, ES modules.
+- **Language: files (code, docs), code comments and commit messages — in English.** Game-facing texts (UI, validation messages, dictionary) stay in Russian — they are part of the game logic and parity with the original.
+- UTF-8 encoding; the dictionary in `src/game/dictionary.ts` is encoding-critical (`<meta charset="UTF-8">` is declared in `index.html`).
+- The algorithms in `dic.ts` / `finder.ts` are ported from the original; do not change their structure without need.
 
-## Типичные задачи
+## Typical tasks
 
-- **Изменить правила/логику игры** — `src/state/gameReducer.ts` (и `src/state/types.ts`).
-- **Ускорить поиск хода** — `src/game/finder.ts` (перебор) и `src/game/dic.ts` (проверки слов).
-- **Заменить/пополнить словарь** — только содержимое массива `dictionary` в `src/game/dictionary.ts` (слова ≤ 10 букв попадают в поиск, без «ё», нижний регистр; хэши строятся при загрузке).
-- **UI/верстка** — `src/components/` + `src/styles/index.css`.
+- **Change game rules/logic** — `src/state/gameReducer.ts` (and `src/state/types.ts`).
+- **Speed up the move search** — `src/game/finder.ts` (the search) and `src/game/dic.ts` (word checks).
+- **Replace/extend the dictionary** — only the contents of the `dictionary` array in `src/game/dictionary.ts` (words ≤ 10 letters take part in the search, no "ё", lowercase; hashes are built on load).
+- **UI/layout** — `src/components/` + `src/styles/index.css`.
 
-## Известные исправления относительно оригинала
+## Known fixes relative to the original
 
-1. «Отмена» сбрасывает `numChar` (в оригинале оставалась подсветка и ложная ошибка валидации).
-2. Проверка соседей `i > 5` → `i >= 5` (клетка 5 «не видела» верхнего соседа) — `helpers.ts`, `finder.ts`.
-3. Нет хода у бота — пропуск хода (в оригинале падало).
-4. Скрытые `#time` и `#emulator` («Помощь») не переносились.
+1. "Отмена" resets `numChar` (in the original the highlight stayed and caused a false validation error).
+2. Neighbor check `i > 5` → `i >= 5` (cell 5 could not see its top neighbor) — `helpers.ts`, `finder.ts`.
+3. No move for the bot — the turn is skipped (the original crashed).
+4. The hidden `#time` and `#emulator` ("Help") were not ported.

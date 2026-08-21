@@ -1,13 +1,13 @@
-// Поиск лучшего хода компьютера — перенос js/track2.js на TypeScript.
-// Алгоритм перенесён без изменений: для каждой пустой клетки со смежной
-// непустой подставляются все буквы алфавита, из каждой непустой клетки
-// запускается рекурсивный обход путей по 4 направлениям; путь не должен
-// пересекать сам себя, ветка отсекается, если ни одно слово не имеет
-// текущего префикса. Возвращается самое длинное слово, содержащее
-// добавленную букву и не использованное ранее.
-// Отличия от оригинала: поле передаётся массивом (без чтения DOM),
-// исправлена проверка соседа сверху (i > 5 → i >= 5), при отсутствии
-// хода возвращается null вместо падения.
+// Best-move search for the computer — a TypeScript port of js/track2.js.
+// The algorithm is ported unchanged: for every empty cell adjacent to a
+// non-empty one, every alphabet letter is substituted; from every non-empty
+// cell a recursive path search runs in 4 directions; a path must not cross
+// itself, and a branch is pruned when no word starts with the current prefix.
+// Returns the longest word that contains the added letter and has not been
+// used before.
+// Differences from the original: the board is passed as an array (no DOM
+// reads), the top-neighbor check is fixed (i > 5 → i >= 5), and when no move
+// exists null is returned instead of crashing.
 import { dic } from './dic';
 import { ALPHABET, SIZE } from './constants';
 
@@ -18,27 +18,27 @@ export interface BotMove {
 }
 
 export function findBestMove(board: string[], usedWords: string[]): BotMove | null {
-  // лучшее найденное слово
+  // best word found so far
   let gWord = '';
   let gChar = '';
   let gIndex = -1;
 
-  // рекурсивный поиск путей
-  // arrData — данные поля, arrWord — координаты пути,
-  // cur — номер текущей ячейки, ins — номер ячейки с подставленной буквой
+  // recursive path search
+  // arrData — board data, arrWord — path coordinates,
+  // cur — index of the current cell, ins — index of the cell with the substituted letter
   function findTrack(arrData: string[], arrWord: number[], cur: number, ins: number): void {
-    if (arrData[cur] === '') // текущая ячейка пустая
+    if (arrData[cur] === '') // the current cell is empty
       return;
-    // путь не должен пересекать сам себя
+    // a path must not cross itself
     if (arrWord.length > 0 && arrWord.indexOf(cur) !== -1)
       return;
-    // добавляем текущую ячейку в путь
+    // add the current cell to the path
     arrWord.push(cur);
     if (arrWord.length > 1) {
       let word = '';
       for (let k = 0; k < arrWord.length; k++)
         word += arrData[arrWord[k]];
-      // если слово длиннее ранее найденного и путь содержит добавленную букву
+      // if the word is longer than the best one found and the path contains the added letter
       if (arrWord.length > gWord.length)
         if (arrWord.indexOf(ins) !== -1)
           if (dic.findWord(word))
@@ -47,11 +47,11 @@ export function findBestMove(board: string[], usedWords: string[]): BotMove | nu
               gChar = arrData[ins];
               gIndex = ins;
             }
-      // продолжать поиск бессмысленно: слов с таким префиксом нет
+      // no point in searching further: no words share this prefix
       if (!dic.hasPrefix(word))
         return;
     }
-    // рекурсивный вызов в 4 направлениях
+    // recurse in 4 directions
     if (cur < SIZE * (SIZE - 1))
       findTrack(arrData, arrWord.slice(), cur + SIZE, ins);
     if (cur >= SIZE)
@@ -62,9 +62,9 @@ export function findBestMove(board: string[], usedWords: string[]): BotMove | nu
       findTrack(arrData, arrWord.slice(), cur - 1, ins);
   }
 
-  // цикл подстановок
+  // substitution loop
   for (let i = 0; i < board.length; i++) {
-    // пустая ячейка со смежной непустой (исправлено i > 5 → i >= 5)
+    // an empty cell with a non-empty neighbor (fixed i > 5 → i >= 5)
     if (!board[i] && (
       (i < SIZE * (SIZE - 1) && board[i + SIZE]) ||
       (i >= SIZE && board[i - SIZE]) ||
@@ -74,7 +74,7 @@ export function findBestMove(board: string[], usedWords: string[]): BotMove | nu
       for (let k = 0; k < ALPHABET.length; k++) {
         const arrTemp = board.slice();
         arrTemp[i] = ALPHABET[k];
-        // ищем пути, начиная с непустых ячеек
+        // search paths starting from non-empty cells
         for (let j = 0; j < board.length; j++)
           if (arrTemp[j] !== '')
             findTrack(arrTemp, [], j, i);

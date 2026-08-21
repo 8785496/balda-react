@@ -1,10 +1,10 @@
-// Клетка поля. В оригинале — readonly-input, здесь достаточно кнопки:
-// значение хранится в состоянии, а не в DOM.
+// A board cell. In the original it was a readonly input; a button is enough here:
+// the value lives in state, not in the DOM.
 interface CellProps {
   letter: string;
-  inTrack: boolean;   // клетка в пути — подсветка .select
-  isNew: boolean;     // клетка с добавленной буквой — подсветка .add
-  isSelected: boolean; // выбранная пустая клетка в фазе letter
+  inTrack: boolean;   // the cell is in the path — highlighted .select
+  isNew: boolean;     // the cell with the added letter — highlighted .add
+  isSelected: boolean; // the selected empty cell in the letter phase
   onClick: () => void;
 }
 

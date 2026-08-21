@@ -1,4 +1,4 @@
-// Колонки счёта: очки и списки слов игрока и компьютера.
+// Score columns: points and word lists for the player and the computer.
 function score(words: string[]): number {
   let n = 0;
   for (let i = 0; i < words.length; i++)

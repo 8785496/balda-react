@@ -1,7 +1,7 @@
-// Кнопки управления: Старт/Заново, Ход, Отмена.
-// «Ход» активен в те же моменты, что и validate оригинала (после старта,
-// вне хода компьютера и не после конца партии), «Отмена» — только пока
-// идёт выбор буквы или построение пути.
+// Control buttons: Старт/Заново, Ход, Отмена.
+// «Ход» is active at the same moments as the original's validate (after the
+// start, outside the computer's turn and not after the game is over);
+// «Отмена» — only while a letter is being chosen or a path is being built.
 import type { Phase } from '../state/types';
 
 interface ControlsProps {

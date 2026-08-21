@@ -1,4 +1,4 @@
-// Поле SIZE × SIZE.
+// The board of SIZE × SIZE cells.
 import type { Phase } from '../state/types';
 import { Cell } from './Cell';
 
