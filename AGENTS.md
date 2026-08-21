@@ -21,7 +21,8 @@ There is no test framework — correctness of the logic is verified by `npm run 
 | `index.html` | Skeleton: `<div id="root">`, Play / Open Sans fonts via an https `<link>` |
 | `src/main.tsx` | Entry point (StrictMode) |
 | `src/App.tsx` | `useReducer(gameReducer)`, the bot turn effect, physical keyboard keydown |
-| `src/styles/index.css` | Styles based on the original's `css/style.css` |
+| `src/styles/index.css` | Styles based on the original's `css/style.css`; all colors are CSS variables, board themes are `[data-theme='…']` blocks (wood/paper/night/neon; `:root` keeps the original's classic palette as the base fallback — no longer selectable) |
+| `src/theme.ts` | Board color themes: ids, Russian names, swatch colors, localStorage persistence |
 | `src/game/constants.ts` | ALPHABET (32 letters, no "ё"), SIZE=5, START_WORD='балда', MAX_WORDS=21, START_ROW |
 | `src/game/dictionary.ts` | Dictionary of ~16,000 words (~290 KB, one line) — converted from the original's `out3.js` |
 | `src/game/dic.ts` | From `dictionary2.js`: base-32 hashes + binary search; `findWord()`, `hasPrefix()` |
@@ -29,7 +30,7 @@ There is no test framework — correctness of the logic is verified by `npm run 
 | `src/state/types.ts` | `GameState`, `Phase`, `Action`, `BotMove` |
 | `src/state/gameReducer.ts` | All move and validation logic (from `events.js`) |
 | `src/state/helpers.ts` | `neighbors`, `areAdjacent`, `wordFromTrack`, `hasFilledNeighbor` |
-| `src/components/` | Board, Cell, Keyboard, Controls, ScorePanel, StatusBar, EndPanel |
+| `src/components/` | Board, Cell, Keyboard, Controls, ScorePanel, StatusBar, EndPanel, ThemePicker |
 | `scripts/check.ts` | Logic check script |
 
 ## Architecture
@@ -38,6 +39,7 @@ There is no test framework — correctness of the logic is verified by `npm run 
 - **A state machine** instead of the original's attaching of listeners: `phase: 'menu' | 'idle' | 'letter' | 'word' | 'bot' | 'over'`. Cycle: `idle` (choosing an empty cell) → `letter` (the virtual keyboard is open) → `word` (clicks on adjacent cells build the `track`) → `SUBMIT_MOVE` → `bot` (an effect in App calls `findBestMove` via `setTimeout`) → `idle`; with 21 words in `usedWords` — `over` (EndPanel instead of `alert()`).
 - **Bot's turn**: `useEffect` in App when `phase === 'bot'`; the result arrives as the `BOT_MOVED` action (`null` = no move, skip).
 - **Physical keyboard**: in the `letter` phase a letter (ё → е) enters it, `Escape` cancels the move, `Enter` in the `word` phase submits.
+- **Board themes**: the palette is a set of CSS custom properties; `data-theme` on `<html>` (set from App, persisted in localStorage; `index.html` hardcodes `neon` for the first paint) switches it. Default: `neon` (`DEFAULT_THEME`); empty cells are styled via `.cell:empty`. A saved id that is no longer in `THEMES` falls back to the default.
 
 ### Game model (as in the original)
 
@@ -58,6 +60,7 @@ There is no test framework — correctness of the logic is verified by `npm run 
 - **Speed up the move search** — `src/game/finder.ts` (the search) and `src/game/dic.ts` (word checks).
 - **Replace/extend the dictionary** — only the contents of the `dictionary` array in `src/game/dictionary.ts` (words ≤ 10 letters take part in the search, no "ё", lowercase; hashes are built on load).
 - **UI/layout** — `src/components/` + `src/styles/index.css`.
+- **Add/recolor a board theme** — a `[data-theme='…']` variable block in `src/styles/index.css` + an entry in `THEMES` (`src/theme.ts`); no other places.
 
 ## Known fixes relative to the original
 

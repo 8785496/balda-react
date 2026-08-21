@@ -1,14 +1,16 @@
-import { useEffect, useReducer } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 import { EndPanel } from './components/EndPanel';
 import { Keyboard } from './components/Keyboard';
 import { ScorePanel } from './components/ScorePanel';
 import { StatusBar } from './components/StatusBar';
+import { ThemePicker } from './components/ThemePicker';
 import { ALPHABET } from './game/constants';
 import { findBestMove } from './game/finder';
 import { gameReducer, initialState } from './state/gameReducer';
 import { wordFromTrack } from './state/helpers';
+import { loadTheme, saveTheme, type ThemeId } from './theme';
 
 // score — the sum of word lengths (1 point per letter)
 function scoreOf(words: string[]): number {
@@ -20,6 +22,13 @@ function scoreOf(words: string[]): number {
 
 export default function App() {
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  const [theme, setTheme] = useState<ThemeId>(loadTheme);
+
+  // the color theme: data-theme on <html> switches the CSS variable set
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    saveTheme(theme);
+  }, [theme]);
 
   // the computer's turn: after the player's successful submit. setTimeout lets
   // the UI show the player's word and the «Компьютер думает…» status before
@@ -61,6 +70,7 @@ export default function App() {
 
   return (
     <div className="context">
+      <ThemePicker value={theme} onChange={setTheme} />
       <StatusBar
         result={wordFromTrack(state.board, state.track)}
         error={state.error}
