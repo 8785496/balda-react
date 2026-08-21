@@ -22,7 +22,6 @@ function createInitialState(): GameState {
     numChar: null,
     track: [],
     boardBackup: null,
-    result: '',
     error: '',
     status: '',
     lastBotMove: null,
@@ -77,7 +76,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
         return {
           ...state,
           track,
-          result: wordFromTrack(state.board, track),
           error: '',
         };
       }
@@ -155,7 +153,6 @@ export function gameReducer(state: GameState, action: Action): GameState {
         numChar: null, // фикс: в оригинале numChar не сбрасывался
         selectedCell: null,
         phase: 'idle',
-        result: '',
         error: '',
         status: '',
       };

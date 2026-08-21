@@ -8,6 +8,7 @@ import { StatusBar } from './components/StatusBar';
 import { ALPHABET } from './game/constants';
 import { findBestMove } from './game/finder';
 import { gameReducer, initialState } from './state/gameReducer';
+import { wordFromTrack } from './state/helpers';
 
 // счёт — сумма длин слов (по 1 очку за букву)
 function scoreOf(words: string[]): number {
@@ -60,7 +61,7 @@ export default function App() {
   return (
     <div className="context">
       <StatusBar
-        result={state.result}
+        result={wordFromTrack(state.board, state.track)}
         error={state.error}
         status={state.status}
         botThinking={state.phase === 'bot'}

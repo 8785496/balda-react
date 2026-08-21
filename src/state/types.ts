@@ -25,7 +25,6 @@ export interface GameState {
   numChar: number | null;      // клетка с новой буквой (подсветка .add)
   track: number[];             // путь — текущее слово
   boardBackup: string[] | null; // бэкап поля для «Отмена» (bakArr оригинала)
-  result: string;              // строящееся/последнее слово (строка #result оригинала)
   error: string;               // текст ошибки валидации (#error оригинала)
   status: string;              // служебные сообщения («Компьютер думает…» и т.п.)
   lastBotMove: BotMove | null;
