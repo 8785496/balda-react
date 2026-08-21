@@ -693,6 +693,8 @@ button:disabled {
 
 .cell {
   font-family: 'Play', sans-serif;
+  /* display-only: the board state and the dictionaries stay lowercase */
+  text-transform: uppercase;
   font-size: clamp(20px, 7vw, 34px);
   line-height: 1;
   aspect-ratio: 1;
