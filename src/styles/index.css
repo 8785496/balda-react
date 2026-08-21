@@ -689,6 +689,17 @@ button:disabled {
   border: var(--board-frame-border);
   border-radius: var(--board-frame-radius);
   box-shadow: var(--board-frame-shadow);
+  /* a mouse drag across cells must select letters, not text */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* the word phase — the path is drawn by dragging: without touch-action: none
+   a touch drag is stolen by page scrolling before the path can build.
+   Other phases keep the default, so the page stays scrollable from the board */
+.board.word {
+  touch-action: none;
 }
 
 .cell {

@@ -106,6 +106,47 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return state;
     }
 
+    // The drag-selection actions (see Board.tsx): unlike clicks, re-entering a
+    // path cell does not edit the move — it unwinds the path to that cell, and
+    // the added letter never reopens the keyboard mid-gesture.
+    case 'DRAG_START': {
+      // the pointer first left the cell where the drag began — anchor the
+      // path there before the gesture continues into other cells
+      if (state.phase !== 'word' || state.board[action.index] === '')
+        return state;
+      const i = action.index;
+      const pos = state.track.indexOf(i);
+      if (pos !== -1) {
+        // the drag began on a path cell: rewind to it (or keep the tip as is)
+        if (pos === state.track.length - 1)
+          return state;
+        return { ...state, track: state.track.slice(0, pos + 1), error: null };
+      }
+      const last = state.track.length > 0 ? state.track[state.track.length - 1] : null;
+      if (last === null || areAdjacent(last, i))
+        return { ...state, track: state.track.concat([i]), error: null };
+      // a drag from a cell unrelated to the path starts a new word — the old
+      // path gives way (handy after a validation error, which keeps the path)
+      return { ...state, track: [i], error: null };
+    }
+
+    case 'DRAG_CELL': {
+      // the pointer entered another cell mid-drag: extend, unwind on the way
+      // back, ignore empty cells and non-adjacent jumps (diagonal corner cuts)
+      if (state.phase !== 'word' || state.board[action.index] === '')
+        return state;
+      const i = action.index;
+      const pos = state.track.indexOf(i);
+      if (pos !== -1) {
+        if (pos === state.track.length - 1)
+          return state; // already the tip
+        return { ...state, track: state.track.slice(0, pos + 1), error: null };
+      }
+      if (state.track.length > 0 && !areAdjacent(state.track[state.track.length - 1], i))
+        return state;
+      return { ...state, track: state.track.concat([i]), error: null };
+    }
+
     case 'SET_LETTER': {
       if (state.phase !== 'letter' || state.selectedCell === null)
         return state;

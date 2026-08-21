@@ -277,6 +277,61 @@ assert(s.phase === 'idle' && s.board[17] === '' && s.numChar === null, 'cancel r
 s = gameReducer(s, { type: 'SUBMIT_MOVE' });
 assert(s.error !== null && s.error.code === 'addLetter', 'a move without a letter yields the addLetter error');
 
+// --- reducer: drag-selection of the word (the DRAG_* actions of Board.tsx) ---
+
+// phase gating: drags do nothing outside the word phase
+const d0 = freshGame('ru', 'балда');
+assert(gameReducer(d0, { type: 'DRAG_START', index: 10 }) === d0 &&
+  gameReducer(d0, { type: 'DRAG_CELL', index: 11 }) === d0,
+  'drag actions are no-ops outside the word phase');
+
+// a full gesture for "фалда": anchor at the added letter, enter the cells
+let d = freshGame('ru', 'балда');
+d = gameReducer(d, { type: 'CLICK_CELL', index: 6 });
+d = gameReducer(d, { type: 'SET_LETTER', char: 'ф' });
+d = gameReducer(d, { type: 'DRAG_START', index: 6 });
+assert(d.track.length === 1 && d.track[0] === 6, 'DRAG_START anchors an empty path at the pressed cell');
+for (const c of [11, 12, 13, 14]) d = gameReducer(d, { type: 'DRAG_CELL', index: c });
+assert(wordFromTrack(d.board, d.track) === 'фалда', 'the drag builds the word "фалда" cell by cell');
+assert(gameReducer(d, { type: 'DRAG_CELL', index: 14 }) === d, 're-entering the tip of the path is a no-op');
+assert(gameReducer(d, { type: 'DRAG_CELL', index: 10 }) === d, 'a non-adjacent filled cell is ignored mid-drag');
+assert(gameReducer(d, { type: 'DRAG_CELL', index: 0 }) === d, 'an empty cell is ignored mid-drag');
+d = gameReducer(d, { type: 'DRAG_CELL', index: 13 });
+d = gameReducer(d, { type: 'DRAG_CELL', index: 12 });
+assert(d.track.length === 3 && wordFromTrack(d.board, d.track) === 'фал', 'dragging back over the path unwinds it');
+d = gameReducer(d, { type: 'DRAG_CELL', index: 6 });
+assert(d.phase === 'word' && d.track.length === 1,
+  'entering the added letter mid-drag unwinds to it — the keyboard never opens in a gesture');
+
+// DRAG_START mid-path: next to the tip it extends, on the tip it is a no-op,
+// on a path cell it rewinds to it, from an unrelated cell it replaces
+d = gameReducer(d, { type: 'DRAG_START', index: 11 });
+assert(d.track.length === 2 && wordFromTrack(d.board, d.track) === 'фа', 'a drag begun next to the tip extends the path');
+assert(gameReducer(d, { type: 'DRAG_START', index: 11 }) === d, 'a drag begun on the tip changes nothing');
+d = gameReducer(d, { type: 'DRAG_CELL', index: 12 });
+d = gameReducer(d, { type: 'DRAG_START', index: 11 });
+assert(d.track.length === 2 && wordFromTrack(d.board, d.track) === 'фа', 'a drag begun on a path cell rewinds to it');
+d = gameReducer(d, { type: 'DRAG_START', index: 10 });
+assert(d.track.length === 3 && wordFromTrack(d.board, d.track) === 'фаб', 'a drag from a cell next to the new tip extends again');
+d = gameReducer(d, { type: 'DRAG_START', index: 14 });
+assert(d.track.length === 1 && d.track[0] === 14, 'a drag from an unrelated cell replaces the path');
+
+// a drag edit clears a pending validation error, like clicks do
+d = gameReducer(d, { type: 'SUBMIT_MOVE' });
+assert(d.error !== null && d.error.code === 'noAddedLetter' && d.track.length === 1,
+  'submitting the leftover drag fails, the path is kept');
+d = gameReducer(d, { type: 'DRAG_CELL', index: 13 });
+assert(d.error === null && d.track.length === 2, 'a drag edit clears the error');
+
+// the release auto-submit: rebuild "фалда" with drags and let go
+d = gameReducer(d, { type: 'DRAG_START', index: 6 }); // unrelated to the tip — replaces
+for (const c of [11, 12, 13, 14]) d = gameReducer(d, { type: 'DRAG_CELL', index: c });
+assert(wordFromTrack(d.board, d.track) === 'фалда', 'the path is rebuilt with drags alone');
+d = gameReducer(d, { type: 'SUBMIT_MOVE' });
+assert(d.playerWords.length === 1 && d.phase === 'bot' && d.track.length === 0,
+  'the release auto-submit plays the dragged word');
+
+
 // the bot skipping its turn (the original crashed here): a successful player move, then a bot with no move
 const mv2 = findBestMove(s.board, s.usedWords);
 if (mv2 === null) {

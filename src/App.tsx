@@ -142,6 +142,9 @@ export default function App() {
           boardRef={boardRef}
           texts={texts}
           onCellClick={(index) => dispatch({ type: 'CLICK_CELL', index })}
+          onDragStartCell={(index) => dispatch({ type: 'DRAG_START', index })}
+          onDragCell={(index) => dispatch({ type: 'DRAG_CELL', index })}
+          onDragSubmit={() => dispatch({ type: 'SUBMIT_MOVE' })}
         />
         {state.phase === 'letter' && state.selectedCell !== null && (
           <Keyboard
