@@ -1,0 +1,222 @@
+/* Стили на базе css/style.css оригинала: градиентные кнопки,
+   жёлтая .select, красная .add, серые клетки. Изменения под новую
+   разметку: клетки — кнопки .cell на CSS Grid, адаптив через clamp(),
+   колонки счёта на flex, оверлеи клавиатуры и конца игры. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  background-color: #f7f4ec;
+  margin: 0;
+  padding: 16px;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.context {
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* --- строка состояния --- */
+
+.status-bar {
+  min-height: 3em;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.result {
+  font-size: 18px;
+}
+
+.error {
+  color: red;
+  min-height: 1.4em;
+}
+
+/* --- кнопки (управление, клавиатура) --- */
+
+button {
+  border: 1px solid #646464;
+  background: linear-gradient(to bottom, #ffffff, #b4b4b4);
+  padding: 5px;
+  margin: 10px 2px;
+  min-width: 92px;
+  border-radius: 6px;
+  box-shadow: rgba(255, 255, 255, 0.4) 0 0 0, inset rgba(255, 255, 255, 0.4) 0 1px 0;
+  color: #323232;
+  font-family: inherit;
+  font-size: 20px;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #323232;
+  background: linear-gradient(to bottom, #ffffff, #969696);
+  color: #323232;
+}
+
+button:active {
+  border-color: #323232;
+  background: linear-gradient(to bottom, #969796, #ffffff);
+  color: #323232;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.controls {
+  text-align: center;
+}
+
+/* --- поле --- */
+
+.board-wrap {
+  position: relative;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.cell {
+  font-family: 'Play', sans-serif;
+  font-size: clamp(20px, 7vw, 34px);
+  line-height: 1;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgb(221, 221, 221);
+  border: 1px solid grey;
+  border-radius: 4px;
+  margin: 0;
+  box-shadow: none;
+}
+
+.cell.select {
+  background-color: yellow;
+}
+
+.cell.add {
+  color: red;
+}
+
+.cell.selected {
+  border-style: dashed;
+  border-color: #323232;
+}
+
+/* --- счёт --- */
+
+.score-panel {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.column-left,
+.column-right {
+  flex: 1 1 50%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* --- оверлеи: клавиатура и конец игры --- */
+
+.substrate {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: rgba(100, 100, 100, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 66px;
+}
+
+.keyboard {
+  width: min(92vw, 340px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.keyboard button {
+  min-width: 0;
+  width: clamp(30px, 9vw, 38px);
+  margin: 1px;
+  font-size: clamp(16px, 4vw, 20px);
+  padding: 5px 0;
+}
+
+.end-panel {
+  position: absolute;
+  align-items: center;
+  padding: 0;
+}
+
+.end-card {
+  background: #ffffff;
+  border: 1px solid #646464;
+  border-radius: 8px;
+  padding: 20px 28px;
+  text-align: center;
+  max-width: 90%;
+}
+
+.end-card h2 {
+  font-family: 'Play', sans-serif;
+  margin: 0 0 8px;
+}
+
+.end-card p {
+  margin: 0 0 12px;
+}
+
+/* --- узкие экраны --- */
+
+@media (max-width: 400px) {
+  body {
+    padding: 8px;
+  }
+
+  .controls button {
+    min-width: 84px;
+    font-size: 18px;
+    padding: 4px;
+  }
+
+  .score-panel {
+    gap: 8px;
+  }
+}
