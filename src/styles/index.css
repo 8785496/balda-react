@@ -803,11 +803,32 @@ button:disabled {
   text-align: right;
 }
 
-.column-left strong {
+/* the header of a score column: the side's name in the quiet tone, its
+   points a bold chip tinted with the side's color — the digits set the
+   number off where a "Name: 20" colon used to. The end panel reuses the
+   chips for its final score line */
+.score-name {
+  font-size: 14px;
+  color: color-mix(in srgb, var(--text) 60%, transparent);
+}
+
+.score-num {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--player-color) 14%, transparent);
   color: var(--player-color);
 }
 
-.column-right strong {
+/* the computer's chip: a modifier, not a column selector, so the end
+   panel can pair the two chips side by side */
+.score-num.bot {
+  background: color-mix(in srgb, var(--bot-color) 14%, transparent);
   color: var(--bot-color);
 }
 
@@ -933,6 +954,17 @@ button:disabled {
 
 .end-card p {
   margin: 0 0 12px;
+}
+
+/* the end-panel score line: the muted tones mix from the card's text
+   color, since the card carries its own palette */
+.end-card .score-name {
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+}
+
+.end-score-sep {
+  margin: 0 4px;
+  color: color-mix(in srgb, var(--card-color) 55%, transparent);
 }
 
 /* --- the rules modal (the footer "?" button) --- */

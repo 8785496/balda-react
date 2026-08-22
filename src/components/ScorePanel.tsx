@@ -1,8 +1,9 @@
 // Score columns: points and word lists for the player and the computer,
-// with the game progress counter above them. The lists render newest first,
-// so the just-played word lands on top of its column; the per-word letter
-// count is set off by its style (.word-len), not by parentheses. Every word
-// is an outbound link (wordUrl below).
+// with the game progress counter above them. The column headers set the
+// points off by style (.score-num) instead of a "Name: 20" colon. The lists
+// render newest first, so the just-played word lands on top of its column;
+// the per-word letter count is set off by its style (.word-len), not by
+// parentheses. Every word is an outbound link (wordUrl below).
 import type { Lang } from '../game/lang';
 import type { Texts } from '../i18n';
 
@@ -53,13 +54,15 @@ export function ScorePanel({ playerWords, botWords, lang, usedCount, maxWords, t
       <div className="words-progress">{texts.score.progress(usedCount, maxWords)}</div>
       <div className="score-columns">
         <div className="column-left">
-          <strong>{texts.score.player}: {score(playerWords)}</strong>
+          <span className="score-name">{texts.score.player}</span>
+          <span className="score-num">{score(playerWords)}</span>
           <div className="words">
             {renderWords(playerWords, lang)}
           </div>
         </div>
         <div className="column-right">
-          <strong>{texts.score.computer}: {score(botWords)}</strong>
+          <span className="score-name">{texts.score.computer}</span>
+          <span className="score-num bot">{score(botWords)}</span>
           <div className="words">
             {renderWords(botWords, lang)}
           </div>
