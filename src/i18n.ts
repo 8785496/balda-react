@@ -8,6 +8,11 @@ import type { GameError, Status } from './state/types';
 import type { Difficulty } from './difficulty';
 import type { ThemeId } from './theme';
 
+// The wiki article the rules modal links to — the Russian one in both game
+// languages, as the game itself is Russian in origin.
+export const RULES_WIKI_URL =
+  'https://ru.wikipedia.org/wiki/%D0%91%D0%B0%D0%BB%D0%B4%D0%B0_%28%D0%B8%D0%B3%D1%80%D0%B0%29';
+
 export interface Texts {
   title: string;                 // document.title
   turnPlayer: string;            // the turn badge
@@ -15,20 +20,15 @@ export interface Texts {
   botThinking: string;
   boardAria: string;
   controls: {
-    submit: string;              // «Готово»
-    addLetter: string;           // «Добавьте букву» — the submit's label until a letter is chosen
     cancel: string;              // «Отмена»
     restart: string;             // «Заново»
     confirm: string;             // the armed «Точно?»
-    backTitle: string;           // the ⌫ button tooltip
-    backLabel: string;
     restartTitle: string;
     restartArmedTitle: string;
   };
   keyboard: {
     aria: string;
     title: string;               // «Выберите букву»
-    cancel: string;
   };
   score: {
     progress: (n: number, max: number) => string; // «Слово 3 из 21»
@@ -45,8 +45,10 @@ export interface Texts {
   error(err: GameError): string;
   status(s: Status): string;
   rules: {
-    title: string;               // the footer "?" link
-    href: string;                // the rules page in the game's language
+    title: string;               // the footer "?" button and the modal heading
+    items: string[];             // the brief rules, a bullet each
+    link: string;                // the wiki link text at the end
+    close: string;               // the modal close button
   };
   langAria: string;              // the footer switchers
   difficultyAria: string;
@@ -63,20 +65,15 @@ export const TEXTS: Record<Lang, Texts> = {
     botThinking: 'Компьютер думает…',
     boardAria: 'Игровое поле',
     controls: {
-      submit: 'Готово',
-      addLetter: 'Добавьте букву',
       cancel: 'Отмена',
       restart: 'Заново',
       confirm: 'Точно?',
-      backTitle: 'Убрать последнюю букву пути; с пустым путём — сменить добавленную букву',
-      backLabel: 'Убрать последнюю букву пути',
       restartTitle: 'Начать игру заново',
       restartArmedTitle: 'Нажмите ещё раз — игра начнётся заново',
     },
     keyboard: {
       aria: 'Виртуальная клавиатура',
       title: 'Выберите букву',
-      cancel: 'Отмена',
     },
     score: {
       progress: (n, max) => 'Слово ' + n + ' из ' + max,
@@ -111,7 +108,15 @@ export const TEXTS: Record<Lang, Texts> = {
     },
     rules: {
       title: 'Правила игры',
-      href: 'https://ru.wikipedia.org/wiki/%D0%91%D0%B0%D0%BB%D0%B4%D0%B0_%28%D0%B8%D0%B3%D1%80%D0%B0%29',
+      items: [
+        'Игра идёт на поле 5×5, в центре выложено случайное слово из 5 букв.',
+        'За ход игрок добавляет одну букву в пустую клетку, соседнюю с занятой.',
+        'Затем он составляет слово, проведя по клеткам, соседним по стороне, — добавленная буква обязательно входит в слово, а каждая клетка используется один раз.',
+        'Слова — нарицательные существительные в начальной форме; «е» и «ё» равнозначны.',
+        'Длина слова — очки за ход. Игра идёт до 21 слова (включая стартовое), побеждает набравший больше.',
+      ],
+      link: 'Подробнее — в русской Википедии',
+      close: 'Закрыть',
     },
     langAria: 'Язык игры',
     difficultyAria: 'Сложность',
@@ -128,20 +133,15 @@ export const TEXTS: Record<Lang, Texts> = {
     botThinking: 'Computer is thinking…',
     boardAria: 'Game board',
     controls: {
-      submit: 'Done',
-      addLetter: 'Add a letter',
       cancel: 'Cancel',
       restart: 'Restart',
       confirm: 'Sure?',
-      backTitle: 'Remove the last letter of the path; with an empty path — change the added letter',
-      backLabel: 'Remove the last letter of the path',
       restartTitle: 'Restart the game',
       restartArmedTitle: 'Tap again — the game will restart',
     },
     keyboard: {
       aria: 'On-screen keyboard',
       title: 'Choose a letter',
-      cancel: 'Cancel',
     },
     score: {
       progress: (n, max) => 'Word ' + n + ' of ' + max,
@@ -176,7 +176,15 @@ export const TEXTS: Record<Lang, Texts> = {
     },
     rules: {
       title: 'Game rules',
-      href: 'https://en.wikipedia.org/wiki/Balda_(game)',
+      items: [
+        'The game is played on a 5×5 board, with a random 5-letter word laid out in the middle row.',
+        'On a turn, a player adds one letter to an empty cell next to the occupied ones.',
+        'Then a word is composed by dragging through side-adjacent cells — it must contain the added letter, and each cell is used once.',
+        'Words are common nouns in their base form.',
+        'A word scores its length. The game lasts until 21 words (including the starting one); the higher total wins.',
+      ],
+      link: 'More details — in the Russian Wikipedia',
+      close: 'Close',
     },
     langAria: 'Game language',
     difficultyAria: 'Difficulty',

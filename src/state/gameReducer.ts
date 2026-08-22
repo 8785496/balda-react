@@ -10,9 +10,9 @@
 //   - "Отмена" resets numChar (the original kept the highlight and produced a false validation error);
 //   - if the computer has no move, the turn is skipped (the original crashed on an undefined access);
 //   - a validation error keeps the track (the original cleared the whole path);
-//   - the path is editable: a click on the last cell (or BACKSPACE) removes it, and a click
-//     on the added letter already in the path (or BACKSPACE with an empty path) reopens the
-//     keyboard to change the letter — the path and the board survive all of this;
+//   - the word is drawn with a single drag gesture only (the DRAG_* actions): the release
+//     submits it, dragging back over the path unwinds it, and a drag from an unrelated
+//     cell replaces the path — the fast redo after a validation error;
 //   - in the letter phase a click on another empty cell moves the pending letter there
 //     (the floating keyboard sits at the cell, so the field around it stays clickable);
 //   - an empty cell with no letters around it cannot be chosen for the new letter
@@ -72,43 +72,17 @@ export function gameReducer(state: GameState, action: Action): GameState {
       }
       if (state.phase === 'letter') {
         // the keyboard is open for a fresh cell: a tap on another empty cell
-        // moves the pending letter there (the board stays visible). Not in the
-        // letter-change back-transition — there the cell is fixed by the move
-        // being edited (numChar is set), and the board backup still matches.
-        if (state.numChar === null && state.board[i] === '' && hasFilledNeighbor(state.board, i))
+        // moves the pending letter there (the board stays visible)
+        if (state.board[i] === '' && hasFilledNeighbor(state.board, i))
           return { ...state, selectedCell: i };
         return state;
-      }
-      if (state.phase === 'word') {
-        if (state.board[i] === '')
-          return state;
-        // a click on the last cell of the path removes it (a misclick undo)
-        if (state.track.length > 0 && state.track[state.track.length - 1] === i)
-          return { ...state, track: state.track.slice(0, -1), error: null };
-        // a click on the added letter already in the path reopens the keyboard
-        // to change it; the path survives — a new letter changes the word,
-        // not the cells (the letter cell itself must stay clickable to be
-        // added to the path, hence only the mid-path case)
-        if (state.numChar === i && state.track.indexOf(i) !== -1)
-          return { ...state, selectedCell: i, phase: 'letter', error: null };
-        // building the path: non-empty cells only, no repeats, adjacent to the last one
-        if (state.track.indexOf(i) !== -1)
-          return state;
-        if (state.track.length > 0 && !areAdjacent(state.track[state.track.length - 1], i))
-          return state;
-        const track = state.track.concat([i]);
-        return {
-          ...state,
-          track,
-          error: null,
-        };
       }
       return state;
     }
 
-    // The drag-selection actions (see Board.tsx): unlike clicks, re-entering a
-    // path cell does not edit the move — it unwinds the path to that cell, and
-    // the added letter never reopens the keyboard mid-gesture.
+    // The drag-selection actions (see Board.tsx) — the only way a word is built:
+    // re-entering a path cell unwinds the path to that cell, a drag from an
+    // unrelated cell replaces it, and the release submits what is drawn.
     case 'DRAG_START': {
       // the pointer first left the cell where the drag began — anchor the
       // path there before the gesture continues into other cells
@@ -167,7 +141,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (state.phase !== 'idle' && state.phase !== 'letter' && state.phase !== 'word')
         return state;
       // in the idle/letter phases a move is impossible — «Добавьте букву», as in the original.
-      // On any error the track is kept so the path can be edited, not rebuilt.
+      // On any error the track is kept, so the word can be redrawn with a new drag
+      // instead of being rebuilt from scratch.
       if (state.numChar !== null && state.track.indexOf(state.numChar) === -1) {
         return {
           ...state,
@@ -206,25 +181,9 @@ export function gameReducer(state: GameState, action: Action): GameState {
       return { ...state, error };
     }
 
-    // one step back: removes the last path cell; once the path is empty,
-    // reopens the keyboard for the added letter
-    case 'BACKSPACE': {
-      if (state.phase !== 'word')
-        return state;
-      if (state.track.length > 0)
-        return { ...state, track: state.track.slice(0, -1), error: null };
-      if (state.numChar !== null)
-        return { ...state, selectedCell: state.numChar, phase: 'letter', error: null };
-      return state;
-    }
-
     case 'CANCEL_MOVE': {
       if (state.phase !== 'letter' && state.phase !== 'word')
         return state;
-      // canceling a letter change (the keyboard reopened for an existing move —
-      // numChar is set): back to the word, the path and the letter survive
-      if (state.phase === 'letter' && state.numChar !== null)
-        return { ...state, selectedCell: null, phase: 'word', error: null };
       return {
         ...state,
         board: state.boardBackup !== null ? state.boardBackup.slice() : state.board,

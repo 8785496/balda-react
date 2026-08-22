@@ -5,7 +5,7 @@ import type { Lang } from '../game/lang';
 export type Phase =
   | 'idle'  // choosing an empty cell
   | 'letter' // entering a letter (the keyboard floats at the selected cell)
-  | 'word'  // clicks or drags over adjacent cells build the path
+  | 'word'  // a drag over adjacent cells builds the path; releasing submits it
   | 'bot'   // the computer's turn
   | 'over'; // the game is over
 
@@ -47,11 +47,10 @@ export interface GameState {
 
 export type Action =
   | { type: 'NEW_GAME'; lang?: Lang } // restarts, optionally switching the game language
-  | { type: 'CLICK_CELL'; index: number }
+  | { type: 'CLICK_CELL'; index: number } // choose the cell for the new letter (idle) / re-target it (letter)
   | { type: 'DRAG_START'; index: number } // a drag left its start cell — anchor the path there
   | { type: 'DRAG_CELL'; index: number } // the pointer entered a cell mid-drag
   | { type: 'SET_LETTER'; char: string }
-  | { type: 'BACKSPACE' } // one step back: drop the last path cell / change the letter
   | { type: 'SUBMIT_MOVE' }
   | { type: 'CANCEL_MOVE' }
   | { type: 'BOT_MOVED'; move: BotMove | null };

@@ -5,6 +5,7 @@ import { DifficultyPicker } from './components/DifficultyPicker';
 import { EndPanel } from './components/EndPanel';
 import { Keyboard } from './components/Keyboard';
 import { LangPicker } from './components/LangPicker';
+import { RulesModal } from './components/RulesModal';
 import { ScorePanel } from './components/ScorePanel';
 import { StatusBar } from './components/StatusBar';
 import { ThemePicker } from './components/ThemePicker';
@@ -36,6 +37,7 @@ export default function App() {
   const [state, dispatch] = useReducer(gameReducer, lang, freshGame);
   const [difficulty, setDifficulty] = useState<Difficulty>(loadDifficulty);
   const [theme, setTheme] = useState<ThemeId>(loadTheme);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const texts = TEXTS[lang];
   // the board grid element: the floating letter keyboard anchors to its cells
   const boardRef = useRef<HTMLDivElement | null>(null);
@@ -87,13 +89,18 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [lastBotMove]);
 
-  // physical keyboard: a letter (ё → е) in the letter phase,
-  // Escape — cancel, Enter in the word phase — submit,
-  // Backspace — one step back (the last path cell, then the letter)
+  // physical keyboard: a letter (ё → е) in the letter phase, Escape — cancel
+  // the move or close the rules modal. The word itself is drawn with the
+  // mouse/touch and submitted by the drag release.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      if (rulesOpen) {
+        if (e.key === 'Escape')
+          setRulesOpen(false);
+        return;
+      }
       if (state.phase === 'letter') {
-        if (e.key === 'Escape' || e.key === 'Backspace') {
+        if (e.key === 'Escape') {
           dispatch({ type: 'CANCEL_MOVE' });
           return;
         }
@@ -105,15 +112,11 @@ export default function App() {
       } else if (state.phase === 'word') {
         if (e.key === 'Escape')
           dispatch({ type: 'CANCEL_MOVE' });
-        else if (e.key === 'Enter')
-          dispatch({ type: 'SUBMIT_MOVE' });
-        else if (e.key === 'Backspace')
-          dispatch({ type: 'BACKSPACE' });
       }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.phase, state.lang]);
+  }, [state.phase, state.lang, rulesOpen]);
 
   // switching the language starts a new game in it (the confirmation for a
   // game in progress lives in the picker itself)
@@ -153,7 +156,6 @@ export default function App() {
             lang={state.lang}
             texts={texts}
             onLetter={(char) => dispatch({ type: 'SET_LETTER', char })}
-            onCancel={() => dispatch({ type: 'CANCEL_MOVE' })}
           />
         )}
         {state.phase === 'over' && (
@@ -167,11 +169,8 @@ export default function App() {
       </div>
       <Controls
         phase={state.phase}
-        canSubmit={state.phase === 'word' && state.track.length > 0}
         texts={texts}
         onRestart={() => dispatch({ type: 'NEW_GAME' })}
-        onSubmit={() => dispatch({ type: 'SUBMIT_MOVE' })}
-        onBack={() => dispatch({ type: 'BACKSPACE' })}
         onCancel={() => dispatch({ type: 'CANCEL_MOVE' })}
       />
       <ScorePanel
@@ -182,16 +181,15 @@ export default function App() {
         texts={texts}
       />
       <footer className="footer">
-        <a
+        <button
+          type="button"
           className="rules-icon"
-          href={texts.rules.href}
-          target="_blank"
-          rel="noreferrer"
+          onClick={() => setRulesOpen(true)}
           title={texts.rules.title}
           aria-label={texts.rules.title}
         >
           ?
-        </a>
+        </button>
         <LangPicker
           value={lang}
           hasProgress={state.usedWords.length > 1}
@@ -205,6 +203,7 @@ export default function App() {
         />
         <ThemePicker value={theme} texts={texts} onChange={setTheme} />
       </footer>
+      {rulesOpen && <RulesModal texts={texts} onClose={() => setRulesOpen(false)} />}
     </div>
   );
 }

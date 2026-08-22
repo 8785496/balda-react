@@ -369,7 +369,7 @@ a:hover {
 }
 
 /* must repeat the colors on :hover — the generic button:hover wins over the
-   plain class (same as .btn-primary above) */
+   plain class */
 .seg-btn.active,
 .seg-btn.active:hover {
   border: none;
@@ -399,14 +399,16 @@ a:hover {
   margin-top: 14px;
 }
 
-/* a round "?" icon-link to the game rules (the former "Правила игры"
-   link in the status row) */
+/* a round "?" button opening the rules modal (the former external link) */
 .rules-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 26px;
   height: 26px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
   border-radius: 50%;
   border: var(--btn-border);
   background: var(--btn-bg);
@@ -414,6 +416,7 @@ a:hover {
   font-size: 15px;
   font-weight: 600;
   line-height: 1;
+  box-shadow: none;
 }
 
 .rules-icon:hover {
@@ -452,7 +455,11 @@ a:hover {
 /* --- status line --- */
 
 .status-bar {
-  min-height: 3em;
+  position: relative;
+  /* reserves both lines — the word row and the error line under it; the error
+     itself is absolutely positioned into that slot, so showing, hiding or
+     wrapping it never reflows the board below */
+  min-height: 3.9em;
 }
 
 /* the badge and the word being built share one row; the word reserves its
@@ -490,7 +497,16 @@ a:hover {
   min-height: 1.4em;
 }
 
+/* floats in the reserved slot under the word row (see .status-bar), centered;
+   pointer-events: none — it is a passive message and must never block the
+   board underneath, even when a long word wraps it taller than the slot */
 .error {
+  position: absolute;
+  top: 1.9em;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
   color: var(--error);
   display: flex;
   align-items: center;
@@ -498,15 +514,12 @@ a:hover {
   gap: 6px;
   width: fit-content;
   max-width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  min-height: 1.4em;
   padding: 5px 12px;
   border-radius: 6px;
+  pointer-events: none;
 }
 
-/* a shown error becomes a tinted chip fading in; the empty line keeps the
-   same box (padding included), so the layout below does not move */
+/* a shown error becomes a tinted chip fading in */
 .error.show {
   background: color-mix(in srgb, var(--error) 12%, transparent);
   animation: error-in 0.25s ease-out;
@@ -564,67 +577,24 @@ button:disabled {
   cursor: default;
 }
 
-/* the controls live in two rows: the main action row and a separate small
-   row for Заново, tucked to the right — away from «Готово»'s tap area */
+/* the controls are a single row: «Отмена» on the left (while a move is being
+   made), «Заново» on the right — the word is submitted by the drag release,
+   so there is no submit button. Space-between keeps «Заново» at the right
+   edge whether or not «Отмена» is shown */
 .controls {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
 }
 
-/* equal heights for text and icon buttons: the row stretches every button
-   to the tallest one, and each button centers its own content */
-.controls-main {
+.controls-row {
   display: flex;
-  justify-content: center;
-  align-items: stretch;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
+  margin: 8px 0 2px;
 }
 
-.controls-main button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1.4;
-  margin: 10px 2px;
-}
-
-/* the submit — the one large primary action of the screen */
-.btn-primary {
-  flex: 1 1 150px;
-  min-width: 150px;
-  max-width: 320px;
-  padding: 10px 18px;
-  font-size: 22px;
-  font-weight: 600;
-  border: var(--btn-primary-border);
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-color);
-}
-
-/* must repeat the colors on :hover/:active — the generic button:hover wins
-   over the plain class; brightness shifts stand in for extra hover vars */
-.btn-primary:hover:not(:disabled) {
-  border: var(--btn-primary-border);
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-color);
-  filter: brightness(1.08);
-}
-
-.btn-primary:active:not(:disabled) {
-  border: var(--btn-primary-border);
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-color);
-  filter: brightness(0.92);
-}
-
-.btn-primary:disabled {
-  opacity: 0.45;
-}
-
-/* small text buttons that must not compete with the primary one: Отмена in
-   the main row and on the keyboard panel, and the demoted Заново */
+/* small text buttons: Отмена and the demoted Заново */
 .btn-secondary {
   min-width: 0;
   margin: 2px;
@@ -641,15 +611,7 @@ button:disabled {
   color: var(--btn-color);
 }
 
-/* the Заново row: small, right-aligned, off the primary button's way */
-.controls-restart {
-  display: flex;
-  justify-content: flex-end;
-  width: 100%;
-}
-
 .btn-restart {
-  margin: 0 2px 8px;
   font-weight: 600;
 }
 
@@ -660,18 +622,6 @@ button:disabled {
   border-color: var(--error);
   background: color-mix(in srgb, var(--error) 12%, transparent);
   color: var(--error);
-}
-
-/* the backspace button: the ⌫ glyph is missing from the Play/Open Sans
-   fonts, so the button carries an SVG icon instead of a character */
-#back {
-  min-width: 0;
-  padding: 5px 14px;
-}
-
-#back svg {
-  width: 1.4em;
-  height: 1.4em;
 }
 
 /* --- board --- */
@@ -878,17 +828,8 @@ button:disabled {
 }
 
 .keyboard-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  width: 100%;
   font-size: 14px;
   font-weight: 600;
-}
-
-.keyboard-cancel {
-  margin: 0;
 }
 
 .keyboard {
@@ -918,8 +859,7 @@ button:disabled {
   }
 }
 
-/* --- end-of-game overlay (the only overlay left: the letter keyboard used
-   to be one too, before it became a floating panel at the selected cell) --- */
+/* --- overlays: the end-of-game panel and the rules modal --- */
 
 .substrate {
   position: fixed;
@@ -959,17 +899,58 @@ button:disabled {
   margin: 0 0 12px;
 }
 
+/* --- the rules modal (the footer "?" button) --- */
+
+.rules-card {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: 8px;
+  color: var(--card-color);
+  padding: 16px 22px 18px;
+  max-width: min(430px, 92%);
+  max-height: 82vh;
+  overflow-y: auto;
+}
+
+.rules-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rules-head h2 {
+  font-family: 'Play', sans-serif;
+  margin: 0;
+  font-size: 22px;
+}
+
+.rules-close {
+  min-width: 0;
+  margin: 0;
+  padding: 2px 10px;
+  font-size: 14px;
+  box-shadow: none;
+}
+
+.rules-list {
+  margin: 12px 0 14px;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+  display: grid;
+  gap: 8px;
+}
+
+.rules-link {
+  font-size: 14px;
+}
+
 /* --- narrow screens --- */
 
 @media (max-width: 400px) {
   body {
     padding: 8px;
-  }
-
-  .btn-primary {
-    min-width: 130px;
-    font-size: 20px;
-    padding: 8px 12px;
   }
 
   .score-columns {

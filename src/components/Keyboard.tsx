@@ -2,7 +2,8 @@
 // next to the tapped cell — below it in the top half of the board, above in
 // the bottom half — so neither the cursor nor the thumb has to travel far,
 // and it follows the cell when the letter is re-targeted. The board stays
-// interactive around the panel; the small cancel button drops the move.
+// interactive around the panel; the move is dropped by «Отмена» in the
+// controls row.
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import type { Texts } from '../i18n';
@@ -15,10 +16,9 @@ interface KeyboardProps {
   lang: Lang;                                 // whose alphabet to show
   texts: Texts;
   onLetter: (char: string) => void;
-  onCancel: () => void;
 }
 
-export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter, onCancel }: KeyboardProps) {
+export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter }: KeyboardProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
 
@@ -64,9 +64,6 @@ export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter, onCancel 
     >
       <div className="keyboard-title">
         <span>{texts.keyboard.title}</span>
-        <button type="button" className="btn-secondary keyboard-cancel" onClick={onCancel}>
-          {texts.keyboard.cancel}
-        </button>
       </div>
       <div className="keyboard">
         {alphabetFor(lang).split('').map((char) => (

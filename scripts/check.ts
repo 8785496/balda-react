@@ -218,8 +218,11 @@ assert(s.selectedCell === 6, 'the pending letter moves back the same way');
 s = gameReducer(s, { type: 'SET_LETTER', char: 'ф' });
 assert(s.phase === 'word' && s.numChar === 6 && s.board[6] === 'ф', 'the letter is placed and highlighted (numChar)');
 const faldaPath = [6, 11, 12, 13, 14];
-for (const c of faldaPath) s = gameReducer(s, { type: 'CLICK_CELL', index: c });
-assert(wordFromTrack(s.board, s.track) === 'фалда', 'the path builds the word "фалда"');
+s = gameReducer(s, { type: 'DRAG_START', index: faldaPath[0] });
+for (let k = 1; k < faldaPath.length; k++) s = gameReducer(s, { type: 'DRAG_CELL', index: faldaPath[k] });
+assert(wordFromTrack(s.board, s.track) === 'фалда', 'the drag builds the word "фалда" cell by cell');
+assert(gameReducer(s, { type: 'CLICK_CELL', index: 11 }) === s,
+  'a click on a filled cell in the word phase does nothing (the drag is the only input)');
 s = gameReducer(s, { type: 'SUBMIT_MOVE' });
 assert(s.phase === 'bot' && s.playerWords.length === 1 && s.error === null, 'a successful move switches to the bot phase');
 s = gameReducer(s, { type: 'BOT_MOVED', move: { word: 'халда', char: 'х', index: 16, track: [16, 17, 12, 13, 14] } });
@@ -230,46 +233,13 @@ assert(s.status !== null && s.status.kind === 'botMove' && s.status.word === 'х
 // "word already used": a new "а" at cell 17, path х(16)-а(17)-л(12)-д(13)-а(14)
 s = gameReducer(s, { type: 'CLICK_CELL', index: 17 });
 s = gameReducer(s, { type: 'SET_LETTER', char: 'а' });
-for (const c of [16, 17, 12, 13, 14]) s = gameReducer(s, { type: 'CLICK_CELL', index: c });
-assert(wordFromTrack(s.board, s.track) === 'халда', 'the path builds the word "халда"');
+s = gameReducer(s, { type: 'DRAG_START', index: 16 });
+for (const c of [17, 12, 13, 14]) s = gameReducer(s, { type: 'DRAG_CELL', index: c });
+assert(wordFromTrack(s.board, s.track) === 'халда', 'the drag builds the word "халда"');
 s = gameReducer(s, { type: 'SUBMIT_MOVE' });
 assert(s.error !== null && s.error.code === 'wordUsed' && s.error.word === 'халда' && s.phase === 'word',
   'a repeated word is rejected with the wordUsed error');
-assert(s.track.length === 5, 'a validation error keeps the path for editing');
-
-// a click on the last path cell and BACKSPACE remove it from the path
-s = gameReducer(s, { type: 'CLICK_CELL', index: 14 });
-assert(s.track.length === 4 && wordFromTrack(s.board, s.track) === 'халд',
-  'a click on the last cell removes it from the path');
-s = gameReducer(s, { type: 'BACKSPACE' });
-assert(s.track.length === 3 && wordFromTrack(s.board, s.track) === 'хал',
-  'BACKSPACE removes the last path cell');
-s = gameReducer(s, { type: 'CLICK_CELL', index: 13 });
-s = gameReducer(s, { type: 'CLICK_CELL', index: 14 });
-assert(wordFromTrack(s.board, s.track) === 'халда', 'the path is rebuilt back to "халда"');
-
-// changing the letter without canceling the move: a click on the added letter
-// mid-path reopens the keyboard, the path stays; a new letter replaces the old one
-s = gameReducer(s, { type: 'CLICK_CELL', index: 17 });
-assert(s.phase === 'letter' && s.selectedCell === 17 && s.numChar === 17 && s.track.length === 5,
-  'a click on the added letter mid-path reopens the keyboard, the path is kept');
-s = gameReducer(s, { type: 'SET_LETTER', char: 'у' });
-assert(s.phase === 'word' && s.board[17] === 'у' && wordFromTrack(s.board, s.track) === 'хулда',
-  'a new letter replaces the old one in the same path');
-s = gameReducer(s, { type: 'CLICK_CELL', index: 17 });
-s = gameReducer(s, { type: 'CANCEL_MOVE' });
-assert(s.phase === 'word' && s.board[17] === 'у' && s.track.length === 5,
-  'canceling the letter change returns to the word, the path is kept');
-
-// BACKSPACE with an empty path reopens the keyboard over the added letter
-for (let k = 0; k < 5; k++) s = gameReducer(s, { type: 'BACKSPACE' });
-assert(s.phase === 'word' && s.track.length === 0, 'BACKSPACE empties the path');
-s = gameReducer(s, { type: 'BACKSPACE' });
-assert(s.phase === 'letter' && s.selectedCell === 17 && s.numChar === 17,
-  'BACKSPACE with an empty path reopens the keyboard over the added letter');
-s = gameReducer(s, { type: 'SET_LETTER', char: 'а' });
-assert(s.phase === 'word' && s.board[17] === 'а' && s.track.length === 0,
-  'the letter is changed, the move continues');
+assert(s.track.length === 5, 'a validation error keeps the path — the word can be redrawn');
 
 // "Отмена" resets numChar (a fix over the original)
 s = gameReducer(s, { type: 'CANCEL_MOVE' });
@@ -316,7 +286,7 @@ assert(d.track.length === 3 && wordFromTrack(d.board, d.track) === 'фаб', 'a 
 d = gameReducer(d, { type: 'DRAG_START', index: 14 });
 assert(d.track.length === 1 && d.track[0] === 14, 'a drag from an unrelated cell replaces the path');
 
-// a drag edit clears a pending validation error, like clicks do
+// a new drag clears a pending validation error
 d = gameReducer(d, { type: 'SUBMIT_MOVE' });
 assert(d.error !== null && d.error.code === 'noAddedLetter' && d.track.length === 1,
   'submitting the leftover drag fails, the path is kept');
@@ -342,8 +312,10 @@ if (mv2 === null) {
   const path2 = findWordPath(b3, mv2.word, mv2.index);
   s = gameReducer(s, { type: 'CLICK_CELL', index: mv2.index });
   s = gameReducer(s, { type: 'SET_LETTER', char: mv2.char });
-  if (path2 !== null)
-    for (const c of path2) s = gameReducer(s, { type: 'CLICK_CELL', index: c });
+  if (path2 !== null) {
+    s = gameReducer(s, { type: 'DRAG_START', index: path2[0] });
+    for (let k = 1; k < path2.length; k++) s = gameReducer(s, { type: 'DRAG_CELL', index: path2[k] });
+  }
   s = gameReducer(s, { type: 'SUBMIT_MOVE' });
   assert(s.phase === 'bot', "the player's move is accepted (bot phase)");
   s = gameReducer(s, { type: 'BOT_MOVED', move: null });
@@ -365,7 +337,8 @@ while (g.phase !== 'over' && guard++ < 100 && !simError) {
     if (path === null) { simError = 'no path for the word ' + mv.word; break; }
     g = gameReducer(g, { type: 'CLICK_CELL', index: mv.index });
     g = gameReducer(g, { type: 'SET_LETTER', char: mv.char });
-    for (const c of path) g = gameReducer(g, { type: 'CLICK_CELL', index: c });
+    g = gameReducer(g, { type: 'DRAG_START', index: path[0] });
+    for (let k = 1; k < path.length; k++) g = gameReducer(g, { type: 'DRAG_CELL', index: path[k] });
     if (wordFromTrack(g.board, g.track) !== mv.word) { simError = 'the path produced a different word'; break; }
     g = gameReducer(g, { type: 'SUBMIT_MOVE' });
     if (g.phase !== 'bot' && g.phase !== 'over') { simError = 'SUBMIT gave phase=' + g.phase; break; }

@@ -1,7 +1,6 @@
 // The board of SIZE × SIZE cells.
 import {
   useRef,
-  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type Ref,
 } from 'react';
@@ -25,11 +24,10 @@ interface BoardProps {
   onDragSubmit: () => void; // the drag ended — send the word
 }
 
-// Drag-selection of the word (the word phase only): press a filled cell and
-// draw through adjacent cells — the path builds as the pointer moves, and
-// letting go submits the word. A press that never enters another cell stays a
-// plain click: the native click fires on the cell exactly as before, so all
-// click behaviors (append, undo the tip, reopen the letter keyboard) survive.
+// Drag-selection of the word (the word phase only) — the single way a word is
+// entered: press a filled cell and draw through adjacent cells, the path builds
+// as the pointer moves, and letting go submits the word. A press that never
+// enters another cell is a plain click and does nothing.
 interface DragGesture {
   pointerId: number;
   start: number; // the cell where the press began
@@ -56,9 +54,6 @@ function useWordDrag(
   const latest = useRef({ phase, board, track, onStartCell, onEnterCell, onSubmit });
   latest.current = { phase, board, track, onStartCell, onEnterCell, onSubmit };
   const gesture = useRef<DragGesture | null>(null);
-  // a drag released on its start cell still fires a native click there —
-  // swallow that one click so it cannot pop a cell or reopen the keyboard
-  const suppressClick = useRef(false);
 
   function stop() {
     window.removeEventListener('pointermove', onPointerMove);
@@ -73,7 +68,7 @@ function useWordDrag(
       return;
     if ((e.buttons & 1) === 0) {
       // the button was released outside the window — its pointerup is lost;
-      // end the gesture, keep the drawn path for an explicit submit
+      // end the gesture, keep the drawn path for a new drag or «Отмена»
       stop();
       return;
     }
@@ -102,9 +97,8 @@ function useWordDrag(
       return;
     if (g.moved) {
       // letting go sends the word; a path of a single cell is not a word yet —
-      // keep it for editing instead of flashing a validation error
-      if (hitTest(g.rects, e.clientX, e.clientY) === g.start)
-        suppressClick.current = true;
+      // keep it (the next drag continues or replaces it) instead of flashing
+      // a validation error
       if (latest.current.track.length >= 2)
         latest.current.onSubmit();
     }
@@ -119,7 +113,6 @@ function useWordDrag(
   }
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
-    suppressClick.current = false;
     if (gesture.current !== null)
       return; // a second pointer while a gesture is running
     const p = latest.current;
@@ -138,21 +131,15 @@ function useWordDrag(
     window.addEventListener('pointercancel', onPointerCancel);
   }
 
-  function onClickCapture(e: ReactMouseEvent<HTMLDivElement>) {
-    if (suppressClick.current) {
-      suppressClick.current = false;
-      e.stopPropagation();
-    }
-  }
-
-  return { onPointerDown, onClickCapture };
+  return { onPointerDown };
 }
 
 export function Board({ board, track, numChar, selectedCell, phase, botMove, boardRef, texts, onCellClick, onDragStartCell, onDragCell, onDragSubmit }: BoardProps) {
   const drag = useWordDrag(phase, board, track, onDragStartCell, onDragCell, onDragSubmit);
   // idle — choosing an empty cell; letter — the keyboard is open, and a tap on
-  // another empty cell moves the pending letter there; word — building the path
-  const interactive = phase === 'idle' || phase === 'letter' || phase === 'word';
+  // another empty cell moves the pending letter there; word — the drag only,
+  // plain clicks on the cells do nothing
+  const clickable = phase === 'idle' || phase === 'letter';
   // while a spot for the new letter is being chosen, empty cells with no
   // letters around them are not legal spots — dimmed and unclickable
   const choosing = phase === 'idle' || phase === 'letter';
@@ -166,7 +153,6 @@ export function Board({ board, track, numChar, selectedCell, phase, botMove, boa
       aria-label={texts.boardAria}
       ref={boardRef}
       onPointerDown={drag.onPointerDown}
-      onClickCapture={drag.onClickCapture}
     >
       {board.map((letter, i) => {
         const trackPos = track.indexOf(i);
@@ -182,7 +168,7 @@ export function Board({ board, track, numChar, selectedCell, phase, botMove, boa
             botNew={botMove !== null && botMove.index === i}
             disabled={choosing && letter === '' && !hasFilledNeighbor(board, i)}
             onClick={() => {
-              if (interactive) onCellClick(i);
+              if (clickable) onCellClick(i);
             }}
           />
         );

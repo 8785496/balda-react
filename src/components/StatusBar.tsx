@@ -1,7 +1,8 @@
 // Status line: the word being built (the original's #result) and the error,
 // the computer's turn status, plus a permanent whose-turn badge.
 // Validation errors render as a tinted chip with a warning icon (role=alert);
-// the line reserves its height whether or not an error is shown.
+// the chip is absolutely positioned in a reserved slot under the word row, so
+// it never reflows the layout below (styles/index.css).
 import type { Texts } from '../i18n';
 import type { GameError, Phase, Status } from '../state/types';
 
