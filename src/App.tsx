@@ -75,7 +75,8 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [state.phase, state.board, state.usedWords, state.lang, difficulty, state.playerWords, state.botWords]);
 
-  // the computer's move is visible: its word path and the added letter stay
+  // the computer's move is visible: its word path (with the letters' order
+  // numbers, like the player's own track) and the added letter stay
   // highlighted on the board for a few seconds. Keyed on the move itself, so
   // the countdown does not restart while the player is already building
   // their own next word.

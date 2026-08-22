@@ -3,7 +3,7 @@
 interface CellProps {
   letter: string;
   inTrack: boolean;          // the cell is in the path — highlighted .select
-  trackNumber: number | null; // 1-based position in the path, shown on the cell
+  trackNumber: number | null; // 1-based order on the cell: the player's path, or the computer's word while its move is highlighted
   isNew: boolean;            // the cell with the added letter — highlighted .add
   isSelected: boolean;       // the cell the letter keyboard is anchored to: the chosen empty cell (letter phase) or the added letter being changed (word phase)
   bot: boolean;              // on the highlighted path of the computer's move

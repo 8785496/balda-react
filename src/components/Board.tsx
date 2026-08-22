@@ -158,12 +158,17 @@ export function Board({ board, track, numChar, selectedCell, phase, botMove, boa
     >
       {board.map((letter, i) => {
         const trackPos = track.indexOf(i);
+        // while the computer's move is highlighted, its word path carries the
+        // same order numbers — so the word can be read off the board; where
+        // the player is already drawing their own next word, their track wins
+        const botPos = botMove !== null ? botMove.track.indexOf(i) : -1;
+        const num = trackPos !== -1 ? trackPos + 1 : botPos !== -1 ? botPos + 1 : null;
         return (
           <Cell
             key={i}
             letter={letter}
             inTrack={trackPos !== -1}
-            trackNumber={trackPos === -1 ? null : trackPos + 1}
+            trackNumber={num}
             isNew={numChar === i}
             isSelected={selectedCell === i}
             bot={botMove !== null && botMove.track.indexOf(i) !== -1}
