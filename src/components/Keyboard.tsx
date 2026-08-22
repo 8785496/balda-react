@@ -1,7 +1,9 @@
 // Floating letter keyboard anchored to the selected cell: it opens right
 // next to the tapped cell — below it in the top half of the board, above in
 // the bottom half — so neither the cursor nor the thumb has to travel far,
-// and it follows the cell when the letter is re-targeted. The board stays
+// and it follows the cell when the letter is re-targeted. On narrow (phone)
+// screens the CSS pins the panel to the viewport edges — the full screen
+// width — and only the vertical anchor is measured here. The board stays
 // interactive around the panel; the move is dropped by «Отмена» in the
 // controls row.
 import { useLayoutEffect, useRef, useState } from 'react';
@@ -9,6 +11,9 @@ import type { RefObject } from 'react';
 import type { Texts } from '../i18n';
 import { alphabetFor, type Lang } from '../game/lang';
 import { SIZE } from '../game/constants';
+
+// kept in sync with the .keyboard-panel media query in styles/index.css
+const NARROW = '(max-width: 560px)';
 
 interface KeyboardProps {
   boardRef: RefObject<HTMLDivElement | null>; // the .board grid, for the cell's position
@@ -20,7 +25,9 @@ interface KeyboardProps {
 
 export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter }: KeyboardProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
+  // left is unset in the narrow mode — there the CSS stretches the panel
+  // across the screen and only top is placed
+  const [pos, setPos] = useState<{ left?: number; top: number } | null>(null);
 
   // Place the panel by measured geometry: the cells' offsetParent is
   // .board-wrap (relative) and the panel is absolute in the same host, so
@@ -35,6 +42,19 @@ export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter }: Keyboar
       const cell = board.children[cellIndex] as HTMLElement | undefined;
       if (!cell)
         return;
+      const below = Math.floor(cellIndex / SIZE) < SIZE / 2;
+      if (window.matchMedia(NARROW).matches) {
+        // the full-width panel is fixed to the viewport (styles/index.css):
+        // the vertical anchor is measured in viewport coordinates and
+        // clamped, so the panel never leaves the screen
+        const rect = cell.getBoundingClientRect();
+        const top = below
+          ? rect.bottom + 8
+          : rect.top - panel.offsetHeight - 8;
+        const maxTop = Math.max(4, window.innerHeight - panel.offsetHeight - 4);
+        setPos({ top: Math.min(Math.max(top, 4), maxTop) });
+        return;
+      }
       const host = cell.offsetParent as HTMLElement | null;
       const hostWidth = host ? host.clientWidth : 0;
       // centered on the cell, clamped into the board column
@@ -42,7 +62,6 @@ export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter }: Keyboar
         Math.max(cell.offsetLeft + cell.offsetWidth / 2 - panel.offsetWidth / 2, 4),
         Math.max(4, hostWidth - panel.offsetWidth - 4),
       );
-      const below = Math.floor(cellIndex / SIZE) < SIZE / 2;
       const top = below
         ? cell.offsetTop + cell.offsetHeight + 8
         : cell.offsetTop - panel.offsetHeight - 8;
@@ -54,6 +73,7 @@ export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter }: Keyboar
     return () => window.removeEventListener('resize', place);
   }, [boardRef, cellIndex]);
 
+  // an undefined left is skipped by React — the CSS left of the narrow mode wins
   return (
     <div
       className="keyboard-panel"

@@ -358,6 +358,39 @@ assert(d.playerWords.length === 1 && d.phase === 'bot' && d.track.length === 0,
   'the release auto-submit plays the dragged word');
 
 
+// --- reducer: the added letter can be changed (the keyboard reopened on its cell) ---
+let k = freshGame('ru', 'балда');
+k = gameReducer(k, { type: 'CLICK_CELL', index: 6 });
+const dismissed = gameReducer(k, { type: 'CLICK_CELL', index: 6 });
+assert(dismissed.phase === 'idle' && dismissed.selectedCell === null && dismissed.boardBackup === null,
+  'a tap on the selected cell dismisses the open letter keyboard');
+k = gameReducer(k, { type: 'SET_LETTER', char: 'ф' });
+k = gameReducer(k, { type: 'DRAG_START', index: 6 });
+for (const c of [11, 12, 13]) k = gameReducer(k, { type: 'DRAG_CELL', index: c });
+k = gameReducer(k, { type: 'SUBMIT_MOVE' });
+assert(k.error !== null && k.error.code === 'wordNotFound' && wordFromTrack(k.board, k.track) === 'фалд',
+  '"фалд" is not a word — the error is kept with the path');
+k = gameReducer(k, { type: 'CLICK_CELL', index: 6 });
+assert(k.phase === 'word' && k.selectedCell === 6,
+  'a tap on the added letter reopens the keyboard anchored there');
+const closed = gameReducer(k, { type: 'CLICK_CELL', index: 11 });
+assert(closed.phase === 'word' && closed.selectedCell === null && closed.board[6] === 'ф' &&
+  wordFromTrack(closed.board, closed.track) === 'фалд',
+  'any cell tap closes the reopened panel — the letter and the path stay');
+k = gameReducer(k, { type: 'SET_LETTER', char: 'м' });
+assert(k.phase === 'word' && k.numChar === 6 && k.selectedCell === null && k.board[6] === 'м' &&
+  wordFromTrack(k.board, k.track) === 'малд' && k.error === null,
+  'the picked letter replaces the added one; the path stays, the error clears');
+const reopened = gameReducer(k, { type: 'CLICK_CELL', index: 6 });
+const dragged = gameReducer(reopened, { type: 'DRAG_START', index: 6 });
+assert(dragged.phase === 'word' && dragged.selectedCell === null && dragged.track.length === 1,
+  'a begun drag closes the reopened keyboard and rewinds to its start cell');
+const escaped = gameReducer(reopened, { type: 'CLOSE_KEYBOARD' });
+assert(escaped.phase === 'word' && escaped.selectedCell === null && escaped.board[6] === 'м' &&
+  escaped.track.length === 4,
+  'CLOSE_KEYBOARD (Escape) dismisses the panel without touching the move');
+
+
 // the bot skipping its turn (the original crashed here): a successful player move, then a bot with no move
 const mv2 = findBestMove(s.board, s.usedWords);
 if (mv2 === null) {

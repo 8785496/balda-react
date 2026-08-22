@@ -14,7 +14,12 @@
 //     submits it, dragging back over the path unwinds it, and a drag from an unrelated
 //     cell replaces the path — the fast redo after a validation error;
 //   - in the letter phase a click on another empty cell moves the pending letter there
-//     (the floating keyboard sits at the cell, so the field around it stays clickable);
+//     (the floating keyboard sits at the cell, so the field around it stays clickable),
+//     and a click on the selected cell itself dismisses the keyboard;
+//   - the added letter can be changed: a click on its cell in the word phase reopens
+//     the keyboard, the picked letter replaces the pending one (the track is kept, so
+//     another letter can be tried on the same path), and any cell click — or a drag,
+//     or Escape — closes the reopened panel;
 //   - an empty cell with no letters around it cannot be chosen for the new letter
 //     (the original allowed any empty cell, and an isolated letter could enter no word).
 import { SIZE, START_ROW, MAX_WORDS } from '../game/constants';
@@ -72,8 +77,30 @@ export function gameReducer(state: GameState, action: Action): GameState {
       }
       if (state.phase === 'letter') {
         // the keyboard is open for a fresh cell: a tap on another empty cell
-        // moves the pending letter there (the board stays visible)
-        if (state.board[i] === '' && hasFilledNeighbor(state.board, i))
+        // moves the pending letter there (the board stays visible); a tap on
+        // the selected cell itself dismisses the keyboard — nothing has been
+        // entered yet, so the choice of the cell is simply dropped
+        if (i !== state.selectedCell) {
+          if (state.board[i] === '' && hasFilledNeighbor(state.board, i))
+            return { ...state, selectedCell: i };
+          return state;
+        }
+        return {
+          ...state,
+          boardBackup: null,
+          selectedCell: null,
+          phase: 'idle',
+          error: null,
+          status: null,
+        };
+      }
+      if (state.phase === 'word') {
+        // the added letter can be reworked: a tap on its cell reopens the
+        // keyboard anchored there; while the panel is open, any cell tap
+        // closes it again (the letter and the track stay as they are)
+        if (state.selectedCell !== null)
+          return { ...state, selectedCell: null };
+        if (state.numChar !== null && i === state.numChar)
           return { ...state, selectedCell: i };
         return state;
       }
@@ -89,19 +116,25 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (state.phase !== 'word' || state.board[action.index] === '')
         return state;
       const i = action.index;
+      // drawing a word and picking a letter do not mix: a begun drag closes
+      // the reopened letter keyboard
+      let track: number[];
       const pos = state.track.indexOf(i);
       if (pos !== -1) {
         // the drag began on a path cell: rewind to it (or keep the tip as is)
         if (pos === state.track.length - 1)
           return state;
-        return { ...state, track: state.track.slice(0, pos + 1), error: null };
+        track = state.track.slice(0, pos + 1);
+      } else {
+        const last = state.track.length > 0 ? state.track[state.track.length - 1] : null;
+        if (last === null || areAdjacent(last, i))
+          track = state.track.concat([i]);
+        else
+          // a drag from a cell unrelated to the path starts a new word — the old
+          // path gives way (handy after a validation error, which keeps the path)
+          track = [i];
       }
-      const last = state.track.length > 0 ? state.track[state.track.length - 1] : null;
-      if (last === null || areAdjacent(last, i))
-        return { ...state, track: state.track.concat([i]), error: null };
-      // a drag from a cell unrelated to the path starts a new word — the old
-      // path gives way (handy after a validation error, which keeps the path)
-      return { ...state, track: [i], error: null };
+      return { ...state, track, selectedCell: null, error: null };
     }
 
     case 'DRAG_CELL': {
@@ -122,7 +155,13 @@ export function gameReducer(state: GameState, action: Action): GameState {
     }
 
     case 'SET_LETTER': {
-      if (state.phase !== 'letter' || state.selectedCell === null)
+      // the letter phase places the pending letter; in the word phase the
+      // keyboard is reopened on the added letter (selectedCell === numChar)
+      // and the pick replaces it — the drawn track stays, so another letter
+      // can be tried on the same path, and the stale error clears
+      if (state.phase !== 'letter' && state.phase !== 'word')
+        return state;
+      if (state.selectedCell === null)
         return state;
       if (alphabetFor(state.lang).indexOf(action.char) === -1)
         return state;
@@ -134,7 +173,27 @@ export function gameReducer(state: GameState, action: Action): GameState {
         numChar: state.selectedCell, // highlighted in red
         selectedCell: null,
         phase: 'word',
+        error: null,
       };
+    }
+
+    // dismiss the open letter keyboard without touching the move itself:
+    // in the letter phase nothing has been entered yet, so the choice of the
+    // cell is dropped; in the word phase only the panel closes — the added
+    // letter and the track stay
+    case 'CLOSE_KEYBOARD': {
+      if (state.phase === 'letter')
+        return {
+          ...state,
+          boardBackup: null,
+          selectedCell: null,
+          phase: 'idle',
+          error: null,
+          status: null,
+        };
+      if (state.phase === 'word' && state.selectedCell !== null)
+        return { ...state, selectedCell: null };
+      return state;
     }
 
     case 'SUBMIT_MOVE': {

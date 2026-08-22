@@ -91,9 +91,11 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [lastBotMove]);
 
-  // physical keyboard: a letter (ё → е) in the letter phase, Escape — cancel
-  // the move or close the rules modal. The word itself is drawn with the
-  // mouse/touch and submitted by the drag release.
+  // physical keyboard: a letter (ё → е) while the letter keyboard is open (the
+  // letter phase, or the word phase with the panel reopened on the added
+  // letter); Escape closes the open keyboard, cancels the move, or closes the
+  // rules modal. The word itself is drawn with the mouse/touch and submitted
+  // by the drag release.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (rulesOpen) {
@@ -101,9 +103,13 @@ export default function App() {
           setRulesOpen(false);
         return;
       }
-      if (state.phase === 'letter') {
+      const keyboardOpen = state.selectedCell !== null &&
+        (state.phase === 'letter' || state.phase === 'word');
+      if (keyboardOpen) {
         if (e.key === 'Escape') {
-          dispatch({ type: 'CANCEL_MOVE' });
+          // the open panel closes first; in the word phase the move itself
+          // stays, waiting for a second Escape
+          dispatch({ type: state.phase === 'word' ? 'CLOSE_KEYBOARD' : 'CANCEL_MOVE' });
           return;
         }
         let ch = e.key.toLowerCase();
@@ -118,7 +124,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.phase, state.lang, rulesOpen]);
+  }, [state.phase, state.selectedCell, state.lang, rulesOpen]);
 
   // switching the language starts a new game in it (the confirmation for a
   // game in progress lives in the picker itself)
@@ -152,7 +158,7 @@ export default function App() {
           onDragCell={(index) => dispatch({ type: 'DRAG_CELL', index })}
           onDragSubmit={() => dispatch({ type: 'SUBMIT_MOVE' })}
         />
-        {state.phase === 'letter' && state.selectedCell !== null && (
+        {(state.phase === 'letter' || state.phase === 'word') && state.selectedCell !== null && (
           <Keyboard
             boardRef={boardRef}
             cellIndex={state.selectedCell}

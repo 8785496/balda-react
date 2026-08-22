@@ -5,7 +5,8 @@ import type { Lang } from '../game/lang';
 export type Phase =
   | 'idle'  // choosing an empty cell
   | 'letter' // entering a letter (the keyboard floats at the selected cell)
-  | 'word'  // a drag over adjacent cells builds the path; releasing submits it
+  | 'word'  // a drag over adjacent cells builds the path; releasing submits it;
+           // a click on the added letter's cell reopens the keyboard to change it
   | 'bot'   // the computer's turn
   | 'over'; // the game is over
 
@@ -36,7 +37,9 @@ export interface GameState {
   usedWords: string[];         // all words of the game, [0] = the starting word
   playerWords: string[];       // the player's words; score = sum of lengths
   botWords: string[];          // the computer's words
-  selectedCell: number | null; // the chosen empty cell (letter phase)
+  selectedCell: number | null; // the cell the letter keyboard is anchored to:
+                               // the chosen empty cell (letter phase) or the
+                               // added letter being changed (word phase)
   numChar: number | null;      // the cell with the new letter (highlighted .add)
   track: number[];             // the path — the word being built
   boardBackup: string[] | null; // board backup for "Отмена" (the original's bakArr)
@@ -47,10 +50,11 @@ export interface GameState {
 
 export type Action =
   | { type: 'NEW_GAME'; lang?: Lang } // restarts, optionally switching the game language
-  | { type: 'CLICK_CELL'; index: number } // choose the cell for the new letter (idle) / re-target it (letter)
+  | { type: 'CLICK_CELL'; index: number } // choose the cell for the new letter (idle) / re-target or dismiss the keyboard (letter) / reopen it on the added letter (word)
   | { type: 'DRAG_START'; index: number } // a drag left its start cell — anchor the path there
   | { type: 'DRAG_CELL'; index: number } // the pointer entered a cell mid-drag
-  | { type: 'SET_LETTER'; char: string }
+  | { type: 'SET_LETTER'; char: string } // place the pending letter (letter phase) / replace it (word phase, the keyboard reopened)
+  | { type: 'CLOSE_KEYBOARD' } // dismiss the open letter keyboard without touching the move
   | { type: 'SUBMIT_MOVE' }
   | { type: 'CANCEL_MOVE' }
   | { type: 'BOT_MOVED'; move: BotMove | null };

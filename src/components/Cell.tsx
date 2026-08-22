@@ -5,7 +5,7 @@ interface CellProps {
   inTrack: boolean;          // the cell is in the path — highlighted .select
   trackNumber: number | null; // 1-based position in the path, shown on the cell
   isNew: boolean;            // the cell with the added letter — highlighted .add
-  isSelected: boolean;       // the selected empty cell in the letter phase
+  isSelected: boolean;       // the cell the letter keyboard is anchored to: the chosen empty cell (letter phase) or the added letter being changed (word phase)
   bot: boolean;              // on the highlighted path of the computer's move
   botNew: boolean;           // the letter cell added by the computer
   disabled?: boolean;        // an empty cell with no letters around — not a legal spot

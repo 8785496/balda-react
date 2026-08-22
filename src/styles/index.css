@@ -876,6 +876,25 @@ button:disabled {
   }
 }
 
+/* phones (the same 560px the Keyboard component matches): the panel spans
+   the full screen width — pinned to the viewport edges, edge to edge; the
+   component sets only the vertical anchor (inline top, viewport coords) and
+   leaves left alone. The letters stretch to fill the wide rows */
+@media (max-width: 560px) {
+  .keyboard-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: auto;
+    border-radius: 0;
+  }
+
+  .keyboard button {
+    flex: 1 1 clamp(30px, 9vw, 38px);
+    max-width: 52px;
+  }
+}
+
 /* --- overlays: the end-of-game panel and the rules modal --- */
 
 .substrate {
