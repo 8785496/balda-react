@@ -67,11 +67,13 @@ export default function App() {
     if (state.phase !== 'bot')
       return;
     const timer = setTimeout(() => {
-      const move = findBestMove(state.board, state.usedWords, state.lang, difficulty);
+      // hard eases off to words of at most 5 letters while the player is behind
+      const playerLosing = scoreOf(state.playerWords) < scoreOf(state.botWords);
+      const move = findBestMove(state.board, state.usedWords, state.lang, difficulty, playerLosing);
       dispatch({ type: 'BOT_MOVED', move });
     }, 50);
     return () => clearTimeout(timer);
-  }, [state.phase, state.board, state.usedWords, state.lang, difficulty]);
+  }, [state.phase, state.board, state.usedWords, state.lang, difficulty, state.playerWords, state.botWords]);
 
   // the computer's move is visible: its word path and the added letter stay
   // highlighted on the board for a few seconds. Keyed on the move itself, so
@@ -132,6 +134,7 @@ export default function App() {
         error={state.error}
         status={state.status}
         phase={state.phase}
+        lang={state.lang}
         texts={texts}
       />
       <div className="board-wrap">
@@ -176,6 +179,7 @@ export default function App() {
       <ScorePanel
         playerWords={state.playerWords}
         botWords={state.botWords}
+        lang={state.lang}
         usedCount={state.usedWords.length}
         maxWords={MAX_WORDS}
         texts={texts}

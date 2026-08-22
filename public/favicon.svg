@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 112 112">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2570"/><stop offset="1" stop-color="#0d0a1f"/></linearGradient>
+<linearGradient id="sel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3dfcb0"/><stop offset="1" stop-color="#0ed392"/></linearGradient>
+<linearGradient id="add" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6ad5"/><stop offset="1" stop-color="#e621ad"/></linearGradient>
+<filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3"/></filter>
+</defs>
+<rect x="1" y="1" width="110" height="110" rx="18" fill="url(#bg)" stroke="#9678ff" stroke-opacity="0.45" stroke-width="2"/>
+<g fill="#ffffff" fill-opacity="0.09" stroke="#9678ff" stroke-opacity="0.2" stroke-width="1">
+<rect x="16" y="16" width="12" height="12" rx="2.8"/>
+<rect x="33" y="16" width="12" height="12" rx="2.8"/>
+<rect x="50" y="16" width="12" height="12" rx="2.8"/>
+<rect x="67" y="16" width="12" height="12" rx="2.8"/>
+<rect x="84" y="16" width="12" height="12" rx="2.8"/>
+<rect x="16" y="33" width="12" height="12" rx="2.8"/>
+<rect x="50" y="33" width="12" height="12" rx="2.8"/>
+<rect x="67" y="33" width="12" height="12" rx="2.8"/>
+<rect x="84" y="33" width="12" height="12" rx="2.8"/>
+<rect x="16" y="67" width="12" height="12" rx="2.8"/>
+<rect x="33" y="67" width="12" height="12" rx="2.8"/>
+<rect x="50" y="67" width="12" height="12" rx="2.8"/>
+<rect x="67" y="67" width="12" height="12" rx="2.8"/>
+<rect x="84" y="67" width="12" height="12" rx="2.8"/>
+<rect x="16" y="84" width="12" height="12" rx="2.8"/>
+<rect x="33" y="84" width="12" height="12" rx="2.8"/>
+<rect x="50" y="84" width="12" height="12" rx="2.8"/>
+<rect x="67" y="84" width="12" height="12" rx="2.8"/>
+<rect x="84" y="84" width="12" height="12" rx="2.8"/>
+</g>
+<g filter="url(#glow)" opacity="0.55">
+<rect x="33" y="50" width="12" height="12" rx="2.8" fill="#0ed392"/>
+<rect x="50" y="50" width="12" height="12" rx="2.8" fill="#0ed392"/>
+<rect x="67" y="50" width="12" height="12" rx="2.8" fill="#0ed392"/>
+<rect x="84" y="50" width="12" height="12" rx="2.8" fill="#0ed392"/>
+<rect x="33" y="33" width="12" height="12" rx="2.8" fill="#e621ad"/>
+</g>
+<rect x="16" y="50" width="12" height="12" rx="2.8" fill="#ffffff" fill-opacity="0.14" stroke="#b19dff" stroke-opacity="0.65" stroke-width="1"/>
+<g fill="url(#sel)" stroke="#0aae7c" stroke-width="1">
+<rect x="33" y="50" width="12" height="12" rx="2.8"/>
+<rect x="50" y="50" width="12" height="12" rx="2.8"/>
+<rect x="67" y="50" width="12" height="12" rx="2.8"/>
+<rect x="84" y="50" width="12" height="12" rx="2.8"/>
+</g>
+<rect x="33" y="33" width="12" height="12" rx="2.8" fill="url(#add)" stroke="#b4148b" stroke-width="1"/>
+<g font-family="Arial, 'Segoe UI', sans-serif" font-weight="700" font-size="8.5" text-anchor="middle">
+<text x="22.0" y="59" fill="#f2eeff">б</text>
+<text x="39.0" y="59" fill="#032e1e">а</text>
+<text x="56.0" y="59" fill="#032e1e">л</text>
+<text x="73.0" y="59" fill="#032e1e">д</text>
+<text x="90.0" y="59" fill="#032e1e">а</text>
+<text x="39.0" y="42" fill="#ffffff">ф</text>
+</g>
+</svg>

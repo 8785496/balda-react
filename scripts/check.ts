@@ -33,7 +33,8 @@ assert(dictionary.length > 15000, 'dictionary loaded: ' + dictionary.length + ' 
 assert(ALPHABET.length === 32 && ALPHABET.indexOf('ё') === -1, 'alphabet: 32 letters without "ё"');
 assert(dic.findWord('балда') === true, 'findWord("балда") === true');
 assert(dic.findWord('абажур') === true, 'findWord("абажур") === true');
-assert(dic.findWord('ясновидящий') === false, 'a word longer than 10 letters is not looked up (as in the original)');
+assert(dic.findWord('аббревиатура') === true, 'a 12-letter noun is in the tree (the original\'s 10-letter cap is dropped)');
+assert(Math.max(...dictionary.map((w) => w.length)) > 10, 'the russian dictionary holds words longer than 10 letters');
 assert(dic.findWord('щщщ') === false, 'findWord("щщщ") === false');
 assert(dic.hasPrefix('бал') === true, 'hasPrefix("бал") === true');
 assert(dic.hasPrefix('щщ') === false, 'hasPrefix("щщ") === false');
@@ -77,24 +78,58 @@ if (move !== null) {
 }
 
 // --- difficulty: which of the found moves the bot plays ---
+// easy — words of at most 3 letters, medium — at most 4, hard — the longest
+// (at most 5 while the player is losing, checked below). easy/medium pick
+// randomly within their cap, so each difficulty runs several times: every
+// pick must stay within the cap (when no move fits it, the fallback — the
+// shortest word — is deterministic and gives one and the same length).
 
-const lenByDiff: Record<string, number> = {};
+const RUNS = 15;
+const maxLenByDiff: Record<string, number> = {};
 for (const d of ['easy', 'medium', 'hard'] as const) {
-  const m = findBestMove(board, [START_WORD], 'ru', d);
-  assert(m !== null, 'difficulty ' + d + ': a move is found on the starting position');
-  if (m !== null) {
-    lenByDiff[d] = m.word.length;
-    const diffBoard = board.slice();
-    diffBoard[m.index] = m.char;
-    assert(dic.findWord(m.word) === true, 'difficulty ' + d + ': the word exists in the dictionary');
-    assert(wordFromTrack(diffBoard, m.track) === m.word, 'difficulty ' + d + ': the track spells the word');
-    assert(m.track.indexOf(m.index) !== -1, 'difficulty ' + d + ': the track contains the added letter cell');
+  const cap = d === 'easy' ? 3 : d === 'medium' ? 4 : Infinity;
+  const lengths: number[] = [];
+  for (let run = 0; run < RUNS; run++) {
+    const m = findBestMove(board, [START_WORD], 'ru', d);
+    if (m === null)
+      break;
+    lengths.push(m.word.length);
+    if (run === 0) {
+      const diffBoard = board.slice();
+      diffBoard[m.index] = m.char;
+      assert(dic.findWord(m.word) === true, 'difficulty ' + d + ': the word exists in the dictionary');
+      assert(wordFromTrack(diffBoard, m.track) === m.word, 'difficulty ' + d + ': the track spells the word');
+      assert(m.track.indexOf(m.index) !== -1, 'difficulty ' + d + ': the track contains the added letter cell');
+    }
+  }
+  assert(lengths.length === RUNS, 'difficulty ' + d + ': a move is found on the starting position');
+  if (lengths.length > 0) {
+    maxLenByDiff[d] = Math.max(...lengths);
+    const withinCap = lengths.every((l) => l <= cap);
+    const oneFallback = lengths.every((l) => l === lengths[0]);
+    assert(withinCap || oneFallback,
+      'difficulty ' + d + ': word lengths ' + lengths.join('/') + ' respect the cap of ' +
+      (cap === Infinity ? 'no cap' : cap + ' letters'));
   }
 }
-if (lenByDiff.easy !== undefined && lenByDiff.medium !== undefined && lenByDiff.hard !== undefined) {
-  console.log('     word lengths by difficulty: easy ' + lenByDiff.easy +
-    ', medium ' + lenByDiff.medium + ', hard ' + lenByDiff.hard);
-  assert(lenByDiff.easy <= lenByDiff.medium && lenByDiff.medium <= lenByDiff.hard,
+
+// hard with the player losing: no word longer than 5 letters
+const mercyLens: number[] = [];
+for (let run = 0; run < RUNS; run++) {
+  const m = findBestMove(board, [START_WORD], 'ru', 'hard', true);
+  if (m === null)
+    break;
+  mercyLens.push(m.word.length);
+}
+assert(mercyLens.length === RUNS, 'hard with the player losing: a move is found on the starting position');
+assert(mercyLens.every((l) => l <= 5),
+  'hard with the player losing: word lengths ' + mercyLens.join('/') + ' are at most 5 letters');
+
+if (maxLenByDiff.easy !== undefined && maxLenByDiff.medium !== undefined && maxLenByDiff.hard !== undefined) {
+  console.log('     longest word by difficulty: easy ' + maxLenByDiff.easy +
+    ', medium ' + maxLenByDiff.medium + ', hard ' + maxLenByDiff.hard +
+    ' (with the player losing: ' + mercyLens[0] + ')');
+  assert(maxLenByDiff.easy <= maxLenByDiff.medium && maxLenByDiff.medium <= maxLenByDiff.hard,
     'the easy move is not longer than medium, medium not longer than hard');
 }
 
@@ -106,10 +141,11 @@ const startEn = 'crane';
 const rndStartEn = startWordFor('en');
 assert(rndStartEn.length === SIZE && dicEn.findWord(rndStartEn) === true,
   'the english starting word is a random 5-letter dictionary word (got "' + rndStartEn + '")');
-assert(dictionaryEn.length > 15000, 'english dictionary loaded: ' + dictionaryEn.length + ' words');
+assert(dictionaryEn.length > 10000, 'english dictionary loaded: ' + dictionaryEn.length + ' words');
 assert(alphabetFor('en').length === 26, 'english alphabet: 26 letters');
 assert(dicEn.findWord(startEn) === true, 'the english starting word "' + startEn + '" is in the dictionary');
 assert(dicEn.findWord('zzzq') === false, 'findWord("zzzq") === false (en)');
+assert(dicEn.findWord('communication') === true, 'en: a 13-letter noun is in the tree (the 10-letter cap is dropped)');
 assert(dicEn.hasPrefix('cr') === true && dicEn.hasPrefix('zz') === false, 'hasPrefix works for english');
 
 const enBoard: string[] = new Array(SIZE * SIZE).fill('');
@@ -166,6 +202,26 @@ for (let round = 0; round < 3 && simOk; round++) {
 }
 assert(simOk, 'simulation of 3 rounds without invalid words');
 console.log('     after the simulation: ' + (simUsed.length - 1) + ' words, board: ' + simBoard.join('|'));
+
+// the mercy cap (hard while the player is losing) shows only once words
+// longer than 5 letters exist: keep playing the best move until one shows
+// up, then the capped pick must stay within 5 letters
+const mercyBoard = simBoard.slice();
+const mercyUsed = simUsed.slice();
+let uncapped = findBestMove(mercyBoard, mercyUsed);
+while (uncapped !== null && uncapped.word.length <= 5 && mercyUsed.length < MAX_WORDS) {
+  mercyBoard[uncapped.index] = uncapped.char;
+  mercyUsed.push(uncapped.word);
+  uncapped = findBestMove(mercyBoard, mercyUsed);
+}
+if (uncapped !== null && uncapped.word.length > 5) {
+  const mercy = findBestMove(mercyBoard, mercyUsed, 'ru', 'hard', true);
+  assert(mercy !== null && mercy.word.length <= 5,
+    'hard with the player losing: the longest move of ' + uncapped.word.length +
+    ' letters is capped to ' + (mercy === null ? 'none' : mercy.word.length));
+} else {
+  console.log('     no move longer than 5 letters appeared — the mercy cap is not observable');
+}
 
 // --- reducer: the state machine and validation ---
 

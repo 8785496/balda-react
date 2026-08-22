@@ -4,7 +4,7 @@
 // Everything the components render goes through Texts, so no Russian string
 // stays hardcoded in the views.
 import type { Lang } from './game/lang';
-import type { GameError, Status } from './state/types';
+import type { GameError } from './state/types';
 import type { Difficulty } from './difficulty';
 import type { ThemeId } from './theme';
 
@@ -43,7 +43,8 @@ export interface Texts {
     restart: string;
   };
   error(err: GameError): string;
-  status(s: Status): string;
+  statusBotMove: string; // the bot's-move label; the word and points follow it, styled (StatusBar)
+  statusBotSkip: string;
   rules: {
     title: string;               // the footer "?" button and the modal heading
     items: string[];             // the brief rules, a bullet each
@@ -101,11 +102,8 @@ export const TEXTS: Record<Lang, Texts> = {
           return 'Выберите слово';
       }
     },
-    status(s) {
-      if (s.kind === 'botMove')
-        return 'Компьютер: «' + s.word + '» (+' + s.word.length + ')';
-      return 'У компьютера нет хода — ваш ход';
-    },
+    statusBotMove: 'Компьютер:',
+    statusBotSkip: 'У компьютера нет хода — ваш ход',
     rules: {
       title: 'Правила игры',
       items: [
@@ -169,11 +167,8 @@ export const TEXTS: Record<Lang, Texts> = {
           return 'Choose a word';
       }
     },
-    status(s) {
-      if (s.kind === 'botMove')
-        return 'Computer: "' + s.word + '" (+' + s.word.length + ')';
-      return 'The computer has no move — your turn';
-    },
+    statusBotMove: 'Computer:',
+    statusBotSkip: 'The computer has no move — your turn',
     rules: {
       title: 'Game rules',
       items: [

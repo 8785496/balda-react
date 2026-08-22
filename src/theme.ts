@@ -3,8 +3,8 @@
 // localStorage persistence. The display names are per-language (i18n.ts).
 
 export const THEMES = [
-  { id: 'night', swatch: '#262e3a' },
   { id: 'neon', swatch: '#7c3aed' },
+  { id: 'night', swatch: '#262e3a' },
   { id: 'wood', swatch: '#a9713d' },
   { id: 'paper', swatch: '#ffffff' },
 ] as const;
@@ -12,7 +12,7 @@ export const THEMES = [
 export type ThemeId = (typeof THEMES)[number]['id'];
 
 // applied when the player has no saved choice
-export const DEFAULT_THEME: ThemeId = 'night';
+export const DEFAULT_THEME: ThemeId = 'neon';
 
 const STORAGE_KEY = 'balda-theme';
 

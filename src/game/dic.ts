@@ -11,9 +11,6 @@
 // (Russian/English, see lang.ts), each getting its own tree built once, on
 // first use.
 
-// Maximum word length in the tree: longer dictionary words are ignored (as in the original)
-const MAX_WORD_LEN = 10;
-
 // char-code table size: covers the latin and russian (а..я, up to U+044F) lowercase
 const CODE_TABLE_SIZE = 0x450;
 
@@ -50,9 +47,10 @@ export function createDic(dictionary: string[], alphabet: string): Dic {
     return code < CODE_TABLE_SIZE ? codeIndex[code] : -1;
   }
 
-  // build the tree: words of 2..10 alphabet letters, as in the original's hashes
+  // build the tree: words of 2+ letters, as long as the dictionary holds them
+  // (the original's hashes capped words at 10 letters; the trie has no limit)
   for (const word of dictionary) {
-    if (word.length < 2 || word.length > MAX_WORD_LEN)
+    if (word.length < 2)
       continue;
     let inAlphabet = true;
     for (let i = 0; i < word.length; i++)
@@ -102,9 +100,8 @@ export function createDic(dictionary: string[], alphabet: string): Dic {
 
   return {
     findWord(word: string): boolean {
-      // the tree holds words of 2..MAX_WORD_LEN letters — as in the original,
-      // a longer word is not looked up at all
-      if (word.length < 2 || word.length > MAX_WORD_LEN)
+      // the tree holds words of 2+ letters — a single letter is no word
+      if (word.length < 2)
         return false;
       const node = walk(word);
       return node !== null && node.word;

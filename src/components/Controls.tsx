@@ -1,10 +1,10 @@
-// Control buttons: a single row — «Отмена» (while a move is being made:
-// the letter or the word phase) on the left, the demoted «Заново» on the
-// right. The word itself is submitted by the drag release, so there is no
-// «Готово» button. The restart wipes the whole game, so it is small, visually
-// secondary and needs a second confirming tap: the first tap arms it
-// («Точно?»/«Sure?») for a few seconds, only then it restarts. All labels
-// come from i18n (texts.controls).
+// Control buttons: a single row — the demoted «Заново» on the left, «Отмена»
+// (while a move is being made: the letter or the word phase) on the right,
+// so the restart button never moves when the phases change. The word itself
+// is submitted by the drag release, so there is no «Готово» button. The
+// restart wipes the whole game, so it is small, visually secondary and needs
+// a second confirming tap: the first tap arms it («Точно?»/«Sure?») for a few
+// seconds, only then it restarts. All labels come from i18n (texts.controls).
 import { useEffect, useState } from 'react';
 import type { Texts } from '../i18n';
 import type { Phase } from '../state/types';
@@ -38,11 +38,6 @@ export function Controls({ phase, texts, onRestart, onCancel }: ControlsProps) {
   return (
     <div className="controls">
       <div className="controls-row">
-        {(phase === 'letter' || phase === 'word') && (
-          <button type="button" id="cancel" className="btn-secondary" onClick={onCancel}>
-            {c.cancel}
-          </button>
-        )}
         <button
           type="button"
           id="start"
@@ -59,6 +54,11 @@ export function Controls({ phase, texts, onRestart, onCancel }: ControlsProps) {
         >
           {armed ? c.confirm : c.restart}
         </button>
+        {(phase === 'letter' || phase === 'word') && (
+          <button type="button" id="cancel" className="btn-secondary" onClick={onCancel}>
+            {c.cancel}
+          </button>
+        )}
       </div>
     </div>
   );

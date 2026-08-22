@@ -1,15 +1,15 @@
 // Bot difficulty, switched from the footer and persisted in localStorage.
-// It only changes which of the found moves the computer plays (see finder.ts);
-// easy and medium pick randomly from the weaker/middle part of them, hard is
-// the original's always-longest-word behavior. Applies from the next bot turn,
-// without restarting the game.
+// It only changes which of the found moves the computer plays (see finder.ts):
+// easy — a random word of at most 3 letters, medium — at most 4, hard — the
+// longest word, but at most 5 letters while the player is losing. Applies from
+// the next bot turn, without restarting the game.
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export const DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 
-// applied when the player has no saved choice; 'hard' preserves the original's behavior
-export const DEFAULT_DIFFICULTY: Difficulty = 'hard';
+// applied when the player has no saved choice
+export const DEFAULT_DIFFICULTY: Difficulty = 'medium';
 
 const STORAGE_KEY = 'balda-difficulty';
 

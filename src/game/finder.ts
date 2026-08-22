@@ -8,8 +8,8 @@
 // reads), the top-neighbor check is fixed (i > 5 → i >= 5), when no move
 // exists null is returned instead of crashing, instead of tracking only
 // the longest word every found word is recorded (deduplicated by word) so
-// that the difficulty can choose among them (hard keeps the original's
-// longest-word behavior), and the prefix check walks the dictionary tree
+// that the difficulty can choose among them (see pickMove for the caps),
+// and the prefix check walks the dictionary tree
 // (dic.ts) one letter per step instead of re-hashing the whole prefix and
 // binary-searching it from scratch at every cell.
 import { alphabetFor, dicFor, type Lang } from './lang';
@@ -29,6 +29,7 @@ export function findBestMove(
   usedWords: string[],
   lang: Lang = 'ru',
   difficulty: Difficulty = 'hard',
+  playerLosing: boolean = false, // caps hard at 5-letter words (see pickMove)
 ): BotMove | null {
   const dic = dicFor(lang);
   const alphabet = alphabetFor(lang);
@@ -98,33 +99,39 @@ export function findBestMove(
     }
   }
 
-  return pickMove(found, difficulty);
+  return pickMove(found, difficulty, playerLosing);
 }
 
 // which of the found moves the difficulty plays:
-//   hard — the longest word (the first found among equal-length ones, as in the original);
-//   easy — a random word from the shortest third of the moves;
-//   medium — a random word from the middle third.
-function pickMove(found: BotMove[], difficulty: Difficulty): BotMove | null {
+//   easy — a random word of at most 3 letters;
+//   medium — a random word of at most 4 letters;
+//   hard — the longest word, but of at most 5 letters while the player is
+//     losing (the original's uncapped longest-word behavior otherwise);
+//   when no found word fits a difficulty's cap, the shortest one is played.
+function pickMove(found: BotMove[], difficulty: Difficulty, playerLosing: boolean): BotMove | null {
   if (found.length === 0)
     return null;
+  const cap = difficulty === 'easy' ? 3 : difficulty === 'medium' ? 4 : playerLosing ? 5 : Infinity;
   if (difficulty === 'hard') {
-    let best = found[0];
-    for (let i = 1; i < found.length; i++)
-      if (found[i].word.length > best.word.length)
+    // the longest word within the cap, the first found among equals (as in the original)
+    let best: BotMove | null = null;
+    for (let i = 0; i < found.length; i++)
+      if (found[i].word.length <= cap && (best === null || found[i].word.length > best.word.length))
         best = found[i];
-    return best;
+    return best !== null ? best : shortestMove(found);
   }
-  // ascending by length; the sort is stable, so ties keep the discovery order
-  const sorted = found.slice().sort((a, b) => a.word.length - b.word.length);
-  const third = Math.ceil(sorted.length / 3);
-  let pool: BotMove[];
-  if (difficulty === 'easy') {
-    pool = sorted.slice(0, third);
-  } else {
-    pool = sorted.slice(third, sorted.length - third);
-    if (pool.length === 0) // one or two moves only — any of them
-      pool = sorted;
-  }
+  // a random word within the cap
+  const pool = found.filter((m) => m.word.length <= cap);
+  if (pool.length === 0) // nothing fits — the shortest word there is
+    return shortestMove(found);
   return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// the shortest word, the first found among equals
+function shortestMove(found: BotMove[]): BotMove {
+  let best = found[0];
+  for (let i = 1; i < found.length; i++)
+    if (found[i].word.length < best.word.length)
+      best = found[i];
+  return best;
 }

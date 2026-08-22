@@ -497,6 +497,14 @@ a:hover {
   min-height: 1.4em;
 }
 
+/* the computer's played word in the status line: bold and colored instead
+   of quoted; it is a link (like the score-list words) — the class keeps the
+   bot color over the generic link color, the hover underline comes free */
+.status-word {
+  font-weight: 700;
+  color: var(--bot-color);
+}
+
 /* floats in the reserved slot under the word row (see .status-bar), centered;
    pointer-events: none — it is a passive message and must never block the
    board underneath, even when a long word wraps it taller than the slot */
@@ -577,10 +585,10 @@ button:disabled {
   cursor: default;
 }
 
-/* the controls are a single row: «Отмена» on the left (while a move is being
-   made), «Заново» on the right — the word is submitted by the drag release,
-   so there is no submit button. Space-between keeps «Заново» at the right
-   edge whether or not «Отмена» is shown */
+/* the controls are a single row: «Заново» on the left, «Отмена» on the right
+   (while a move is being made) — the word is submitted by the drag release,
+   so there is no submit button. Space-between pins the buttons to the row's
+   edges whether or not «Отмена» is shown, so «Заново» never moves */
 .controls {
   display: flex;
   justify-content: center;
@@ -801,6 +809,15 @@ button:disabled {
 
 .column-right strong {
   color: var(--bot-color);
+}
+
+/* the letter count after a word (the score lists) or the points after the
+   bot's word (the status line): set off by size and color rather than
+   parentheses — shared by both */
+.word-len {
+  margin-left: 6px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--text) 55%, transparent);
 }
 
 /* --- letter keyboard: floating at the selected cell (the letter phase) --- */
