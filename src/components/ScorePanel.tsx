@@ -32,18 +32,19 @@ interface ScorePanelProps {
   texts: Texts;
 }
 
-// the words newest first; words are unique within a game, so they key themselves
+// the words newest first; words are unique within a game, so they key
+// themselves. The link is the whole row (the word and its count inside it),
+// so a touch can land anywhere along the line — on phones the row is styled
+// into a full-width, 44px-tall tap target
 function renderWords(words: string[], lang: Lang) {
   return words
     .slice()
     .reverse()
     .map((word) => (
-      <div key={word}>
-        <a href={wordUrl(lang, word)} target="_blank" rel="noopener noreferrer">
-          {word}
-        </a>
+      <a key={word} href={wordUrl(lang, word)} target="_blank" rel="noopener noreferrer">
+        {word}
         <span className="word-len">{word.length}</span>
-      </div>
+      </a>
     ));
 }
 

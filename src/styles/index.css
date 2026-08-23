@@ -681,7 +681,7 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin: 8px 0 2px;
+  margin: 8px 0 10px;
 }
 
 /* «Слово 7 из 21» rides the controls row, out of the flow and dead center,
@@ -940,6 +940,16 @@ button:disabled {
   margin-left: 6px;
   font-size: 12px;
   color: color-mix(in srgb, var(--text) 55%, transparent);
+  /* inside the row link now: keep its own tone and no underline when the
+     word is hovered */
+  text-decoration: none;
+}
+
+/* the link is the row: block stacking keeps one word per line (an inline
+   link would run the words into a wrapping ribbon); phones restyle it into
+   the 44px tap target */
+.words > a {
+  display: block;
 }
 
 /* --- letter keyboard: floating at the selected cell (the letter phase) --- */
@@ -1245,6 +1255,29 @@ button:disabled {
 
   .words::-webkit-scrollbar {
     display: none;               /* Chrome/Safari */
+  }
+
+  /* every word row is a comfortable tap target: the link is the row itself —
+     the full column's width and 36px tall (below the 44px HIG minimum, a
+     deliberate trade for more rows visible: full-row width already keeps a
+     mis-tap from landing on the neighboring word), the word and its count
+     centered in it; the press tints the row, so it visibly registers before
+     the dictionary opens in its new tab */
+  .words > a {
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+  }
+
+  /* the computer's column mirrors: the row's content hangs off the right
+     edge, as the plain inline text did */
+  .column-right .words > a {
+    justify-content: flex-end;
+  }
+
+  .words > a:active {
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--text) 10%, transparent);
   }
 
   .footer {
