@@ -2,7 +2,9 @@
 // next to the tapped cell — below it in the top half of the board, above in
 // the bottom half — so neither the cursor nor the thumb has to travel far,
 // and it follows the cell when the letter is re-targeted. The letters sit in
-// three QWERTY/ЙЦУКЕН rows of equal-width keys (keyboardFor). On narrow
+// three QWERTY/ЙЦУКЕН rows of equal-width keys (keyboardFor). A quiet ✕ in
+// the title row closes the panel (onClose → CLOSE_KEYBOARD — the move
+// itself stays). On narrow
 // (phone) screens the CSS pins the panel to the viewport edges — the full
 // screen width — and only the vertical anchor is measured here, clamped
 // above the pinned settings footer. The board stays interactive around the
@@ -22,9 +24,10 @@ interface KeyboardProps {
   lang: Lang;                                 // whose alphabet to show
   texts: Texts;
   onLetter: (char: string) => void;
+  onClose: () => void;                        // the ✕ — dismiss the panel, keep the move
 }
 
-export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter }: KeyboardProps) {
+export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter, onClose }: KeyboardProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   // left is unset in the narrow mode — there the CSS stretches the panel
   // across the screen and only top is placed
@@ -88,6 +91,14 @@ export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter }: Keyboar
     >
       <div className="keyboard-title">
         <span>{texts.keyboard.title}</span>
+        <button
+          type="button"
+          className="keyboard-close"
+          aria-label={texts.keyboard.close}
+          onClick={onClose}
+        >
+          ✕
+        </button>
       </div>
       <div className={'keyboard kb-' + lang}>
         {keyboardFor(lang).map((row) => (

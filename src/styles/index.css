@@ -846,6 +846,7 @@ button:disabled {
 
 .cell:focus-visible,
 .keyboard button:focus-visible,
+.keyboard-close:focus-visible,
 .rules-icon:focus-visible,
 .seg-btn:focus-visible,
 .theme-swatch:focus-visible {
@@ -957,9 +958,41 @@ button:disabled {
   animation: keyboard-in 0.15s ease-out;
 }
 
+/* the title row stretches the panel's width, so the ✕ can sit in its right
+   corner while the title itself stays centered on the panel */
 .keyboard-title {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
   font-size: 14px;
   font-weight: 600;
+}
+
+/* the panel's ✕: a quiet way out — the base button chrome (border,
+   background, shadow) is all off, only a dimmed glyph that brightens a
+   little on hover */
+.keyboard-close {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  min-width: 0;
+  margin: 0;
+  padding: 2px 5px;
+  font-size: 13px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+  background: transparent;
+  border-color: transparent; /* keeps the base 1px box: no size jump on hover */
+  box-shadow: none;
+}
+
+.keyboard-close:hover,
+.keyboard-close:active {
+  border-color: transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--card-color) 85%, transparent);
 }
 
 /* three keyboard rows (QWERTY / ЙЦУКЕН), not a wrapped cloud. The block

@@ -28,6 +28,7 @@ export interface Texts {
   keyboard: {
     aria: string;
     title: string;               // «Выберите букву»
+    close: string;               // the ✕ button's aria-label
   };
   score: {
     progress: (n: number, max: number) => string; // «Слово 3 из 21»
@@ -73,6 +74,7 @@ export const TEXTS: Record<Lang, Texts> = {
     keyboard: {
       aria: 'Виртуальная клавиатура',
       title: 'Выберите букву',
+      close: 'Закрыть',
     },
     score: {
       progress: (n, max) => 'Слово ' + n + ' из ' + max,
@@ -137,6 +139,7 @@ export const TEXTS: Record<Lang, Texts> = {
     keyboard: {
       aria: 'On-screen keyboard',
       title: 'Choose a letter',
+      close: 'Close',
     },
     score: {
       progress: (n, max) => 'Word ' + n + ' of ' + max,

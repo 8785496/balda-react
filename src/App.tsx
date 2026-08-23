@@ -177,6 +177,7 @@ export default function App() {
             lang={state.lang}
             texts={texts}
             onLetter={(char) => dispatch({ type: 'SET_LETTER', char })}
+            onClose={() => dispatch({ type: 'CLOSE_KEYBOARD' })}
           />
         )}
         {state.phase === 'over' && (
