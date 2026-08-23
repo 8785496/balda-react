@@ -163,6 +163,7 @@ export default function App() {
     <div className="context">
       <StatusBar
         result={wordFromTrack(state.board, state.track)}
+        startWord={state.usedWords.length === 1 ? state.usedWords[0] : null}
         error={state.error}
         status={state.status}
         phase={state.phase}

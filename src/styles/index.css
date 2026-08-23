@@ -611,6 +611,38 @@ button.status-word:active {
   color: var(--bot-color);
 }
 
+/* the starting word, filling the status line until the first move: tappable
+   like every other word (the english trigger opens the translation popup),
+   but neutral — the word belongs to neither side, so the plain text color,
+   not the bot color. The button carries the same quiet-chrome and baseline
+   resets as button.status-word above */
+.status-start {
+  font-weight: 700;
+  color: var(--text);
+}
+
+button.status-start {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  font-size: inherit;
+  line-height: inherit;
+  font-weight: 700;
+  color: var(--text);
+  vertical-align: baseline;
+}
+
+button.status-start:hover,
+button.status-start:active {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text);
+  text-decoration: underline;
+}
+
 /* the validation error as a toast: a pill fixed to the top of the screen,
    centered; pointer-events: none — it is a passive message and must never
    block the board or the controls it floats over. It takes no layout space,
@@ -899,6 +931,7 @@ button:disabled {
 .theme-swatch:focus-visible,
 .word-link:focus-visible,
 button.status-word:focus-visible,
+button.status-start:focus-visible,
 .word-close:focus-visible {
   outline: 2px solid var(--focus-color);
   outline-offset: 1px;

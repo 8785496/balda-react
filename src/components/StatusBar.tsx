@@ -7,6 +7,9 @@
 // quotes and parentheses; the word is tappable like the score-list words —
 // a russian word follows the outbound link (wordUrl from ScorePanel), an
 // english one opens the translation popup (onWordClick → WordPopup).
+// While no word has been played yet, the same line shows the starting word
+// itself, tappable the same way: on the board it is just letters, and no
+// score column owns it — this is its only lookup/translation entry point.
 // Validation
 // errors render as a toast: a warning-icon pill (role=alert) fixed to the
 // top of the screen, hidden again after a few seconds — it takes no
@@ -23,6 +26,9 @@ const ERROR_TOAST_MS = 3000;
 
 interface StatusBarProps {
   result: string;
+  // the starting word, shown in the otherwise-empty line until the first
+  // move; null once any word has been played
+  startWord: string | null;
   error: GameError | null;
   status: Status | null;
   phase: Phase;
@@ -32,7 +38,7 @@ interface StatusBarProps {
   onWordClick: (word: string) => void;
 }
 
-export function StatusBar({ result, error, status, phase, lang, texts, onWordClick }: StatusBarProps) {
+export function StatusBar({ result, startWord, error, status, phase, lang, texts, onWordClick }: StatusBarProps) {
   const botThinking = phase === 'bot';
   // the toast hides itself after a few seconds even though the error stays in
   // the game state until the player's next action clears it; every failed
@@ -70,6 +76,26 @@ export function StatusBar({ result, error, status, phase, lang, texts, onWordCli
     ) : (
       texts.statusBotSkip
     );
+  else if (result === '' && startWord !== null)
+    // the game has not moved yet and nothing is being drawn: the starting
+    // word takes the line — tappable like every played word (the same
+    // english/russian split as the bot's word above, but neutral styling:
+    // the word belongs to neither side)
+    line =
+      lang === 'en' ? (
+        <button type="button" className="status-start" onClick={() => onWordClick(startWord)}>
+          {startWord}
+        </button>
+      ) : (
+        <a
+          className="status-start"
+          href={wordUrl(lang, startWord)}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {startWord}
+        </a>
+      );
   return (
     <div className="status-bar">
       <div className="status-row">
