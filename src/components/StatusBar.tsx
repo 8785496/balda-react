@@ -6,10 +6,13 @@
 // and its points are set off by style (.status-word/.word-len) instead of
 // quotes and parentheses; the word is tappable like the score-list words —
 // a russian word follows the outbound link (wordUrl from ScorePanel), an
-// english one opens the translation popup (onWordClick → WordPopup).
+// english one opens the translation popup (onWordClick → WordPopup) and is
+// followed by its IPA transcription (WordIpa), as in the score lists.
 // While no word has been played yet, the same line shows the starting word
 // itself, tappable the same way: on the board it is just letters, and no
 // score column owns it — this is its only lookup/translation entry point.
+// In the english game the word is followed by its IPA transcription
+// (WordIpa from ScorePanel), like the score-list words.
 // Validation
 // errors render as a toast: a warning-icon pill (role=alert) fixed to the
 // top of the screen, hidden again after a few seconds — it takes no
@@ -19,7 +22,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import type { Texts } from '../i18n';
 import type { Lang } from '../game/lang';
 import type { GameError, Phase, Status } from '../state/types';
-import { wordUrl } from './ScorePanel';
+import { wordUrl, WordIpa } from './ScorePanel';
 
 // how long the error toast stays on screen before hiding itself
 const ERROR_TOAST_MS = 3000;
@@ -58,9 +61,12 @@ export function StatusBar({ result, startWord, error, status, phase, lang, texts
       <>
         {texts.statusBotMove}{' '}
         {lang === 'en' ? (
-          <button type="button" className="status-word" onClick={() => onWordClick(status.word)}>
-            {status.word}
-          </button>
+          <>
+            <button type="button" className="status-word" onClick={() => onWordClick(status.word)}>
+              {status.word}
+            </button>
+            <WordIpa word={status.word} />
+          </>
         ) : (
           <a
             className="status-word"
@@ -83,9 +89,12 @@ export function StatusBar({ result, startWord, error, status, phase, lang, texts
     // the word belongs to neither side)
     line =
       lang === 'en' ? (
-        <button type="button" className="status-start" onClick={() => onWordClick(startWord)}>
-          {startWord}
-        </button>
+        <>
+          <button type="button" className="status-start" onClick={() => onWordClick(startWord)}>
+            {startWord}
+          </button>
+          <WordIpa word={startWord} />
+        </>
       ) : (
         <a
           className="status-start"

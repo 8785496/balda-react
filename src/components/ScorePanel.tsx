@@ -2,10 +2,13 @@
 // column headers set the points off by style (.score-num) instead of a
 // "Name: 20" colon. The lists render newest first, so the just-played word
 // lands on top of its column; the per-word letter count is set off by its
-// style (.word-len), not by parentheses. Every word is tappable: russian
-// words follow an outbound link (wordUrl below), english ones open the
-// translation popup (WordPopup via App's onWordClick). The game progress
-// counter lives in the controls row above (Controls.tsx).
+// style (.word-len), not by parentheses. An english word is followed by its
+// IPA transcription (WordIpa below) — one glance reads the word aloud
+// without opening the popup. Every word is tappable: russian words follow
+// an outbound link (wordUrl below), english ones open the translation popup
+// (WordPopup via App's onWordClick). The game progress counter lives in the
+// controls row above (Controls.tsx).
+import { translateEn } from '../game/translate-en';
 import type { Lang } from '../game/lang';
 import type { Texts } from '../i18n';
 
@@ -28,6 +31,17 @@ export function wordUrl(lang: Lang, word: string): string {
   return 'https://gramota.ru/poisk?mode=slovari&query=' + encodeURIComponent(word);
 }
 
+// an english word's IPA transcription, inline after it: the score rows and
+// the status line's starting word (StatusBar imports this too). Quieter
+// than the word — smaller and dimmed (.word-tr in styles/index.css) — and
+// nothing at all when the bundled data has no transcription for the word
+export function WordIpa({ word }: { word: string }) {
+  const ipa = translateEn(word)?.ipa ?? '';
+  if (ipa === '')
+    return null;
+  return <span className="word-tr">/{ipa}/</span>;
+}
+
 interface ScorePanelProps {
   playerWords: string[];
   botWords: string[];
@@ -42,7 +56,11 @@ interface ScorePanelProps {
 // it), so a touch can land anywhere along the line — on phones the row is
 // styled into a full-width, 44px-tall tap target. An english row is a button
 // (opening the popup is an action) styled exactly where the link sits
-// (.word-link in styles/index.css); a russian row stays the outbound link
+// (.word-link in styles/index.css); a russian row stays the outbound link.
+// The word and its metadata sit in one .word-inner span — one inline line:
+// the phone rows center that line vertically in their chip (styles), while
+// inside it the count hangs off the word's baseline (inline flow); at
+// desktop widths the wrapper is transparent inline content
 function renderWords(words: string[], lang: Lang, onWordClick: (word: string) => void) {
   return words
     .slice()
@@ -50,13 +68,18 @@ function renderWords(words: string[], lang: Lang, onWordClick: (word: string) =>
     .map((word) =>
       lang === 'en' ? (
         <button key={word} type="button" className="word-link" onClick={() => onWordClick(word)}>
-          {word}
-          <span className="word-len">{word.length}</span>
+          <span className="word-inner">
+            {word}
+            <WordIpa word={word} />
+            <span className="word-len">{word.length}</span>
+          </span>
         </button>
       ) : (
         <a key={word} href={wordUrl(lang, word)} target="_blank" rel="noopener noreferrer">
-          {word}
-          <span className="word-len">{word.length}</span>
+          <span className="word-inner">
+            {word}
+            <span className="word-len">{word.length}</span>
+          </span>
         </a>
       ),
     );

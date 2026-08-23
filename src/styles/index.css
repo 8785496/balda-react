@@ -587,7 +587,7 @@ a:hover {
    over the .status-word look — the word reads and lands exactly where the
    link did. The only inline button in the app: the global button rule's
    vertical-align: middle would center it on the line instead of sitting it
-   on the text baseline, dropping the word below «Компьютер:» and pushing
+   on the text baseline, dropping the word below «Бот:» and pushing
    the whole status row off — reset to baseline, with the page's line-height
    (a button's UA default is normal) */
 button.status-word {
@@ -1012,8 +1012,24 @@ button.status-start:focus-visible,
   /* inside the row link now: keep its own tone and no underline when the
      word is hovered — text-decoration: none cannot cancel the row's own
      underline (a parent's decoration paints over descendants), but an
-     atomic inline box is excluded from that propagation entirely */
+     atomic inline box is excluded from that propagation entirely. The
+     spelled-out baseline (the inline-block default) is what sits the digit
+     on the word's bottom edge */
   display: inline-block;
+  vertical-align: baseline;
+  text-decoration: none;
+}
+
+/* an english word's IPA transcription, inline between the word and its
+   count (the score rows) or right after it (the status line's starting
+   word): the count chip's quiet metadata tone — smaller and dimmed, the
+   same atomic-inline exclusion from the hover underline */
+.word-tr {
+  margin-left: 6px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--text) 60%, transparent);
+  display: inline-block;
+  vertical-align: baseline;
   text-decoration: none;
 }
 
@@ -1476,12 +1492,20 @@ button.status-start:focus-visible,
      target — the full column's width and 36px tall (below the 44px HIG
      minimum, a deliberate trade for more rows visible: full-row width
      already keeps a mis-tap from landing on the neighboring word), the word
-     and its count centered in it. The quiet hairline frame (~10% of the
-     text color, mixed per theme) reads the rows as tappable chips without
-     shouting; the press fills the row so it visibly registers before the
-     dictionary opens in its new tab or the translation popup shows. The
-     english rows are buttons — the border/background here restyle them the
-     same as the links (the full shorthand wins over the quiet reset above) */
+     line (.word-inner — the word with its count as one inline line) centered
+     vertically in it. The line is the flex item here, and the count hangs
+     off the word's baseline inside it: centering the 16px word and the 12px
+     digit as separate items would float the digit above the word's baseline
+     — and baseline-aligning the items themselves would pin the line to the
+     chip's top instead of centering it. The quiet hairline frame (~10% of
+     the text color, mixed per theme) reads the rows as tappable chips
+     without shouting; the press fills the row so it visibly registers
+     before the dictionary opens in its new tab or the translation popup
+     shows. The english rows are buttons — the border/background here restyle
+     them the same as the links (the full shorthand wins over the quiet
+     reset above). The transcription rides along: when a word plus its IPA
+     does not fit the half-screen column, the .word-inner line wraps at the
+     IPA's inline box and the chip simply grows a line */
   .words > a,
   .words > button.word-link {
     display: flex;

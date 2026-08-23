@@ -85,7 +85,7 @@ export const TEXTS: Record<Lang, Texts> = {
     score: {
       progress: (n, max) => 'Слово ' + n + ' из ' + max,
       player: 'Игрок',
-      computer: 'Компьютер',
+      computer: 'Бот',
     },
     end: {
       draw: 'Ничья',
@@ -108,8 +108,8 @@ export const TEXTS: Record<Lang, Texts> = {
           return 'Выберите слово';
       }
     },
-    statusBotMove: 'Компьютер:',
-    statusBotSkip: 'У компьютера нет хода — ваш ход',
+    statusBotMove: 'Бот:',
+    statusBotSkip: 'У бота нет хода — ваш ход',
     word: {
       noun: 'сущ.',
       noTranslation: 'Перевода нет в словаре',
@@ -156,7 +156,7 @@ export const TEXTS: Record<Lang, Texts> = {
     score: {
       progress: (n, max) => 'Word ' + n + ' of ' + max,
       player: 'Player',
-      computer: 'Computer',
+      computer: 'Bot',
     },
     end: {
       draw: 'Draw',
@@ -179,8 +179,8 @@ export const TEXTS: Record<Lang, Texts> = {
           return 'Choose a word';
       }
     },
-    statusBotMove: 'Computer:',
-    statusBotSkip: 'The computer has no move — your turn',
+    statusBotMove: 'Bot:',
+    statusBotSkip: 'The bot has no move — your turn',
     word: {
       noun: 'noun',
       noTranslation: 'No translation in the dictionary',
