@@ -53,7 +53,7 @@ export type Action =
   | { type: 'CLICK_CELL'; index: number } // choose the cell for the new letter (idle) / re-target or dismiss the keyboard (letter) / reopen it on the added letter (word)
   | { type: 'DRAG_START'; index: number } // a drag left its start cell — anchor the path there
   | { type: 'DRAG_CELL'; index: number } // the pointer entered a cell mid-drag
-  | { type: 'SET_LETTER'; char: string } // place the pending letter (letter phase) / replace it (word phase, the keyboard reopened)
+  | { type: 'SET_LETTER'; char: string } // place the pending letter (letter phase) / replace it (word phase, the keyboard reopened; a changed letter resets the track)
   | { type: 'CLOSE_KEYBOARD' } // dismiss the open letter keyboard without touching the move
   | { type: 'SUBMIT_MOVE' }
   | { type: 'CANCEL_MOVE' }

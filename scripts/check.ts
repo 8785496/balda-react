@@ -418,8 +418,16 @@ assert(closed.phase === 'word' && closed.selectedCell === null && closed.board[6
   'any cell tap closes the reopened panel — the letter and the path stay');
 k = gameReducer(k, { type: 'SET_LETTER', char: 'м' });
 assert(k.phase === 'word' && k.numChar === 6 && k.selectedCell === null && k.board[6] === 'м' &&
-  wordFromTrack(k.board, k.track) === 'малд' && k.error === null,
-  'the picked letter replaces the added one; the path stays, the error clears');
+  k.track.length === 0 && k.error === null,
+  'a changed letter replaces the added one and resets the path; the error clears');
+// redraw "малд", then pick the same letter — the word must survive this time
+k = gameReducer(k, { type: 'DRAG_START', index: 6 });
+for (const c of [11, 12, 13]) k = gameReducer(k, { type: 'DRAG_CELL', index: c });
+assert(wordFromTrack(k.board, k.track) === 'малд', '"малд" is drawn again after the reset');
+k = gameReducer(k, { type: 'CLICK_CELL', index: 6 });
+k = gameReducer(k, { type: 'SET_LETTER', char: 'м' });
+assert(k.selectedCell === null && wordFromTrack(k.board, k.track) === 'малд',
+  'picking the same letter keeps the drawn word');
 const reopened = gameReducer(k, { type: 'CLICK_CELL', index: 6 });
 const dragged = gameReducer(reopened, { type: 'DRAG_START', index: 6 });
 assert(dragged.phase === 'word' && dragged.selectedCell === null && dragged.track.length === 1,

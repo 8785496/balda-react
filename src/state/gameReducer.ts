@@ -17,9 +17,9 @@
 //     (the floating keyboard sits at the cell, so the field around it stays clickable),
 //     and a click on the selected cell itself dismisses the keyboard;
 //   - the added letter can be changed: a click on its cell in the word phase reopens
-//     the keyboard, the picked letter replaces the pending one (the track is kept, so
-//     another letter can be tried on the same path), and any cell click — or a drag,
-//     or Escape — closes the reopened panel;
+//     the keyboard, the picked letter replaces the pending one (a changed letter
+//     resets the drawn track), and any cell click — or a drag, or Escape — closes
+//     the reopened panel;
 //   - an empty cell with no letters around it cannot be chosen for the new letter
 //     (the original allowed any empty cell, and an isolated letter could enter no word).
 import { SIZE, START_ROW, MAX_WORDS } from '../game/constants';
@@ -157,8 +157,8 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'SET_LETTER': {
       // the letter phase places the pending letter; in the word phase the
       // keyboard is reopened on the added letter (selectedCell === numChar)
-      // and the pick replaces it — the drawn track stays, so another letter
-      // can be tried on the same path, and the stale error clears
+      // and the pick replaces it — a changed letter resets the drawn track,
+      // and the stale error clears
       if (state.phase !== 'letter' && state.phase !== 'word')
         return state;
       if (state.selectedCell === null)
@@ -166,12 +166,16 @@ export function gameReducer(state: GameState, action: Action): GameState {
       if (alphabetFor(state.lang).indexOf(action.char) === -1)
         return state;
       const board = state.board.slice();
+      // a changed letter invalidates the drawn word (it spells something else
+      // now), so the track resets; picking the same letter changes nothing
+      const letterChanged = state.phase === 'word' && board[state.selectedCell] !== action.char;
       board[state.selectedCell] = action.char;
       return {
         ...state,
         board,
         numChar: state.selectedCell, // highlighted in red
         selectedCell: null,
+        track: letterChanged ? [] : state.track,
         phase: 'word',
         error: null,
       };
