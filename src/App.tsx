@@ -14,7 +14,7 @@ import { MAX_WORDS } from './game/constants';
 import { findBestMove } from './game/finder';
 import { gameReducer, freshGame } from './state/gameReducer';
 import { wordFromTrack } from './state/helpers';
-import { loadTheme, saveTheme, type ThemeId } from './theme';
+import { chromeColorFor, loadTheme, saveTheme, type ThemeId } from './theme';
 import { loadLang, saveLang } from './lang';
 import { loadDifficulty, saveDifficulty, type Difficulty } from './difficulty';
 import { TEXTS } from './i18n';
@@ -59,9 +59,15 @@ export default function App() {
     saveDifficulty(difficulty);
   }, [difficulty]);
 
-  // the color theme: data-theme on <html> switches the CSS variable set
+  // the color theme: data-theme on <html> switches the CSS variable set, and
+  // meta theme-color re-points the browser/OS chrome above the page — the
+  // status bar of the installed standalone app on Android follows it live,
+  // which the manifest's static theme_color alone cannot do
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', chromeColorFor(theme));
     saveTheme(theme);
   }, [theme]);
 
