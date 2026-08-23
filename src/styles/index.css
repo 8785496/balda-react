@@ -585,7 +585,11 @@ a:hover {
 /* an english word opens the translation popup, so its trigger is a button
    (an action, not navigation): the quiet chrome of the panel-close buttons
    over the .status-word look — the word reads and lands exactly where the
-   link did */
+   link did. The only inline button in the app: the global button rule's
+   vertical-align: middle would center it on the line instead of sitting it
+   on the text baseline, dropping the word below «Компьютер:» and pushing
+   the whole status row off — reset to baseline, with the page's line-height
+   (a button's UA default is normal) */
 button.status-word {
   min-width: 0;
   margin: 0;
@@ -594,8 +598,10 @@ button.status-word {
   background: transparent;
   box-shadow: none;
   font-size: inherit;
+  line-height: inherit;
   font-weight: 700;
   color: var(--bot-color);
+  vertical-align: baseline;
 }
 
 button.status-word:hover,
