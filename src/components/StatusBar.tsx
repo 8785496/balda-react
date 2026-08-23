@@ -4,8 +4,10 @@
 // word being built is gone and the move has not arrived yet).
 // The computer's played word renders as label + word + points, where the word
 // and its points are set off by style (.status-word/.word-len) instead of
-// quotes and parentheses; the word is an outbound link (wordUrl from
-// ScorePanel — the same place the score-list words point to). Validation
+// quotes and parentheses; the word is tappable like the score-list words —
+// a russian word follows the outbound link (wordUrl from ScorePanel), an
+// english one opens the translation popup (onWordClick → WordPopup).
+// Validation
 // errors render as a toast: a warning-icon pill (role=alert) fixed to the
 // top of the screen, hidden again after a few seconds — it takes no
 // layout space, so the status bar is a single row and the board sits right
@@ -24,11 +26,13 @@ interface StatusBarProps {
   error: GameError | null;
   status: Status | null;
   phase: Phase;
-  lang: Lang; // the game's language — decides where the bot's word links to
+  lang: Lang; // the game's language — decides where the bot's word leads
   texts: Texts;
+  // an english bot word opens its translation popup; russian words never call it
+  onWordClick: (word: string) => void;
 }
 
-export function StatusBar({ result, error, status, phase, lang, texts }: StatusBarProps) {
+export function StatusBar({ result, error, status, phase, lang, texts, onWordClick }: StatusBarProps) {
   const botThinking = phase === 'bot';
   // the toast hides itself after a few seconds even though the error stays in
   // the game state until the player's next action clears it; every failed
@@ -47,14 +51,20 @@ export function StatusBar({ result, error, status, phase, lang, texts }: StatusB
     line = status.kind === 'botMove' ? (
       <>
         {texts.statusBotMove}{' '}
-        <a
-          className="status-word"
-          href={wordUrl(lang, status.word)}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {status.word}
-        </a>
+        {lang === 'en' ? (
+          <button type="button" className="status-word" onClick={() => onWordClick(status.word)}>
+            {status.word}
+          </button>
+        ) : (
+          <a
+            className="status-word"
+            href={wordUrl(lang, status.word)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {status.word}
+          </a>
+        )}
         <span className="word-len">+{status.word.length}</span>
       </>
     ) : (

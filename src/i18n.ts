@@ -45,6 +45,12 @@ export interface Texts {
   error(err: GameError): string;
   statusBotMove: string; // the bot's-move label; the word and points follow it, styled (StatusBar)
   statusBotSkip: string;
+  word: {
+    noun: string;                // the noun marker beside the popup's word
+    noTranslation: string;       // no bundled translation for the word
+    yandex: string;              // the Yandex Translate link text (the popup)
+    close: string;               // the popup close button
+  };
   rules: {
     title: string;               // the footer "?" button and the modal heading
     items: string[];             // the brief rules, a bullet each
@@ -104,6 +110,12 @@ export const TEXTS: Record<Lang, Texts> = {
     },
     statusBotMove: 'Компьютер:',
     statusBotSkip: 'У компьютера нет хода — ваш ход',
+    word: {
+      noun: 'сущ.',
+      noTranslation: 'Перевода нет в словаре',
+      yandex: 'Яндекс Переводчик',
+      close: 'Закрыть',
+    },
     rules: {
       title: 'Правила игры',
       items: [
@@ -169,6 +181,12 @@ export const TEXTS: Record<Lang, Texts> = {
     },
     statusBotMove: 'Computer:',
     statusBotSkip: 'The computer has no move — your turn',
+    word: {
+      noun: 'noun',
+      noTranslation: 'No translation in the dictionary',
+      yandex: 'Yandex Translate',
+      close: 'Close',
+    },
     rules: {
       title: 'Game rules',
       items: [

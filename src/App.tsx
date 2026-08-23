@@ -9,6 +9,7 @@ import { RulesModal } from './components/RulesModal';
 import { ScorePanel } from './components/ScorePanel';
 import { StatusBar } from './components/StatusBar';
 import { ThemePicker } from './components/ThemePicker';
+import { WordPopup } from './components/WordPopup';
 import { alphabetFor, type Lang } from './game/lang';
 import { MAX_WORDS } from './game/constants';
 import { findBestMove } from './game/finder';
@@ -43,6 +44,8 @@ export default function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>(loadDifficulty);
   const [theme, setTheme] = useState<ThemeId>(loadTheme);
   const [rulesOpen, setRulesOpen] = useState(false);
+  // an english word tapped for its translation (WordPopup); null = closed
+  const [wordPopup, setWordPopup] = useState<string | null>(null);
   const texts = TEXTS[lang];
   // the board grid element: the floating letter keyboard anchors to its cells
   const boardRef = useRef<HTMLDivElement | null>(null);
@@ -111,14 +114,19 @@ export default function App() {
 
   // physical keyboard: a letter (ё → е) while the letter keyboard is open (the
   // letter phase, or the word phase with the panel reopened on the added
-  // letter); Escape closes the open keyboard, cancels the move, or closes the
-  // rules modal. The word itself is drawn with the mouse/touch and submitted
-  // by the drag release.
+  // letter); Escape closes the open keyboard, cancels the move, closes the
+  // rules modal or the word popup. The word itself is drawn with the
+  // mouse/touch and submitted by the drag release.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (rulesOpen) {
         if (e.key === 'Escape')
           setRulesOpen(false);
+        return;
+      }
+      if (wordPopup !== null) {
+        if (e.key === 'Escape')
+          setWordPopup(null);
         return;
       }
       const keyboardOpen = state.selectedCell !== null &&
@@ -142,7 +150,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.phase, state.selectedCell, state.lang, rulesOpen]);
+  }, [state.phase, state.selectedCell, state.lang, rulesOpen, wordPopup]);
 
   // switching the language starts a new game in it (the confirmation for a
   // game in progress lives in the picker itself)
@@ -160,6 +168,7 @@ export default function App() {
         phase={state.phase}
         lang={state.lang}
         texts={texts}
+        onWordClick={setWordPopup}
       />
       <div className="board-wrap">
         <Board
@@ -208,6 +217,7 @@ export default function App() {
         botWords={state.botWords}
         lang={state.lang}
         texts={texts}
+        onWordClick={setWordPopup}
       />
       {/* two rows: the game settings (language, difficulty), then the help
           button and the theme swatches — on phones the footer is pinned to
@@ -240,6 +250,9 @@ export default function App() {
         </div>
       </footer>
       {rulesOpen && <RulesModal texts={texts} onClose={() => setRulesOpen(false)} />}
+      {wordPopup !== null && (
+        <WordPopup word={wordPopup} texts={texts} onClose={() => setWordPopup(null)} />
+      )}
     </div>
   );
 }

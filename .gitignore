@@ -3,3 +3,4 @@ dist
 .tmp-check
 .design-shots/
 .zcode
+.tmp-translate

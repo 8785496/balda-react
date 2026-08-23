@@ -572,10 +572,34 @@ a:hover {
 }
 
 /* the computer's played word in the status line: bold and colored instead
-   of quoted; it is a link (like the score-list words) — the class keeps the
+   of quoted; it is tappable like the score-list words (a link, or the
+   translation popup's trigger for an english word) — the class keeps the
    bot color over the generic link color, the hover underline comes free */
 .status-word {
   font-weight: 700;
+  color: var(--bot-color);
+}
+
+/* an english word opens the translation popup, so its trigger is a button
+   (an action, not navigation): the quiet chrome of the panel-close buttons
+   over the .status-word look — the word reads and lands exactly where the
+   link did */
+button.status-word {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  font-size: inherit;
+  font-weight: 700;
+  color: var(--bot-color);
+}
+
+button.status-word:hover,
+button.status-word:active {
+  border-color: transparent;
+  background: transparent;
   color: var(--bot-color);
 }
 
@@ -863,7 +887,10 @@ button:disabled {
 .keyboard-close:focus-visible,
 .rules-icon:focus-visible,
 .seg-btn:focus-visible,
-.theme-swatch:focus-visible {
+.theme-swatch:focus-visible,
+.word-link:focus-visible,
+button.status-word:focus-visible,
+.word-close:focus-visible {
   outline: 2px solid var(--focus-color);
   outline-offset: 1px;
 }
@@ -950,6 +977,32 @@ button:disabled {
    the 44px tap target */
 .words > a {
   display: block;
+}
+
+/* an english word's row is the popup's trigger — a button styled to sit
+   exactly where the outbound link sits (the quiet chrome of the panel-close
+   buttons, the link's own color), so both languages' columns read the same */
+.words > button.word-link {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  font-size: inherit;
+  font-weight: inherit;
+  color: var(--link);
+  text-align: left;
+}
+
+.words > button.word-link:hover,
+.words > button.word-link:active {
+  border-color: transparent;
+  background: transparent;
+  color: var(--link);
+  text-decoration: underline;
 }
 
 /* --- letter keyboard: floating at the selected cell (the letter phase) --- */
@@ -1171,6 +1224,94 @@ button:disabled {
   font-size: 14px;
 }
 
+/* --- the word popup (an english word tapped for its translation) --- */
+
+/* a compact centered card over the same substrate as the rules modal — a
+   quick reference, not a document: the word, its transcription, the russian
+   equivalents and the outbound Yandex link */
+.word-card {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: 8px;
+  color: var(--card-color);
+  padding: 16px 22px 18px;
+  max-width: min(340px, 92%);
+  text-align: center;
+}
+
+/* the head centers the word; the ✕ sits absolutely in the row's right
+   corner (the letter keyboard's title-row pattern) */
+.word-head {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.word-title {
+  font-family: 'Play', sans-serif;
+  margin: 0;
+  font-size: 26px;
+}
+
+/* the noun marker beside the word: the english dictionary is nouns-only and
+   the translations below are the noun senses — a muted hint, not a label */
+.word-pos {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+}
+
+.word-ipa {
+  margin-top: 4px;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--card-color) 65%, transparent);
+}
+
+/* the russian equivalents, one per line — scanning beats comma soup */
+.word-ru {
+  margin: 14px 0 12px;
+  display: grid;
+  gap: 6px;
+  font-size: 16px;
+}
+
+/* no source had the word (rare lemmas): say so — the Yandex link below is
+   the way out */
+.word-none {
+  margin: 14px 0 12px;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+}
+
+.word-dict {
+  font-size: 14px;
+}
+
+/* the popup's ✕: the same quiet way out as the keyboard panel's close */
+.word-close {
+  position: absolute;
+  top: 50%;
+  right: -10px; /* pulls onto the card's padding, into the row's corner */
+  transform: translateY(-50%);
+  min-width: 0;
+  margin: 0;
+  padding: 2px 5px;
+  font-size: 13px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+  background: transparent;
+  border-color: transparent; /* keeps the base 1px box: no size jump on hover */
+  box-shadow: none;
+}
+
+.word-close:hover,
+.word-close:active {
+  border-color: transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--card-color) 85%, transparent);
+}
+
 /* --- narrow screens --- */
 
 @media (max-width: 400px) {
@@ -1244,6 +1385,12 @@ button:disabled {
     min-height: 0;
   }
 
+  /* breathing room before the list: the framed first row would otherwise
+     touch the header */
+  .score-head {
+    margin-bottom: 8px;
+  }
+
   .words {
     flex: 1 1 0;
     min-height: 2.5em;
@@ -1251,32 +1398,46 @@ button:disabled {
     overscroll-behavior: contain;
     scrollbar-width: none;        /* Firefox */
     -ms-overflow-style: none;     /* old Edge/IE */
+    /* the framed rows separate by gap, not by the plain text rhythm */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .words::-webkit-scrollbar {
     display: none;               /* Chrome/Safari */
   }
 
-  /* every word row is a comfortable tap target: the link is the row itself —
-     the full column's width and 36px tall (below the 44px HIG minimum, a
-     deliberate trade for more rows visible: full-row width already keeps a
-     mis-tap from landing on the neighboring word), the word and its count
-     centered in it; the press tints the row, so it visibly registers before
-     the dictionary opens in its new tab */
-  .words > a {
+  /* every word row is a comfortable tap target: the row itself is the tap
+     target — the full column's width and 36px tall (below the 44px HIG
+     minimum, a deliberate trade for more rows visible: full-row width
+     already keeps a mis-tap from landing on the neighboring word), the word
+     and its count centered in it. The quiet hairline frame (~10% of the
+     text color, mixed per theme) reads the rows as tappable chips without
+     shouting; the press fills the row so it visibly registers before the
+     dictionary opens in its new tab or the translation popup shows. The
+     english rows are buttons — the border/background here restyle them the
+     same as the links (the full shorthand wins over the quiet reset above) */
+  .words > a,
+  .words > button.word-link {
     display: flex;
     align-items: center;
     min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+    border-radius: 8px;
+    text-decoration: none;
   }
 
   /* the computer's column mirrors: the row's content hangs off the right
      edge, as the plain inline text did */
-  .column-right .words > a {
+  .column-right .words > a,
+  .column-right .words > button.word-link {
     justify-content: flex-end;
   }
 
-  .words > a:active {
-    border-radius: 8px;
+  .words > a:active,
+  .words > button.word-link:active {
     background: color-mix(in srgb, var(--text) 10%, transparent);
   }
 
