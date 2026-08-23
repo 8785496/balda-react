@@ -1,9 +1,10 @@
-// Score columns: points and word lists for the player and the computer,
-// with the game progress counter above them. The column headers set the
-// points off by style (.score-num) instead of a "Name: 20" colon. The lists
-// render newest first, so the just-played word lands on top of its column;
-// the per-word letter count is set off by its style (.word-len), not by
-// parentheses. Every word is an outbound link (wordUrl below).
+// Score columns: points and word lists for the player and the computer. The
+// column headers set the points off by style (.score-num) instead of a
+// "Name: 20" colon. The lists render newest first, so the just-played word
+// lands on top of its column; the per-word letter count is set off by its
+// style (.word-len), not by parentheses. Every word is an outbound link
+// (wordUrl below). The game progress counter lives in the controls row
+// above (Controls.tsx).
 import type { Lang } from '../game/lang';
 import type { Texts } from '../i18n';
 
@@ -28,8 +29,6 @@ interface ScorePanelProps {
   playerWords: string[];
   botWords: string[];
   lang: Lang; // the game's language — decides where the words link to
-  usedCount: number; // words played so far, the starting word included
-  maxWords: number;
   texts: Texts;
 }
 
@@ -48,10 +47,9 @@ function renderWords(words: string[], lang: Lang) {
     ));
 }
 
-export function ScorePanel({ playerWords, botWords, lang, usedCount, maxWords, texts }: ScorePanelProps) {
+export function ScorePanel({ playerWords, botWords, lang, texts }: ScorePanelProps) {
   return (
     <div className="score-panel">
-      <div className="words-progress">{texts.score.progress(usedCount, maxWords)}</div>
       <div className="score-columns">
         <div className="column-left">
           <div className="score-head">

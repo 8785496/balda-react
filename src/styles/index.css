@@ -666,20 +666,34 @@ button:disabled {
 }
 
 /* the controls are a single row: «Заново» on the left, «Отмена» on the right
-   (while a move is being made) — the word is submitted by the drag release,
-   so there is no submit button. Space-between pins the buttons to the row's
-   edges whether or not «Отмена» is shown, so «Заново» never moves */
+   (while a move is being made), the game progress counter dead center — the
+   word is submitted by the drag release, so there is no submit button.
+   Space-between pins the buttons to the row's edges whether or not «Отмена»
+   is shown, so «Заново» never moves */
 .controls {
   display: flex;
   justify-content: center;
 }
 
 .controls-row {
+  position: relative; /* anchors the centered .words-progress */
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
   margin: 8px 0 2px;
+}
+
+/* «Слово 7 из 21» rides the controls row, out of the flow and dead center,
+   so the appearing/disappearing «Отмена» never shifts it; quiet-colored
+   like the score column names (.score-name) */
+.words-progress {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--text) 60%, transparent);
 }
 
 /* small text buttons: Отмена and the demoted Заново */
@@ -858,12 +872,6 @@ button:disabled {
 
 .score-panel {
   margin-top: 4px;
-}
-
-.words-progress {
-  text-align: center;
-  font-size: 14px;
-  margin-bottom: 4px;
 }
 
 .score-columns {

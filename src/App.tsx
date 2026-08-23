@@ -198,6 +198,8 @@ export default function App() {
       <Controls
         phase={state.phase}
         texts={texts}
+        usedCount={state.usedWords.length}
+        maxWords={MAX_WORDS}
         onRestart={() => dispatch({ type: 'NEW_GAME' })}
         onCancel={() => dispatch({ type: 'CANCEL_MOVE' })}
       />
@@ -205,8 +207,6 @@ export default function App() {
         playerWords={state.playerWords}
         botWords={state.botWords}
         lang={state.lang}
-        usedCount={state.usedWords.length}
-        maxWords={MAX_WORDS}
         texts={texts}
       />
       {/* two rows: the game settings (language, difficulty), then the help
