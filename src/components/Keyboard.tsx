@@ -1,15 +1,16 @@
 // Floating letter keyboard anchored to the selected cell: it opens right
 // next to the tapped cell — below it in the top half of the board, above in
 // the bottom half — so neither the cursor nor the thumb has to travel far,
-// and it follows the cell when the letter is re-targeted. On narrow (phone)
-// screens the CSS pins the panel to the viewport edges — the full screen
-// width — and only the vertical anchor is measured here. The board stays
-// interactive around the panel; the move is dropped by «Отмена» in the
-// controls row.
+// and it follows the cell when the letter is re-targeted. The letters sit in
+// three QWERTY/ЙЦУКЕН rows of equal-width keys (keyboardFor). On narrow
+// (phone) screens the CSS pins the panel to the viewport edges — the full
+// screen width — and only the vertical anchor is measured here, clamped
+// above the pinned settings footer. The board stays interactive around the
+// panel; the move is dropped by «Отмена» in the controls row.
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 import type { Texts } from '../i18n';
-import { alphabetFor, type Lang } from '../game/lang';
+import { keyboardFor, type Lang } from '../game/lang';
 import { SIZE } from '../game/constants';
 
 // kept in sync with the .keyboard-panel media query in styles/index.css
@@ -46,12 +47,15 @@ export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter }: Keyboar
       if (window.matchMedia(NARROW).matches) {
         // the full-width panel is fixed to the viewport (styles/index.css):
         // the vertical anchor is measured in viewport coordinates and
-        // clamped, so the panel never leaves the screen
+        // clamped, so the panel never leaves the screen — and stays clear of
+        // the settings footer pinned to the bottom edge there
         const rect = cell.getBoundingClientRect();
         const top = below
           ? rect.bottom + 8
           : rect.top - panel.offsetHeight - 8;
-        const maxTop = Math.max(4, window.innerHeight - panel.offsetHeight - 4);
+        const footer = document.querySelector('footer.footer');
+        const footerH = footer instanceof HTMLElement ? footer.offsetHeight : 0;
+        const maxTop = Math.max(4, window.innerHeight - panel.offsetHeight - footerH - 4);
         setPos({ top: Math.min(Math.max(top, 4), maxTop) });
         return;
       }
@@ -85,11 +89,15 @@ export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter }: Keyboar
       <div className="keyboard-title">
         <span>{texts.keyboard.title}</span>
       </div>
-      <div className="keyboard">
-        {alphabetFor(lang).split('').map((char) => (
-          <button key={char} type="button" onClick={() => onLetter(char)}>
-            {char}
-          </button>
+      <div className={'keyboard kb-' + lang}>
+        {keyboardFor(lang).map((row) => (
+          <div className="keyboard-row" key={row}>
+            {row.split('').map((char) => (
+              <button key={char} type="button" onClick={() => onLetter(char)}>
+                {char}
+              </button>
+            ))}
+          </div>
         ))}
       </div>
     </div>

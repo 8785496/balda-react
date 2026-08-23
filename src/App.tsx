@@ -191,28 +191,35 @@ export default function App() {
         maxWords={MAX_WORDS}
         texts={texts}
       />
+      {/* two rows: the game settings (language, difficulty), then the help
+          button and the theme swatches — on phones the footer is pinned to
+          the screen's bottom edge in this shape */}
       <footer className="footer">
-        <button
-          type="button"
-          className="rules-icon"
-          onClick={() => setRulesOpen(true)}
-          title={texts.rules.title}
-          aria-label={texts.rules.title}
-        >
-          ?
-        </button>
-        <LangPicker
-          value={lang}
-          hasProgress={state.usedWords.length > 1}
-          texts={texts}
-          onChange={switchLang}
-        />
-        <DifficultyPicker
-          value={difficulty}
-          texts={texts}
-          onChange={setDifficulty}
-        />
-        <ThemePicker value={theme} texts={texts} onChange={setTheme} />
+        <div className="footer-row">
+          <LangPicker
+            value={lang}
+            hasProgress={state.usedWords.length > 1}
+            texts={texts}
+            onChange={switchLang}
+          />
+          <DifficultyPicker
+            value={difficulty}
+            texts={texts}
+            onChange={setDifficulty}
+          />
+        </div>
+        <div className="footer-row">
+          <button
+            type="button"
+            className="rules-icon"
+            onClick={() => setRulesOpen(true)}
+            title={texts.rules.title}
+            aria-label={texts.rules.title}
+          >
+            ?
+          </button>
+          <ThemePicker value={theme} texts={texts} onChange={setTheme} />
+        </div>
       </footer>
       {rulesOpen && <RulesModal texts={texts} onClose={() => setRulesOpen(false)} />}
     </div>

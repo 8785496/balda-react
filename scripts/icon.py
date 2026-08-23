@@ -5,6 +5,8 @@
 #   public/favicon.svg          vector icon (Chrome/Firefox/Edge)
 #   public/favicon.ico          16/32/48/64 raster fallback (Safari, old browsers)
 #   public/apple-touch-icon.png 180x180, full-bleed square (iOS rounds it itself)
+#   public/icon-192.png         full-bleed 192x192, the web app manifest
+#   public/icon-512.png         full-bleed 512x512, the web app manifest
 #
 # Run:  python scripts/icon.py      (requires Pillow: pip install Pillow)
 #
@@ -211,6 +213,8 @@ def main():
     render_png(512).save(os.path.join(OUT_DIR, "favicon.ico"),
                          sizes=[(16, 16), (32, 32), (48, 48), (64, 64)])
     render_png(180, full_bleed=True).convert("RGB").save(os.path.join(OUT_DIR, "apple-touch-icon.png"))
+    render_png(192, full_bleed=True).convert("RGB").save(os.path.join(OUT_DIR, "icon-192.png"))
+    render_png(512, full_bleed=True).convert("RGB").save(os.path.join(OUT_DIR, "icon-512.png"))
     print("icons written to", OUT_DIR)
 
 

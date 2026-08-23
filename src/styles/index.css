@@ -64,6 +64,9 @@
   --card-bg: #ffffff;
   --card-border: 1px solid #646464;
   --card-color: #323232;
+  /* the phone footer pinned to the screen's bottom edge */
+  --footer-bg: rgba(247, 244, 236, 0.94);
+  --footer-border: rgba(0, 0, 0, 0.18);
 
   --player-color: #000000;
   --bot-color: #000000;
@@ -120,6 +123,8 @@
   --card-bg: #fdf4dd;
   --card-border: 1px solid #a9713d;
   --card-color: #3a2c18;
+  --footer-bg: rgba(231, 217, 189, 0.94);
+  --footer-border: rgba(107, 67, 31, 0.4);
 
   --player-color: #7c4a12;
   --bot-color: #2e6b45;
@@ -176,6 +181,8 @@
   --card-bg: #ffffff;
   --card-border: 2px solid #1a1a1a;
   --card-color: #1a1a1a;
+  --footer-bg: rgba(255, 255, 255, 0.95);
+  --footer-border: #dcdcdc;
 
   --player-color: #1f54d0;
   --bot-color: #1a1a1a;
@@ -233,6 +240,8 @@
   --card-bg: #232a35;
   --card-border: 1px solid #3d4959;
   --card-color: #e6e9f0;
+  --footer-bg: rgba(13, 17, 23, 0.92);
+  --footer-border: #2a3340;
 
   --player-color: #4fd1e0;
   --bot-color: #f0b24a;
@@ -291,6 +300,8 @@
   --card-bg: #241b45;
   --card-border: 1px solid #6d53c9;
   --card-color: #ece7ff;
+  --footer-bg: rgba(13, 10, 31, 0.88);
+  --footer-border: rgba(150, 120, 255, 0.35);
 
   --player-color: #0ed392;
   --bot-color: #ff6ad5;
@@ -312,6 +323,18 @@ body {
   padding: 16px;
   /* fill the viewport even when the content is shorter; grows with content */
   min-height: 100vh;
+  /* a full-height flex column through #root and .context, so the footer can
+     sit at the bottom of the page at any width */
+  display: flex;
+  flex-direction: column;
+}
+
+/* #root would otherwise be a plain auto-height block and cut the column,
+   leaving the footer floating mid-page when the content is short */
+#root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
@@ -324,9 +347,15 @@ a:hover {
 }
 
 .context {
+  /* width 100% (not auto) keeps the flex item from shrinking to fit-content;
+     its auto margins only center the capped column */
+  width: 100%;
   max-width: 520px;
   margin-left: auto;
   margin-right: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* --- footer switchers: the language and difficulty segmented controls --- */
@@ -388,7 +417,11 @@ a:hover {
 
 /* --- theme picker --- */
 
-/* --- footer: the rules link and the switchers (language, difficulty, theme) --- */
+/* --- footer: the rules link and the switchers (language, difficulty, theme).
+   Two rows — the game settings (language, difficulty), then the help button
+   and the theme swatches; wide screens keep them side by side on one line,
+   phones pin the whole footer to the bottom edge (the phones media query at
+   the end of the file) --- */
 
 .footer {
   display: flex;
@@ -396,7 +429,18 @@ a:hover {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px 14px;
-  margin-top: 14px;
+  /* auto pushes the footer to the bottom of the full-height column — the
+     bottom of the page — instead of right after the content; padding keeps
+     the gap (phones override it: the footer is fixed there) */
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.footer-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px 14px;
 }
 
 /* a round "?" button opening the rules modal (the former external link) */
@@ -850,7 +894,7 @@ button:disabled {
 .keyboard-panel {
   position: absolute;
   z-index: 30; /* above the cells, below the end-of-game overlay (1000) */
-  width: min(92vw, 364px);
+  width: min(92vw, 420px);
   margin: 0;
   padding: 8px 8px 6px;
   display: flex;
@@ -870,18 +914,37 @@ button:disabled {
   font-weight: 600;
 }
 
+/* three keyboard rows (QWERTY / ЙЦУКЕН), not a wrapped cloud. The block
+   stretches to the panel's inner width, so the key width calc below resolves
+   against a definite size — a centered fit-content box would be circular */
 .keyboard {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 5px 4px;
+  align-self: stretch;
+}
+
+.keyboard-row {
+  display: flex;
   justify-content: center;
+  gap: 4px;
 }
 
 .keyboard button {
   min-width: 0;
-  width: clamp(30px, 9vw, 38px);
-  margin: 2px;
-  font-size: clamp(16px, 4vw, 20px);
-  padding: 6px 0;
+  margin: 0;
+  padding: 7px 0;
+  font-size: clamp(13px, 3.4vw, 17px);
+}
+
+/* every key the same width: the longest row (12 keys ru, 10 en) spans the
+   panel exactly, the shorter rows center under it */
+.keyboard.kb-ru button {
+  width: calc((100% - 44px) / 12);
+}
+
+.keyboard.kb-en button {
+  width: calc((100% - 36px) / 10);
 }
 
 @keyframes keyboard-in {
@@ -900,7 +963,7 @@ button:disabled {
 /* phones (the same 560px the Keyboard component matches): the panel spans
    the full screen width — pinned to the viewport edges, edge to edge; the
    component sets only the vertical anchor (inline top, viewport coords) and
-   leaves left alone. The letters stretch to fill the wide rows */
+   leaves left alone */
 @media (max-width: 560px) {
   .keyboard-panel {
     position: fixed;
@@ -908,11 +971,6 @@ button:disabled {
     right: 0;
     width: auto;
     border-radius: 0;
-  }
-
-  .keyboard button {
-    flex: 1 1 clamp(30px, 9vw, 38px);
-    max-width: 52px;
   }
 }
 
@@ -1023,5 +1081,97 @@ button:disabled {
 
   .score-columns {
     gap: 8px;
+  }
+}
+
+/* --- phones (the same 560px as the Keyboard component): an app shell — the
+   page itself never scrolls. The switchers footer is pinned to the bottom
+   edge in its two rows; what scrolls is the word lists, inside their score
+   columns and without a visible scrollbar (the finger is the indicator). The
+   board caps its size by the viewport height left over, so short screens
+   trade board pixels for list room instead of overflowing --- */
+@media (max-width: 560px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    height: 100vh;
+    height: 100dvh; /* follows the browser UI bars instead of being cut by them */
+    overscroll-behavior: none;
+    /* the bottom reserve keeps the in-flow tail (the word lists) clear of
+       the pinned footer stacked above it */
+    padding: 8px 8px calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* the column must be allowed to shrink below its content — the word lists
+     scroll inside, nothing may overflow the fixed-height shell */
+  #root {
+    min-height: 0;
+  }
+
+  .context {
+    min-height: 0;
+  }
+
+  /* everything but the board is fixed chrome (the status bar's reserved
+     slot, the controls row, the score headers, the footer), so ~300px of
+     viewport height is the board's guaranteed share */
+  .board {
+    max-width: calc(100vh - 300px);
+    max-width: calc(100dvh - 300px);
+    margin: 0 auto;
+  }
+
+  .score-panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 8px;
+  }
+
+  .score-columns {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .column-left,
+  .column-right {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .words {
+    flex: 1 1 0;
+    min-height: 2.5em;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* old Edge/IE */
+  }
+
+  .words::-webkit-scrollbar {
+    display: none;               /* Chrome/Safari */
+  }
+
+  .footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 500; /* above the letter keyboard (30), below the overlays (1000) */
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    background: var(--footer-bg);
+    border-top: 1px solid var(--footer-border);
+    box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.12);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 }

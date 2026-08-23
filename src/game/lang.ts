@@ -11,6 +11,9 @@ export type Lang = 'ru' | 'en';
 
 interface LangConf {
   alphabet: string;
+  // the letter keyboard's rows: the same letters as the alphabet, in the
+  // familiar typing order (ЙЦУКЕН / QWERTY, no "ё") — every letter exactly once
+  keyboard: string[];
   words: string[];
 }
 
@@ -18,16 +21,22 @@ interface LangConf {
 const LANG_CONF: Record<Lang, LangConf> = {
   ru: {
     alphabet: 'абвгдежзийклмнопрстуфхцчшщъыьэюя',
+    keyboard: ['йцукенгшщзхъ', 'фывапролджэ', 'ячсмитьбю'],
     words: dictionaryRu,
   },
   en: {
     alphabet: 'abcdefghijklmnopqrstuvwxyz',
+    keyboard: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'],
     words: dictionaryEn,
   },
 };
 
 export function alphabetFor(lang: Lang): string {
   return LANG_CONF[lang].alphabet;
+}
+
+export function keyboardFor(lang: Lang): string[] {
+  return LANG_CONF[lang].keyboard;
 }
 
 // the starting word is drawn at random from the dictionary words that fill
