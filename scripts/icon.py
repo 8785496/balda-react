@@ -1,5 +1,5 @@
 # Regenerates the site icon set in public/ from a single design:
-# a 5x5 neon board with the starting word "балда" in the middle row and the
+# a 5x5 wood board with the starting word "балда" in the middle row and the
 # added letter "ф" above it (the classic first move: балда -> фалда).
 #
 #   public/favicon.svg          vector icon (Chrome/Firefox/Edge)
@@ -10,26 +10,28 @@
 #
 # Run:  python scripts/icon.py      (requires Pillow: pip install Pillow)
 #
-# All geometry is in viewBox units (VB x VB); colors mirror the neon theme
+# All geometry is in viewBox units (VB x VB); colors mirror the wood theme
 # block in src/styles/index.css.
 
 import os
 
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 
 VB = 112  # SVG viewBox / design-grid size
 PAD, CELL, GAP = 16, 12, 5
 STEP = CELL + GAP
-RX_CELL, RX_BOARD = 2.8, 18
+RX_CELL, RX_BOARD = 2, 14
 
-BG_TOP, BG_BOT = (58, 37, 120), (13, 10, 31)  # neon page bg, top brightened
-BORDER = (150, 120, 255, 115)  # neon board-frame border at 45% opacity
+# the icon is the board frame itself: the wood 135deg gradient, flattened to
+# a vertical two-stop approximation
+BG_TOP, BG_BOT = (184, 132, 78), (138, 90, 43)
+BORDER = (107, 67, 31, 255)  # wood board-frame border, solid
 
-EMPTY_FILL, EMPTY_STROKE = (255, 255, 255, 23), (150, 120, 255, 51)
-NEUTRAL_FILL, NEUTRAL_STROKE = (255, 255, 255, 36), (177, 157, 255, 166)
-SEL_TOP, SEL_BOT, SEL_STROKE, SEL_TEXT = (61, 252, 176), (14, 211, 146), (10, 174, 124), (3, 46, 30)
-ADD_TOP, ADD_BOT, ADD_STROKE, ADD_TEXT = (255, 106, 213), (230, 33, 173), (180, 20, 139), (255, 255, 255)
-TEXT_NEUTRAL = (242, 238, 255)
+EMPTY_FILL, EMPTY_STROKE = (63, 38, 12, 71), (63, 38, 12, 89)  # 0.28 / 0.35
+TILE_TOP, TILE_BOT, TILE_STROKE = (253, 244, 221), (240, 223, 180), (200, 167, 101)
+SEL_TOP, SEL_BOT, SEL_STROKE, SEL_TEXT = (255, 215, 110), (240, 183, 58), (176, 125, 36), (76, 49, 19)
+ADD_TOP, ADD_BOT, ADD_STROKE, ADD_TEXT = (63, 156, 92), (46, 125, 70), (31, 92, 49), (253, 244, 221)
+TEXT_NEUTRAL = (76, 49, 19)
 
 ADD_CELL = (1, 1)  # "ф" above the second letter of the starting word
 PATH_CELLS = [(2, 1), (2, 2), (2, 3), (2, 4)]  # the dragged word: а-л-д-а
@@ -55,34 +57,26 @@ def build_svg():
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {VB} {VB}">',
         "<defs>",
         '<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">'
-        '<stop offset="0" stop-color="#3a2570"/><stop offset="1" stop-color="#0d0a1f"/></linearGradient>',
+        '<stop offset="0" stop-color="#b8844e"/><stop offset="1" stop-color="#8a5a2b"/></linearGradient>',
+        '<linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">'
+        f'<stop offset="0" stop-color="{hex3(TILE_TOP)}"/><stop offset="1" stop-color="{hex3(TILE_BOT)}"/></linearGradient>',
         '<linearGradient id="sel" x1="0" y1="0" x2="0" y2="1">'
         f'<stop offset="0" stop-color="{hex3(SEL_TOP)}"/><stop offset="1" stop-color="{hex3(SEL_BOT)}"/></linearGradient>',
         '<linearGradient id="add" x1="0" y1="0" x2="0" y2="1">'
         f'<stop offset="0" stop-color="{hex3(ADD_TOP)}"/><stop offset="1" stop-color="{hex3(ADD_BOT)}"/></linearGradient>',
-        '<filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="3"/></filter>',
         "</defs>",
         f'<rect x="1" y="1" width="{VB - 2}" height="{VB - 2}" rx="{RX_BOARD}" fill="url(#bg)" '
-        f'stroke="{hex3(BORDER)}" stroke-opacity="0.45" stroke-width="2"/>',
-        '<g fill="#ffffff" fill-opacity="0.09" stroke="#9678ff" stroke-opacity="0.2" stroke-width="1">',
+        f'stroke="{hex3(BORDER)}" stroke-width="2"/>',
+        '<g fill="#3f260c" fill-opacity="0.28" stroke="#3f260c" stroke-opacity="0.35" stroke-width="1">',
     ]
     for r, c in EMPTY_CELLS:
         x, y = cell_xy((r, c))
         lines.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" rx="{RX_CELL}"/>')
     lines.append("</g>")
 
-    # soft neon halos under the colored cells
-    lines.append('<g filter="url(#glow)" opacity="0.55">')
-    for rc in PATH_CELLS:
-        x, y = cell_xy(rc)
-        lines.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" rx="{RX_CELL}" fill="{hex3(SEL_BOT)}"/>')
-    x, y = cell_xy(ADD_CELL)
-    lines.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" rx="{RX_CELL}" fill="{hex3(ADD_BOT)}"/>')
-    lines.append("</g>")
-
     x, y = cell_xy((2, 0))  # "б" — the letter not taken into the word
     lines.append(f'<rect x="{x}" y="{y}" width="{CELL}" height="{CELL}" rx="{RX_CELL}" '
-                 'fill="#ffffff" fill-opacity="0.14" stroke="#b19dff" stroke-opacity="0.65" stroke-width="1"/>')
+                 f'fill="url(#tile)" stroke="{hex3(TILE_STROKE)}" stroke-width="1"/>')
 
     lines.append('<g fill="url(#sel)" stroke="%s" stroke-width="1">' % hex3(SEL_STROKE))
     for rc in PATH_CELLS:
@@ -143,13 +137,6 @@ def grad_rounded_rect(img, box, radius, top, bot, stroke=None, stroke_w=1):
     img.alpha_composite(tile, (x0, y0))
 
 
-def rounded_tile(w, h, radius, fill=None, outline=None, width=1):
-    tile = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    ImageDraw.Draw(tile).rounded_rectangle([0, 0, w - 1, h - 1], radius=radius,
-                                           fill=fill, outline=outline, width=width)
-    return tile
-
-
 def render_png(size, full_bleed=False, ss=4):
     s = size * ss
     u = s / VB  # design unit -> px
@@ -168,7 +155,7 @@ def render_png(size, full_bleed=False, ss=4):
     # (empty cells, frame border) goes onto a layer that is alpha-composited.
     layer = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     ld = ImageDraw.Draw(layer)
-    for rc in EMPTY_CELLS:  # faint empty cells
+    for rc in EMPTY_CELLS:  # recessed empty cells
         ld.rounded_rectangle(cbox(rc), radius=round(RX_CELL * u), fill=EMPTY_FILL,
                              outline=EMPTY_STROKE, width=max(1, round(u)))
     if not full_bleed:
@@ -176,19 +163,9 @@ def render_png(size, full_bleed=False, ss=4):
                              radius=radius, outline=BORDER, width=max(1, round(2 * u)))
     img = Image.alpha_composite(img, layer)
 
-    glow = Image.new("RGBA", (s, s), (0, 0, 0, 0))  # neon halos
-    gd = ImageDraw.Draw(glow)
-    for rc in PATH_CELLS:
-        gd.rounded_rectangle(cbox(rc), radius=round(RX_CELL * u), fill=SEL_BOT + (255,))
-    gd.rounded_rectangle(cbox(ADD_CELL), radius=round(RX_CELL * u), fill=ADD_BOT + (255,))
-    glow = glow.filter(ImageFilter.GaussianBlur(round(3 * u)))
-    glow.putalpha(glow.getchannel("A").point(lambda a: round(a * 0.55)))
-    img = Image.alpha_composite(img, glow)
-
-    x0, y0, x1, y1 = cbox((2, 0))  # "б" — a translucent glass cell, not a gradient
-    img.alpha_composite(rounded_tile(x1 - x0 + 1, y1 - y0 + 1, round(RX_CELL * u),
-                                     fill=NEUTRAL_FILL, outline=NEUTRAL_STROKE,
-                                     width=max(1, round(u))), (x0, y0))
+    # "б" — a plain cream tile
+    grad_rounded_rect(img, cbox((2, 0)), round(RX_CELL * u), TILE_TOP, TILE_BOT,
+                      stroke=TILE_STROKE + (255,), stroke_w=max(1, round(u)))
     d = ImageDraw.Draw(img)
     for rc in PATH_CELLS:
         grad_rounded_rect(img, cbox(rc), round(RX_CELL * u), SEL_TOP, SEL_BOT,

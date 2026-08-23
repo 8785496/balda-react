@@ -15,9 +15,8 @@ export const RULES_WIKI_URL =
 
 export interface Texts {
   title: string;                 // document.title
-  turnPlayer: string;            // the turn badge
-  turnBot: string;
-  botThinking: string;
+  turnPlayer: string;            // the turn badge on the player's side
+  botThinking: string;           // the badge while the computer is thinking
   boardAria: string;
   controls: {
     cancel: string;              // «Отмена»
@@ -61,9 +60,8 @@ export interface Texts {
 export const TEXTS: Record<Lang, Texts> = {
   ru: {
     title: 'Балда (игра)',
-    turnPlayer: 'Ход: игрок',
-    turnBot: 'Ход: компьютер',
-    botThinking: 'Компьютер думает…',
+    turnPlayer: 'Ваш ход',
+    botThinking: 'Думаю…',
     boardAria: 'Игровое поле',
     controls: {
       cancel: 'Отмена',
@@ -126,9 +124,8 @@ export const TEXTS: Record<Lang, Texts> = {
   },
   en: {
     title: 'Balda (game)',
-    turnPlayer: 'Turn: player',
-    turnBot: 'Turn: computer',
-    botThinking: 'Computer is thinking…',
+    turnPlayer: 'Your turn',
+    botThinking: 'Thinking…',
     boardAria: 'Game board',
     controls: {
       cancel: 'Cancel',

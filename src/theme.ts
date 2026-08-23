@@ -3,9 +3,9 @@
 // localStorage persistence. The display names are per-language (i18n.ts).
 
 export const THEMES = [
-  { id: 'neon', swatch: '#7c3aed' },
-  { id: 'night', swatch: '#262e3a' },
   { id: 'wood', swatch: '#a9713d' },
+  { id: 'night', swatch: '#262e3a' },
+  { id: 'neon', swatch: '#7c3aed' },
   { id: 'paper', swatch: '#ffffff' },
 ] as const;
 

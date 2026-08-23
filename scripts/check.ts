@@ -78,11 +78,15 @@ if (move !== null) {
 }
 
 // --- difficulty: which of the found moves the bot plays ---
-// easy — words of at most 3 letters, medium — at most 4, hard — the longest
-// (at most 5 while the player is losing, checked below). easy/medium pick
-// randomly within their cap, so each difficulty runs several times: every
-// pick must stay within the cap (when no move fits it, the fallback — the
-// shortest word — is deterministic and gives one and the same length).
+// easy — 3-letter words, medium — 4-letter, hard — the longest. easy/medium
+// pick randomly among the words of exactly their length — the nearest shorter
+// length when the board offers none — so each difficulty runs several times:
+// every pick must be exactly the level's length (both fallbacks — the nearest
+// shorter length and, when nothing fits, the shortest word — are deterministic
+// and give one and the same length). The caps also ease off with the scores —
+// hard caps its longest word at 5 letters when it would put the computer's
+// score above the player's, easy/medium step one letter down when their word
+// would — checked below.
 
 const RUNS = 15;
 const maxLenByDiff: Record<string, number> = {};
@@ -105,18 +109,18 @@ for (const d of ['easy', 'medium', 'hard'] as const) {
   assert(lengths.length === RUNS, 'difficulty ' + d + ': a move is found on the starting position');
   if (lengths.length > 0) {
     maxLenByDiff[d] = Math.max(...lengths);
-    const withinCap = lengths.every((l) => l <= cap);
+    const exactLen = d === 'hard' || lengths.every((l) => l === cap);
     const oneFallback = lengths.every((l) => l === lengths[0]);
-    assert(withinCap || oneFallback,
-      'difficulty ' + d + ': word lengths ' + lengths.join('/') + ' respect the cap of ' +
-      (cap === Infinity ? 'no cap' : cap + ' letters'));
+    assert(exactLen || oneFallback,
+      'difficulty ' + d + ': word lengths ' + lengths.join('/') + ' are exactly the level length of ' +
+      (cap === Infinity ? 'the longest word' : cap + ' letters'));
   }
 }
 
 // hard with the player losing: no word longer than 5 letters
 const mercyLens: number[] = [];
 for (let run = 0; run < RUNS; run++) {
-  const m = findBestMove(board, [START_WORD], 'ru', 'hard', true);
+  const m = findBestMove(board, [START_WORD], 'ru', 'hard', { player: 0, bot: 5 });
   if (m === null)
     break;
   mercyLens.push(m.word.length);
@@ -124,6 +128,26 @@ for (let run = 0; run < RUNS; run++) {
 assert(mercyLens.length === RUNS, 'hard with the player losing: a move is found on the starting position');
 assert(mercyLens.every((l) => l <= 5),
   'hard with the player losing: word lengths ' + mercyLens.join('/') + ' are at most 5 letters');
+
+// easy/medium with a cap-length word about to put the computer's score above
+// the player's: the cap eases off by one letter (easy 3→2, medium 4→3)
+for (const d of ['easy', 'medium'] as const) {
+  const base = d === 'easy' ? 3 : 4;
+  const easeLens: number[] = [];
+  for (let run = 0; run < RUNS; run++) {
+    // bot + base > player with a one-letter gap left, so the cap must drop
+    const m = findBestMove(board, [START_WORD], 'ru', d, { player: base, bot: 1 });
+    if (m === null)
+      break;
+    easeLens.push(m.word.length);
+  }
+  assert(easeLens.length === RUNS, 'difficulty ' + d + ' with the eased cap: a move is found on the starting position');
+  const exactEased = easeLens.every((l) => l === base - 1);
+  const oneFallback = easeLens.every((l) => l === easeLens[0]);
+  assert(exactEased || oneFallback,
+    'difficulty ' + d + ' with the eased cap: word lengths ' + easeLens.join('/') +
+    ' are exactly the eased length of ' + (base - 1) + ' letters');
+}
 
 if (maxLenByDiff.easy !== undefined && maxLenByDiff.medium !== undefined && maxLenByDiff.hard !== undefined) {
   console.log('     longest word by difficulty: easy ' + maxLenByDiff.easy +
@@ -203,9 +227,10 @@ for (let round = 0; round < 3 && simOk; round++) {
 assert(simOk, 'simulation of 3 rounds without invalid words');
 console.log('     after the simulation: ' + (simUsed.length - 1) + ' words, board: ' + simBoard.join('|'));
 
-// the mercy cap (hard while the player is losing) shows only once words
-// longer than 5 letters exist: keep playing the best move until one shows
-// up, then the capped pick must stay within 5 letters
+// the hard cap at 5 letters shows only once words longer than 5 letters
+// exist: keep playing the best move until one shows up, then check the capped
+// picks — the longest word would overtake a leading player, would only draw
+// one, or the player is already losing
 const mercyBoard = simBoard.slice();
 const mercyUsed = simUsed.slice();
 let uncapped = findBestMove(mercyBoard, mercyUsed);
@@ -215,12 +240,26 @@ while (uncapped !== null && uncapped.word.length <= 5 && mercyUsed.length < MAX_
   uncapped = findBestMove(mercyBoard, mercyUsed);
 }
 if (uncapped !== null && uncapped.word.length > 5) {
-  const mercy = findBestMove(mercyBoard, mercyUsed, 'ru', 'hard', true);
+  // playing the longest word would put the computer ahead of a player who is
+  // ahead — capped to 5 letters
+  const overtake = findBestMove(mercyBoard, mercyUsed, 'ru', 'hard',
+    { player: uncapped.word.length - 1, bot: 0 });
+  assert(overtake !== null && overtake.word.length <= 5,
+    'hard: the longest move of ' + uncapped.word.length + ' letters would overtake a leading ' +
+    'player — capped to ' + (overtake === null ? 'none' : overtake.word.length));
+  // the longest word would only draw the player level — played in full
+  const draw = findBestMove(mercyBoard, mercyUsed, 'ru', 'hard',
+    { player: uncapped.word.length, bot: 0 });
+  assert(draw !== null && draw.word.length === uncapped.word.length,
+    'hard: the longest move of ' + uncapped.word.length + ' letters would only draw the ' +
+    'player — played in full');
+  // the player is already losing (the old mercy trigger, now subsumed)
+  const mercy = findBestMove(mercyBoard, mercyUsed, 'ru', 'hard', { player: 0, bot: 5 });
   assert(mercy !== null && mercy.word.length <= 5,
     'hard with the player losing: the longest move of ' + uncapped.word.length +
     ' letters is capped to ' + (mercy === null ? 'none' : mercy.word.length));
 } else {
-  console.log('     no move longer than 5 letters appeared — the mercy cap is not observable');
+  console.log('     no move longer than 5 letters appeared — the hard cap is not observable');
 }
 
 // --- reducer: the state machine and validation ---

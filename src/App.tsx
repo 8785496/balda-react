@@ -30,6 +30,11 @@ function scoreOf(words: string[]): number {
 // how long the computer's move stays highlighted on the board
 const BOT_MOVE_HIGHLIGHT_MS = 3000;
 
+// the artificial pause before the computer's move lands: the search is
+// near-instant early on, and without it the «Думаю…» badge flashes for a
+// split second — unreadable, and its flip animation has no time to play
+const BOT_TURN_DELAY_MS = 700;
+
 export default function App() {
   // the game language: the reducer's state is created for it up front; the
   // footer switcher restarts the game when it changes
@@ -60,18 +65,24 @@ export default function App() {
     saveTheme(theme);
   }, [theme]);
 
-  // the computer's turn: after the player's successful submit. setTimeout lets
-  // the UI show the player's word and the "computer is thinking" status before
-  // the search starts.
+  // the computer's turn: after the player's successful submit. The delay is
+  // mostly artificial (BOT_TURN_DELAY_MS — it makes the turn change
+  // readable); it also lets the browser paint the «Думаю…» badge before
+  // the (blocking) search starts.
   useEffect(() => {
     if (state.phase !== 'bot')
       return;
     const timer = setTimeout(() => {
-      // hard eases off to words of at most 5 letters while the player is behind
-      const playerLosing = scoreOf(state.playerWords) < scoreOf(state.botWords);
-      const move = findBestMove(state.board, state.usedWords, state.lang, difficulty, playerLosing);
+      // the scores drive the difficulty caps' easing: hard caps its longest
+      // word at 5 letters when it would put the computer ahead of the player,
+      // and easy/medium step their exact word length one letter down when it
+      // would put the computer ahead
+      const move = findBestMove(state.board, state.usedWords, state.lang, difficulty, {
+        player: scoreOf(state.playerWords),
+        bot: scoreOf(state.botWords),
+      });
       dispatch({ type: 'BOT_MOVED', move });
-    }, 50);
+    }, BOT_TURN_DELAY_MS);
     return () => clearTimeout(timer);
   }, [state.phase, state.board, state.usedWords, state.lang, difficulty, state.playerWords, state.botWords]);
 

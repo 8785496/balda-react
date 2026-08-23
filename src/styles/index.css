@@ -94,7 +94,7 @@
   --cell-empty-bg: rgba(63, 38, 12, 0.28);
   --cell-empty-border: 1px solid rgba(63, 38, 12, 0.35);
   --cell-empty-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
-  --cell-hover-bg: linear-gradient(180deg, #fffaf0, #f6e8c4);
+  --cell-hover-bg: linear-gradient(180deg, #fff6d9, #f4e2ae);
   --cell-hover-border: 1px solid #a9853f;
 
   --cell-select-bg: linear-gradient(180deg, #ffd76e, #f0b73a);
@@ -250,46 +250,47 @@
 
 /* --- neon — dark glass with glowing accents --- */
 [data-theme='neon'] {
-  --page-bg: radial-gradient(1200px 700px at 50% -10%, #2a1a5e, #150f2e 60%, #0d0a1f);
-  --text: #ece7ff;
-  --link: #b39dff;
+  --page-bg: radial-gradient(1200px 700px at 50% -10%, #2a1a5e, #150f2e 60%, #0b0819);
+  --text: #f4efff;
+  --link: #c4b0ff;
   --error: #ff7ad9;
 
-  --board-frame-bg: rgba(122, 92, 255, 0.08);
-  --board-frame-border: 1px solid rgba(150, 120, 255, 0.45);
+  --board-frame-bg: rgba(122, 92, 255, 0.14);
+  --board-frame-border: 1px solid rgba(170, 145, 255, 0.7);
   --board-frame-radius: 16px;
   --board-frame-pad: 8px;
-  --board-frame-shadow: 0 0 24px rgba(124, 58, 237, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --board-frame-shadow: 0 0 26px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   --board-gap: 6px;
 
-  --cell-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
-  --cell-border: 1px solid rgba(150, 120, 255, 0.3);
+  --cell-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  --cell-border: 1px solid rgba(180, 157, 255, 0.52);
   --cell-radius: 10px;
-  --cell-color: #f2eeff;
-  --cell-empty-bg: rgba(255, 255, 255, 0.02);
-  --cell-empty-border: 1px solid rgba(150, 120, 255, 0.16);
-  --cell-hover-bg: rgba(255, 255, 255, 0.14);
-  --cell-hover-border: 1px solid rgba(170, 145, 255, 0.55);
+  --cell-color: #ffffff;
+  --cell-empty-bg: rgba(8, 5, 22, 0.55);
+  --cell-empty-border: 1px solid rgba(150, 120, 255, 0.3);
+  --cell-empty-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+  --cell-hover-bg: rgba(255, 255, 255, 0.22);
+  --cell-hover-border: 1px solid rgba(196, 176, 255, 0.8);
 
   --cell-select-bg: linear-gradient(180deg, #3dfcb0, #0ed392);
   --cell-select-color: #032e1e;
   --cell-select-border: 1px solid #0aae7c;
-  --cell-select-shadow: 0 0 14px rgba(0, 255, 163, 0.55);
+  --cell-select-shadow: 0 0 16px rgba(0, 255, 163, 0.7);
   --cell-add-bg: linear-gradient(180deg, #ff6ad5, #e621ad);
   --cell-add-color: #ffffff;
   --cell-add-border: 1px solid #b4148b;
-  --cell-add-shadow: 0 0 14px rgba(255, 46, 196, 0.55);
-  --cell-selected-bg: rgba(139, 92, 246, 0.2);
-  --cell-selected-border: 1px dashed #9b7bff;
+  --cell-add-shadow: 0 0 16px rgba(255, 46, 196, 0.7);
+  --cell-selected-bg: rgba(139, 92, 246, 0.3);
+  --cell-selected-border: 1px dashed #b09aff;
 
-  --btn-border: 1px solid #6d53c9;
-  --btn-bg: linear-gradient(to bottom, #382a6b, #221a44);
-  --btn-color: #ece7ff;
+  --btn-border: 1px solid #8468e0;
+  --btn-bg: linear-gradient(to bottom, #3d2e75, #261d4d);
+  --btn-color: #f4efff;
   --btn-radius: 8px;
-  --btn-hover-border: 1px solid #8f74e8;
-  --btn-hover-bg: linear-gradient(to bottom, #44337f, #2b2158);
+  --btn-hover-border: 1px solid #a58bf5;
+  --btn-hover-bg: linear-gradient(to bottom, #4a3889, #2d2255);
   --btn-hover-color: #ffffff;
-  --btn-active-bg: linear-gradient(to bottom, #1e173a, #352869);
+  --btn-active-bg: linear-gradient(to bottom, #221a44, #3a2c70);
   --btn-active-color: #ffffff;
 
   --btn-primary-border: 1px solid #0aae7c;
@@ -298,14 +299,14 @@
 
   --substrate-bg: rgba(8, 5, 20, 0.7);
   --card-bg: #241b45;
-  --card-border: 1px solid #6d53c9;
-  --card-color: #ece7ff;
+  --card-border: 1px solid #8468e0;
+  --card-color: #f4efff;
   --footer-bg: rgba(13, 10, 31, 0.88);
-  --footer-border: rgba(150, 120, 255, 0.35);
+  --footer-border: rgba(170, 145, 255, 0.55);
 
   --player-color: #0ed392;
   --bot-color: #ff6ad5;
-  --focus-color: #9b7bff;
+  --focus-color: #b09aff;
 }
 
 /* The page background lives on <html>: the root's background paints the
@@ -498,34 +499,63 @@ a:hover {
 
 /* --- status line --- */
 
-.status-bar {
-  position: relative;
-  /* reserves both lines — the word row and the error line under it; the error
-     itself is absolutely positioned into that slot, so showing, hiding or
-     wrapping it never reflows the board below */
-  min-height: 3.9em;
-}
-
 /* the badge and the word being built share one row; the word reserves its
-   line so the board below does not jump as letters are typed */
+   line so the board below does not jump as letters are typed, and the
+   row's bottom margin sets the board off the badge line */
 .status-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 4px 24px;
+  margin-bottom: 10px;
 }
 
-/* whose turn it is — a permanent badge to the left of the word */
+/* whose turn it is — a permanent badge to the left of the word. Both
+   labels are rendered stacked in one grid cell (the inactive one hidden,
+   see StatusBar), so the badge's width is always the wider label's — the
+   word next to it never shifts on the turn flip */
 .turn {
-  display: inline-block;
+  display: inline-grid;
+  grid-template-areas: 'stack';
+  align-items: center;
+  justify-items: center;
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid currentColor;
-  min-width: calc(14ch + 22px); /* fits «Ход: компьютер» — the word's start does not move */
-  text-align: center;
+  /* the player↔computer color (and with it the border, currentColor)
+     eases over instead of snapping */
+  transition: color 0.18s ease;
+}
+
+.turn > span {
+  grid-area: stack;
+}
+
+.turn-alt {
+  visibility: hidden;
+}
+
+/* the label entering view rises in over the hidden one */
+.turn-player > span:not(.turn-alt),
+.turn-bot > span:not(.turn-alt) {
+  animation: turn-in 0.18s ease-out;
+}
+
+@keyframes turn-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn-player > span:not(.turn-alt),
+  .turn-bot > span:not(.turn-alt) {
+    animation: none;
+  }
 }
 
 .turn-player {
@@ -549,31 +579,37 @@ a:hover {
   color: var(--bot-color);
 }
 
-/* floats in the reserved slot under the word row (see .status-bar), centered;
-   pointer-events: none — it is a passive message and must never block the
-   board underneath, even when a long word wraps it taller than the slot */
+/* the validation error as a toast: a pill fixed to the top of the screen,
+   centered; pointer-events: none — it is a passive message and must never
+   block the board or the controls it floats over. It takes no layout space,
+   and a timer in StatusBar hides it after a few seconds (the error itself
+   lives in the game state and clears on the player's next action) */
 .error {
-  position: absolute;
-  top: 1.9em;
-  left: 0;
-  right: 0;
-  margin-left: auto;
-  margin-right: auto;
+  position: fixed;
+  left: 50%;
+  top: calc(24px + env(safe-area-inset-top, 0px));
+  transform: translateX(-50%);
+  /* below the overlays (1000) */
+  z-index: 600;
   color: var(--error);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   width: fit-content;
-  max-width: 100%;
-  padding: 5px 12px;
-  border-radius: 6px;
+  max-width: calc(100% - 32px);
+  padding: 6px 14px;
+  font-size: 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
+  background: var(--footer-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   pointer-events: none;
 }
 
-/* a shown error becomes a tinted chip fading in */
+/* the toast fades in dropping from above */
 .error.show {
-  background: color-mix(in srgb, var(--error) 12%, transparent);
   animation: error-in 0.25s ease-out;
 }
 
@@ -584,7 +620,7 @@ a:hover {
 @keyframes error-in {
   from {
     opacity: 0;
-    transform: translateY(-3px);
+    transform: translateX(-50%) translateY(-6px);
   }
 }
 
@@ -820,7 +856,7 @@ button:disabled {
 /* --- score --- */
 
 .score-panel {
-  margin-top: 12px;
+  margin-top: 4px;
 }
 
 .words-progress {
@@ -845,6 +881,18 @@ button:disabled {
    hang off the right edge */
 .column-right {
   text-align: right;
+}
+
+/* the header row of a score column: keeps the name and the points chip
+   on one line at every width — the phone columns are flex columns whose
+   children would otherwise stack one per line */
+.score-head {
+  display: flex;
+  align-items: center;
+}
+
+.column-right .score-head {
+  justify-content: flex-end;
 }
 
 /* the header of a score column: the side's name in the quiet tone, its
@@ -1116,9 +1164,9 @@ button:disabled {
     min-height: 0;
   }
 
-  /* everything but the board is fixed chrome (the status bar's reserved
-     slot, the controls row, the score headers, the footer), so ~300px of
-     viewport height is the board's guaranteed share */
+  /* everything but the board is fixed chrome (the status bar, the controls
+     row, the score headers, the footer), so ~300px of viewport height is the
+     board's guaranteed share */
   .board {
     max-width: calc(100vh - 300px);
     max-width: calc(100dvh - 300px);
@@ -1130,7 +1178,7 @@ button:disabled {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    margin-top: 8px;
+    margin-top: 4px;
   }
 
   .score-columns {

@@ -54,15 +54,19 @@ export function ScorePanel({ playerWords, botWords, lang, usedCount, maxWords, t
       <div className="words-progress">{texts.score.progress(usedCount, maxWords)}</div>
       <div className="score-columns">
         <div className="column-left">
-          <span className="score-name">{texts.score.player}</span>
-          <span className="score-num">{score(playerWords)}</span>
+          <div className="score-head">
+            <span className="score-name">{texts.score.player}</span>
+            <span className="score-num">{score(playerWords)}</span>
+          </div>
           <div className="words">
             {renderWords(playerWords, lang)}
           </div>
         </div>
         <div className="column-right">
-          <span className="score-name">{texts.score.computer}</span>
-          <span className="score-num bot">{score(botWords)}</span>
+          <div className="score-head">
+            <span className="score-name">{texts.score.computer}</span>
+            <span className="score-num bot">{score(botWords)}</span>
+          </div>
           <div className="words">
             {renderWords(botWords, lang)}
           </div>
