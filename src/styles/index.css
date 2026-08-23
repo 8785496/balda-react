@@ -77,7 +77,9 @@
 [data-theme='wood'] {
   --page-bg: #e7d9bd;
   --text: #3a2c18;
-  --link: #3a2c18;
+  /* links get their own voice: with --text here links melted into plain
+     text (no underline until hover) — a burnt orange that stays woody */
+  --link: #93490b;
   --error: #a13312;
 
   --board-frame-bg: linear-gradient(135deg, #b07b42, #8a5a2b 60%, #a06a35);
@@ -885,6 +887,7 @@ button:disabled {
 .cell:focus-visible,
 .keyboard button:focus-visible,
 .keyboard-close:focus-visible,
+.rules-close:focus-visible,
 .rules-icon:focus-visible,
 .seg-btn:focus-visible,
 .theme-swatch:focus-visible,
@@ -968,7 +971,10 @@ button.status-word:focus-visible,
   font-size: 12px;
   color: color-mix(in srgb, var(--text) 55%, transparent);
   /* inside the row link now: keep its own tone and no underline when the
-     word is hovered */
+     word is hovered — text-decoration: none cannot cancel the row's own
+     underline (a parent's decoration paints over descendants), but an
+     atomic inline box is excluded from that propagation entirely */
+  display: inline-block;
   text-decoration: none;
 }
 
@@ -994,7 +1000,9 @@ button.status-word:focus-visible,
   font-size: inherit;
   font-weight: inherit;
   color: var(--link);
-  text-align: left;
+  /* inherit, not left: a button's UA default is center — this resets it and
+     the row follows its column (the computer's words hang off the right) */
+  text-align: inherit;
 }
 
 .words > button.word-link:hover,
@@ -1190,11 +1198,10 @@ button.status-word:focus-visible,
   overflow-y: auto;
 }
 
+/* the head carries the title; the ✕ sits absolutely in its right corner
+   (the word popup / keyboard title-row pattern) */
 .rules-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  position: relative;
 }
 
 .rules-head h2 {
@@ -1203,12 +1210,28 @@ button.status-word:focus-visible,
   font-size: 22px;
 }
 
+/* the rules' ✕: the same quiet way out as the word popup's and the
+   keyboard panel's close */
 .rules-close {
+  position: absolute;
+  top: 0; /* rides the row's top edge: level with the title's cap */
+  right: -10px; /* pulls onto the card's padding, into the row's corner */
   min-width: 0;
   margin: 0;
-  padding: 2px 10px;
-  font-size: 14px;
+  padding: 2px 5px;
+  font-size: 13px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+  background: transparent;
+  border-color: transparent; /* keeps the base 1px box: no size jump on hover */
   box-shadow: none;
+}
+
+.rules-close:hover,
+.rules-close:active {
+  border-color: transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--card-color) 85%, transparent);
 }
 
 .rules-list {
@@ -1235,6 +1258,9 @@ button.status-word:focus-visible,
   border-radius: 8px;
   color: var(--card-color);
   padding: 16px 22px 18px;
+  /* a short word must not shrink the card under the corner ✕'s room; the
+     min() keeps the floor below the same 92% viewport cap as the max */
+  min-width: min(240px, 92%);
   max-width: min(340px, 92%);
   text-align: center;
 }
@@ -1291,9 +1317,8 @@ button.status-word:focus-visible,
 /* the popup's ✕: the same quiet way out as the keyboard panel's close */
 .word-close {
   position: absolute;
-  top: 50%;
+  top: 0; /* rides the row's top edge: level with the word's cap, not its midline */
   right: -10px; /* pulls onto the card's padding, into the row's corner */
-  transform: translateY(-50%);
   min-width: 0;
   margin: 0;
   padding: 2px 5px;
