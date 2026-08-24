@@ -109,34 +109,29 @@ export function findBestMove(
 }
 
 // which of the found moves the difficulty plays:
-//   easy — a random 3-letter word, medium — a random 4-letter word — of the
-//     nearest shorter length when the board offers no word of that length;
-//   hard — the longest word (the original's behavior, first found among equals);
+//   easy — a random 4-letter word — of the nearest shorter length when the
+//     board offers no word of that length;
+//   medium — the longest word of at most 5 letters;
+//   hard — the longest word, no length limit (the original's behavior, first
+//     found among equals);
 //   when no found word fits a difficulty's cap, the shortest one is played.
-// With the scores at hand the caps ease off so the computer does not run away
-// with the game: easy/medium drop their cap by one letter (to 2 and 3) when a
-// cap-length word would put the computer's score above the player's, and hard
-// caps its longest word at 5 letters when that word would — the player already
-// losing included, as any word then grows the computer's lead.
-function capFor(difficulty: Difficulty, scores: Scores | undefined, found: BotMove[]): number {
-  if (difficulty === 'hard') {
-    // the longest word decides: capped at 5 letters when playing it would put
-    // the computer's score above the player's
-    let longestLen = 0;
-    for (let i = 0; i < found.length; i++)
-      if (found[i].word.length > longestLen)
-        longestLen = found[i].word.length;
-    return scores !== undefined && scores.bot + longestLen > scores.player ? 5 : Infinity;
-  }
-  const base = difficulty === 'easy' ? 3 : 4;
+// With the scores at hand the caps ease off by one letter so the computer does
+// not run away with the game — easy 4 → 3, medium 5 → 4 — when a cap-length
+// word would put the computer's score above the player's (the player already
+// losing included, as any word then grows the computer's lead). Hard knows no
+// length limit and no easing: it always plays the longest word it found.
+function capFor(difficulty: Difficulty, scores: Scores | undefined): number {
+  if (difficulty === 'hard')
+    return Infinity;
+  const base = difficulty === 'medium' ? 5 : 4;
   return scores !== undefined && scores.bot + base > scores.player ? base - 1 : base;
 }
 
 function pickMove(found: BotMove[], difficulty: Difficulty, scores?: Scores): BotMove | null {
   if (found.length === 0)
     return null;
-  const cap = capFor(difficulty, scores, found);
-  if (difficulty === 'hard') {
+  const cap = capFor(difficulty, scores);
+  if (difficulty !== 'easy') {
     // the longest word within the cap, the first found among equals (as in the original)
     let best: BotMove | null = null;
     for (let i = 0; i < found.length; i++)

@@ -1,8 +1,10 @@
 // Bot difficulty, switched from the footer and persisted in localStorage.
 // It only changes which of the found moves the computer plays (see finder.ts):
-// easy — a random word of at most 3 letters, medium — at most 4, hard — the
-// longest word, but at most 5 letters while the player is losing. Applies from
-// the next bot turn, without restarting the game.
+// easy — a random word of at most 4 letters; medium — the longest word of at
+// most 5 letters; hard — the longest word with no length limit at all. Both
+// capped levels ease off by one letter (to 3 and 4) while the computer would
+// overtake the player. Applies from the next bot turn, without restarting the
+// game.
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
