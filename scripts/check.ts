@@ -1,6 +1,7 @@
 // Checks the ported logic without a test framework (see AGENTS.md):
 // the dictionaries, board geometry, the move search on reference positions
-// (both languages, all difficulties) and the reducer state machine.
+// (both languages, all difficulties), the reducer state machine and the
+// saved-game round trip.
 // Run: npm run check
 import { dictionary } from '../src/game/dictionary';
 import { dictionary as dictionaryEn } from '../src/game/dictionary-en';
@@ -9,6 +10,7 @@ import { alphabetFor, dicFor, startWordFor } from '../src/game/lang';
 import { SIZE, START_ROW, MAX_WORDS } from '../src/game/constants';
 import { neighbors, areAdjacent, wordFromTrack } from '../src/state/helpers';
 import { gameReducer, freshGame, initialState } from '../src/state/gameReducer';
+import { saveGame, loadGame, clearGame, initGame } from '../src/state/persist';
 
 const dic = dicFor('ru');
 const ALPHABET = alphabetFor('ru');
@@ -513,6 +515,71 @@ function sumLen(words: string[]): number {
   return n;
 }
 console.log('     final score: player ' + sumLen(g.playerWords) + ' : ' + sumLen(g.botWords) + ' computer');
+
+// --- the saved game (state/persist.ts) ---
+
+// node has no localStorage; persist.ts only touches it inside its functions,
+// so a minimal in-memory stand-in installed here is enough
+const store = new Map<string, string>();
+(globalThis as { localStorage?: unknown }).localStorage = {
+  getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
+  setItem: (k: string, v: string) => { store.set(k, String(v)); },
+  removeItem: (k: string) => { store.delete(k); },
+};
+
+// a game in progress: "фалда" played from the reference position above
+let p = freshGame('ru', START_WORD);
+p = gameReducer(p, { type: 'CLICK_CELL', index: 6 });
+p = gameReducer(p, { type: 'SET_LETTER', char: 'ф' });
+p = gameReducer(p, { type: 'DRAG_START', index: 6 });
+for (const c of [11, 12, 13, 14]) p = gameReducer(p, { type: 'DRAG_CELL', index: c });
+p = gameReducer(p, { type: 'SUBMIT_MOVE' });
+assert(p.phase === 'bot' && p.playerWords.length === 1, 'persist fixture: a word is played (' + p.playerWords[0] + ')');
+
+saveGame(p);
+const restored = loadGame('ru');
+assert(restored !== null, 'the played game is restored from storage');
+assert(restored !== null && restored.board.join('') === p.board.join(''), 'the restored board matches the saved one');
+assert(restored !== null && restored.usedWords.join(',') === p.usedWords.join(','), 'the restored usedWords match');
+assert(restored !== null && restored.playerWords.join(',') === p.playerWords.join(','), 'the restored playerWords match');
+// the bot phase is never restored: the computer forfeits the answer it owed
+assert(restored !== null && restored.phase === 'idle', 'a saved bot phase comes back as idle (phase=' + (restored ? restored.phase : '-') + ')');
+assert(restored !== null && restored.track.length === 0 && restored.numChar === null &&
+  restored.selectedCell === null && restored.boardBackup === null,
+  'the transient move fields come back empty');
+assert(loadGame('en') === null, 'a russian save is not offered to an english game');
+
+// a move in progress is rolled back into the snapshot, not stored half-made
+let q = gameReducer(restored!, { type: 'CLICK_CELL', index: 17 });
+q = gameReducer(q, { type: 'SET_LETTER', char: 'а' });
+assert(q.board[17] === 'а', 'persist fixture: the pending letter is on the board');
+saveGame(q);
+const rolled = loadGame('ru');
+assert(rolled !== null && rolled.board[17] === '', 'the pending letter is rolled back out of the snapshot');
+assert(rolled !== null && rolled.board.join('') === restored!.board.join(''), 'the rolled-back board equals the board before the move');
+
+// the finished game keeps its phase, so the end panel comes back
+saveGame({ ...p, phase: 'over' });
+assert(loadGame('ru')?.phase === 'over', 'a finished game is restored as over');
+
+// a game still on its starting word is not worth restoring — and clears the slot
+saveGame(freshGame('ru', START_WORD));
+assert(loadGame('ru') === null, 'a game on its starting word is not saved');
+
+// corrupt or foreign data never reaches the reducer
+store.set('balda-game', 'not json at all');
+assert(loadGame('ru') === null, 'unparsable storage is ignored');
+store.set('balda-game', JSON.stringify({ v: 1, lang: 'ru', over: false, board: ['а'], usedWords: ['балда'], playerWords: [], botWords: [] }));
+assert(loadGame('ru') === null, 'a board of the wrong size is rejected');
+store.set('balda-game', JSON.stringify({ v: 999, lang: 'ru', over: false, board: new Array(25).fill(''), usedWords: ['балда'], playerWords: [], botWords: [] }));
+assert(loadGame('ru') === null, 'a snapshot of another version is rejected');
+
+// initGame falls back to a fresh game when there is nothing to restore
+clearGame();
+const fresh = initGame('ru');
+assert(fresh.usedWords.length === 1 && fresh.phase === 'idle', 'initGame starts a new game with no save');
+saveGame(p);
+assert(initGame('ru').usedWords.length === p.usedWords.length, 'initGame returns the saved game when there is one');
 
 if (failures > 0) {
   console.error('\nFailed checks: ' + failures);

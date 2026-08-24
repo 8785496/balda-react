@@ -34,6 +34,7 @@ A port of an ES5 original (`../balda`) to Vite + React 19 + TypeScript, behavior
 
 - TypeScript strict (`noUnusedLocals`, `noUnusedParameters`, `verbatimModuleSyntax`), ES modules.
 - **Code, comments, docs and commit messages are in English.** Only `src/i18n.ts` game texts and the dictionaries are in the game languages; the Russian text set preserves the original game's exact wording.
+- **Commit message format**: a short summary on the first line, a blank line, then the body. The summary stands alone — no trailing period, no scope prefix; the reasoning, details and numbers go in the body, as prose, not packed into the first line.
 - **Commit messages carry no tool trailer.** Do not append `Co-Authored-By: Claude …`, `🤖 Generated with [Claude Code]…` or any other model/agent attribution line at the end of a commit message or a PR description — the message ends with its own text. The history records what changed, not what wrote it.
 - UTF-8 is load-bearing: `src/game/dictionary*.ts` and `translate-en.ts` are single-line multi-hundred-KB data modules. On Windows, piping them through node's stdin mangles the encoding — the regeneration commands in each file header therefore read/write files instead.
 - The ported algorithms in `dic.ts` / `finder.ts` should keep their structure: found words, their order and pruning semantics must stay identical (the simulated game in `npm run check` is what guards this).

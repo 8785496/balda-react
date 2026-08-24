@@ -2,7 +2,16 @@
 <html lang="ru" data-theme="neon">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- no pinch/double-tap zoom: the board is a drag surface, and an
+         accidental two-finger or double-tap zoom mid-word leaves the app
+         scaled with no way back (the page itself never scrolls on phones).
+         maximum-scale/user-scalable cover Android and the installed
+         standalone app; iOS Safari in a browser tab ignores them, so the
+         gesture listeners in main.tsx close that gap -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
     <!-- the launch chrome color (matches the splash/icon identity); once the
          app runs, App.tsx re-points this tag at the active board theme, so
          the installed app's status bar follows the theme switcher -->

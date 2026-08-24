@@ -13,7 +13,8 @@ import { WordPopup } from './components/WordPopup';
 import { alphabetFor, type Lang } from './game/lang';
 import { MAX_WORDS } from './game/constants';
 import { findBestMove } from './game/finder';
-import { gameReducer, freshGame } from './state/gameReducer';
+import { gameReducer } from './state/gameReducer';
+import { initGame, saveGame } from './state/persist';
 import { wordFromTrack } from './state/helpers';
 import { chromeColorFor, loadTheme, saveTheme, type ThemeId } from './theme';
 import { loadLang, saveLang } from './lang';
@@ -38,9 +39,12 @@ const BOT_TURN_DELAY_MS = 700;
 
 export default function App() {
   // the game language: the reducer's state is created for it up front; the
-  // footer switcher restarts the game when it changes
+  // footer switcher restarts the game when it changes. The initial state is
+  // the game saved from the last visit when there is one (state/persist.ts) —
+  // leaving the app (the phone's Back button closes an installed PWA outright)
+  // must not cost the player their game
   const [lang, setLang] = useState<Lang>(loadLang);
-  const [state, dispatch] = useReducer(gameReducer, lang, freshGame);
+  const [state, dispatch] = useReducer(gameReducer, lang, initGame);
   const [difficulty, setDifficulty] = useState<Difficulty>(loadDifficulty);
   const [theme, setTheme] = useState<ThemeId>(loadTheme);
   const [rulesOpen, setRulesOpen] = useState(false);
@@ -61,6 +65,16 @@ export default function App() {
   useEffect(() => {
     saveDifficulty(difficulty);
   }, [difficulty]);
+
+  // the game itself: persisted after every move, so closing the app (or the
+  // phone's Back button, which closes an installed PWA) resumes where the
+  // player left off. Only the settled game is stored — the move in progress
+  // is rolled back into the snapshot, see state/persist.ts. The state object
+  // is a new one on every action, so this writes once per action; the drag
+  // actions rewrite the same snapshot, which is cheap and always current.
+  useEffect(() => {
+    saveGame(state);
+  }, [state]);
 
   // the color theme: data-theme on <html> switches the CSS variable set, and
   // meta theme-color re-points the browser/OS chrome above the page — the

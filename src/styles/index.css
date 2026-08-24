@@ -317,6 +317,10 @@
    its own coordinate box (visible seam where body ends). */
 html {
   background: var(--page-bg);
+  /* iOS rescales text on its own when the device rotates; the phone shell is
+     a fixed-height layout that has no room for a font that grew */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
@@ -324,6 +328,10 @@ body {
   color: var(--text);
   margin: 0;
   padding: 16px;
+  /* the app is never zoomed (see the viewport meta and src/noZoom.ts): no
+     double-tap zoom, no pinch. manipulation keeps taps, drags and scrolling
+     — .board.word narrows it further to none while the path is drawn */
+  touch-action: manipulation;
   /* fill the viewport even when the content is shorter; grows with content */
   min-height: 100vh;
   /* a full-height flex column through #root and .context, so the footer can
