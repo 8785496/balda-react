@@ -5,20 +5,25 @@
 //
 // Sources, in order of precedence per field:
 //  - transcription: ipa-dict en_US (MIT, https://github.com/open-dict-data/ipa-dict),
-//    the gap filled from ru.wiktionary {{transcriptions}} of the same pages
-//    fetched for the translations;
+//    the gap filled from the Russian Wiktionary {{transcriptions}} and then
+//    the English Wiktionary {{IPA}} of the same pages;
 //  - translation: OpenRussian nouns reversed by their English glosses
 //    (CC-BY-SA 4.0, https://github.com/Badestrand/russian-dictionary — a
 //    Russian-noun table, so the reversed pairs are noun senses), the gap
-//    filled from the Russian Wiktionary entries of the English words:
-//    the {{-en-}} section's noun blocks, whose «Значение» lines are the
-//    Russian equivalents themselves (CC-BY-SA).
+//    filled from the Russian Wiktionary entries of the English words — the
+//    «Значение» lists of their noun blocks, then of the adjective, verb and
+//    adverb blocks (a word the noun sources miss is often translated only in
+//    another sense) — and the remaining gap from the English Wiktionary's
+//    translation tables {{t|ru|…}} of the same four sections, noun first.
+//    The popup's part-of-speech marker follows the sense that won: noun
+//    unless only another part of speech translated the word.
 //
 // Run from the repo root (Node.js >= 20.19, no dependencies):
 //   node scripts/translate-en.mjs
-// The fetched Wiktionary wikitext is cached in .tmp-translate/ — delete the
-// folder to refetch it fresh. The downloads are read as files, not piped,
-// same reason as the dictionary scripts (Windows pipes mangle UTF-8).
+// The fetched wikitext is cached in .tmp-translate/ (wiktionary.json for the
+// Russian one, en-wiktionary.json for the English) — delete the folder to
+// refetch it fresh. The downloads are read as files, not piped, same reason
+// as the dictionary scripts (Windows pipes mangle UTF-8).
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -34,6 +39,10 @@ const UA = 'balda-react translate-en build (https://github.com/; dev machine)';
 // the Yandex link below them is the full lookup
 const MAX_RU = 6;
 const MAX_RU_OPENRUSSIAN = 4;
+
+// part-of-speech codes: 'n' is never stored (it is the default), 'a'/'v'/'d'
+// tag a translation that came from an adjective/verb/adverb sense
+const POS_ORDER = ['n', 'a', 'v', 'd'];
 
 // ---------- the game dictionary ----------
 
@@ -100,15 +109,15 @@ function loadOpenRussian(text, dictSet) {
   return map;
 }
 
-// ---------- the Russian Wiktionary ----------
+// ---------- wiktionaries (shared page fetching) ----------
 
 // 50 titles per query is the API's limit for ordinary users
 const WIKT_BATCH = 50;
 
 // the fetched wikitext, cached across runs (the fetch is the slow part);
 // a Map serialized as [word, text|null] pairs
-async function loadWikt(pages) {
-  const file = path.join(CACHE, 'wiktionary.json');
+async function loadWikt(host, cacheName, pages) {
+  const file = path.join(CACHE, cacheName);
   const cached = existsSync(file)
     ? new Map(JSON.parse(await readFile(file, 'utf8')))
     : new Map();
@@ -116,7 +125,7 @@ async function loadWikt(pages) {
   for (let i = 0; i < need.length; i += WIKT_BATCH) {
     const batch = need.slice(i, i + WIKT_BATCH);
     const url =
-      'https://ru.wiktionary.org/w/api.php?action=query&format=json&formatversion=2&redirects=1' +
+      `https://${host}/w/api.php?action=query&format=json&formatversion=2&redirects=1` +
       '&prop=revisions&rvprop=content&rvslots=main&titles=' +
       encodeURIComponent(batch.join('|'));
     const j = JSON.parse(await fetchText(url));
@@ -133,16 +142,18 @@ async function loadWikt(pages) {
       for (let k = 0; k < 5 && hop.has(end); k++) end = hop.get(end);
       cached.set(t, byTitle.get(end) ?? null);
     }
-    process.stderr.write(`wiktionary ${Math.min(i + WIKT_BATCH, need.length)}/${need.length}\n`);
+    process.stderr.write(`${cacheName} ${Math.min(i + WIKT_BATCH, need.length)}/${need.length}\n`);
     await new Promise((r) => setTimeout(r, 150));
   }
   await writeFile(file, JSON.stringify([...cached]), 'utf8');
   return cached;
 }
 
+// ---------- the Russian Wiktionary ----------
+
 // The {{-en-}} section of the page, or null when the entry is not an English
 // word. The section runs to the next language header («= {{-xx-}} =»).
-function enSection(wikitext) {
+function ruEnSection(wikitext) {
   const m = wikitext.match(/= *\{\{-en-\}\} *=([\s\S]*?)(?== *\{\{-|\n__NOTOC__|$)/);
   return m ? m[1] : null;
 }
@@ -164,13 +175,14 @@ function wiktIpa(section) {
   return '';
 }
 
-// Russian words from the section's noun «Значение» lists. A language section
-// repeats per part of speech: a «=== Морфологические …» block, then semantics
-// with the numbered definitions. A block is the noun's when its head names a
-// noun template ({{сущ en}}, {{wdl-en-noun}}, …); the definition lines are
-// the Russian equivalents themselves — the wikilinks in them. Function words
+// Russian words from the section's POS blocks. A language section repeats per
+// part of speech: a «=== Морфологические …» block, then semantics with the
+// numbered definitions. A block's head names its POS template ({{сущ en}},
+// {{прил en}}, {{гл en}}, {{нареч en}}, …); the definition lines are the
+// Russian equivalents themselves — the wikilinks in them. Function words
 // leak in as links of definition phrases («распределение [[по]] зонам») and
-// are never a noun's translation — dropped by the stoplist.
+// are never a noun's translation — dropped by the stoplist. The noun blocks
+// win; when they hold nothing, the adjective, verb and adverb ones follow.
 const NOT_TRANSLATIONS = new Set([
   'и', 'в', 'во', 'не', 'ни', 'на', 'с', 'со', 'по', 'из', 'за', 'к', 'ко',
   'у', 'о', 'об', 'от', 'до', 'для', 'при', 'про', 'под', 'над', 'без', 'вне',
@@ -180,10 +192,16 @@ const NOT_TRANSLATIONS = new Set([
   'один', 'одна', 'одно', 'два', 'две',
 ]);
 
+const WIKT_RU_HEADS = [
+  ['n', /сущ en|wdl-en-noun|en-noun|существительное/],
+  ['a', /прил en|wdl-en-adj|en-adj|прилагательное/],
+  ['v', /гл en|wdl-en-verb|en-verb|глагол/],
+  ['d', /нареч en|wdl-en-adv|en-adv|наречие/],
+];
+
 function wiktRu(section) {
-  const ru = [];
-  const nounHead = /сущ en|wdl-en-noun|en-noun|существительное/;
-  const take = (raw) => {
+  const byPos = new Map(POS_ORDER.map((p) => [p, []]));
+  const take = (ru, raw) => {
     // links carry the target's language anchor ([[анемия#Русский|анемия]])
     const word = raw.replace(/\u0301/g, '').split('#')[0].trim().toLowerCase();
     if (/^[а-яё][а-яё -]{0,24}$/.test(word) && !NOT_TRANSLATIONS.has(word) && !ru.includes(word))
@@ -192,12 +210,64 @@ function wiktRu(section) {
   for (const chunk of section.split(/=== *Морфологические/).slice(1)) {
     const cut = chunk.indexOf('====');
     const head = chunk.slice(0, cut === -1 ? chunk.length : cut);
-    if (!nounHead.test(head)) continue;
+    const pos = WIKT_RU_HEADS.find(([, re]) => re.test(head))?.[0];
+    if (!pos) continue;
+    const ru = byPos.get(pos);
     for (const def of chunk.matchAll(/^#(?!#)\s*(.+)$/gm))
-      for (const link of def[1].matchAll(/\[\[([^\]|]+)/g)) take(link[1]);
+      for (const link of def[1].matchAll(/\[\[([^\]|]+)/g)) take(ru, link[1]);
     // stub entries define the word as a bare wikilink line, no list marker
     for (const bare of chunk.matchAll(/^[ \t]*\[\[([^\]|]+)(?:\|[^\]]*)?\]\][ \t]*$/gm))
-      take(bare[1]);
+      take(ru, bare[1]);
+  }
+  for (const pos of POS_ORDER) {
+    const ru = byPos.get(pos);
+    if (ru.length) return { pos, ru };
+  }
+  return { pos: '', ru: [] };
+}
+
+// ---------- the English Wiktionary ----------
+
+// The ==English== section of the page, or '' when the entry is not an English
+// word. The section runs to the next language header («== French ==»).
+function enwiktEn(wikitext) {
+  const m = wikitext.match(/== *English *==([\s\S]*?)(?=\n==[^=]|$)/);
+  return m ? m[1] : '';
+}
+
+// A ===PartOfSpeech=== section, null when absent. The content runs to the
+// next level-2/3 header, so the ====Translations==== subsections stay inside.
+function enwiktPos(en, name) {
+  const m = en.match(new RegExp('=== *' + name + ' *===([\\s\\S]*?)(?=\\n==[^=]|\\n===[^=]|$)'));
+  return m ? m[1] : null;
+}
+
+// {{IPA|en|/…/|a=UK,US}} — the first slashed argument of the first template.
+function enwiktIpa(en) {
+  const m = en.match(/\{\{IPA\|en\|([^}]*)\}\}/);
+  if (!m) return '';
+  for (const arg of m[1].split('|')) {
+    const a = arg.trim();
+    if (a.length > 2 && a.startsWith('/') && a.endsWith('/')) return a.slice(1, -1);
+  }
+  return '';
+}
+
+// Russian translations from a section's translation tables: the {{t|ru|…}} /
+// {{t+|ru|…}} pairs ({{t-check}} excluded — unverified). The Russian carries
+// combining stress marks, and a multiword translation spans several arguments
+// ({{t|ru|торговый|центр}}); gender and qualifier arguments are non-Cyrillic
+// and drop out on their own.
+function enwiktRu(section) {
+  const ru = [];
+  for (const m of section.matchAll(/\{\{t\+?\|ru\|([^}]*)/g)) {
+    const parts = m[1]
+      .split('|')
+      .map((s) => s.replace(/\u0301/g, '').trim().toLowerCase())
+      .filter((s) => /^[а-яё][а-яё -]*$/.test(s));
+    if (!parts.length) continue;
+    const w = parts.join(' ');
+    if (!ru.includes(w)) ru.push(w);
   }
   return ru;
 }
@@ -218,35 +288,82 @@ async function main() {
     dictSet,
   );
 
-  // the wiktionary is fetched only for the gaps: words without a translation
-  // (either source) or without a transcription (ipa-dict); its pages can mend
-  // both — translations from the noun senses, IPA from {{transcriptions}}
-  const need = dict.filter((w) => !openRussian.has(w) || !ipa.has(w));
-  const pages = await loadWikt(need);
+  // every word starts with ipa-dict + OpenRussian; each gap is then filled by
+  // the first wiktionary that has it — a word's translations all come from
+  // one sense, and its pos records which
+  const words = new Map(
+    dict.map((w) => [w, { ru: [...(openRussian.get(w) ?? [])], pos: 'n', ipa: ipa.get(w) ?? '' }]),
+  );
 
-  const entries = new Map();
-  for (const word of dict) {
-    const ru = [...(openRussian.get(word) ?? [])];
-    const hasRu = ru.length > 0;
-    let transcription = ipa.get(word) ?? '';
-    if (!hasRu || !transcription) {
-      const text = pages.get(word);
-      if (text) {
-        const section = enSection(text);
-        if (section) {
-          if (!hasRu) for (const w of wiktRu(section)) if (!ru.includes(w)) ru.push(w);
-          if (!transcription) transcription = wiktIpa(section);
+  // the Russian wiktionary is fetched for the words OpenRussian/ipa-dict left
+  // incomplete; its pages can mend both fields — translations from the POS
+  // blocks, IPA from {{transcriptions}}
+  const ruPages = await loadWikt(
+    'ru.wiktionary.org',
+    'wiktionary.json',
+    dict.filter((w) => !openRussian.has(w) || !ipa.has(w)),
+  );
+  for (const [word, text] of ruPages) {
+    const e = words.get(word);
+    if (!e || !text) continue;
+    const section = ruEnSection(text);
+    if (!section) continue;
+    if (!e.ru.length) {
+      const { pos, ru } = wiktRu(section);
+      if (ru.length) {
+        e.ru = ru;
+        e.pos = pos;
+      }
+    }
+    if (!e.ipa) e.ipa = wiktIpa(section);
+  }
+
+  // the English wiktionary is fetched for whatever gaps remain — its
+  // translation tables and {{IPA}} close most of them
+  const enPages = await loadWikt(
+    'en.wiktionary.org',
+    'en-wiktionary.json',
+    dict.filter((w) => !words.get(w).ru.length || !words.get(w).ipa),
+  );
+  for (const [word, text] of enPages) {
+    const e = words.get(word);
+    if (!e || !text) continue;
+    const en = enwiktEn(text);
+    if (!en) continue;
+    if (!e.ipa) e.ipa = enwiktIpa(en);
+    if (!e.ru.length) {
+      for (const [pos, name] of [
+        ['n', 'Noun'],
+        ['a', 'Adjective'],
+        ['v', 'Verb'],
+        ['d', 'Adverb'],
+      ]) {
+        const section = enwiktPos(en, name);
+        if (section === null) continue;
+        const ru = enwiktRu(section);
+        if (ru.length) {
+          e.ru = ru;
+          e.pos = pos;
+          break;
         }
       }
     }
-    if (ru.length > MAX_RU) ru.length = MAX_RU;
-    if (ru.length || transcription) entries.set(word, transcription + '|' + ru.join(','));
   }
 
-  const withRu = [...entries.values()].filter((v) => v.slice(v.indexOf('|') + 1)).length;
-  const withIpa = [...entries.values()].filter((v) => v.indexOf('|') > 0).length;
+  const entries = new Map();
+  const posCounts = { noun: 0, adj: 0, verb: 0, adv: 0 };
+  for (const [word, e] of words) {
+    if (e.ru.length > MAX_RU) e.ru.length = MAX_RU;
+    if (!e.ru.length && !e.ipa) continue;
+    let value = e.ipa + '|' + e.ru.join(',');
+    if (e.ru.length && e.pos !== 'n') value += '|' + e.pos;
+    entries.set(word, value);
+    if (e.ru.length) posCounts[{ n: 'noun', a: 'adj', v: 'verb', d: 'adv' }[e.pos]]++;
+  }
+  const withRu = dict.filter((w) => words.get(w).ru.length).length;
+  const withIpa = dict.filter((w) => words.get(w).ipa).length;
   process.stderr.write(
-    `words: ${dict.length}; translated: ${withRu}; transcribed: ${withIpa}\n`,
+    `words: ${dict.length}; translated: ${withRu} (${JSON.stringify(posCounts)}); transcribed: ${withIpa}\n`,
   );
 
   const header = `// Russian translations and IPA transcriptions of the English game
@@ -255,32 +372,40 @@ async function main() {
 // scripts/translate-en.mjs; regenerate with \`node scripts/translate-en.mjs\`
 // after changing the English dictionary. Sources, per field:
 //  - IPA: ipa-dict en_US (MIT, https://github.com/open-dict-data/ipa-dict),
-//    the gap filled from the Russian Wiktionary's {{transcriptions}};
+//    the gaps filled from the Russian Wiktionary's {{transcriptions}}, then
+//    the English Wiktionary's {{IPA}};
 //  - translation: OpenRussian nouns reversed by their English glosses
 //    (CC-BY-SA 4.0, https://github.com/Badestrand/russian-dictionary), the
-//    gap filled from the Russian Wiktionary entries of the English words —
-//    the noun senses' «Значение» lines (ru.wiktionary.org, CC-BY-SA).
-// Both Russian sources describe noun senses, matching the English
-// dictionary's nouns-only filter. A value is "ipa|ru,ru" (either side may be
-// empty); only words with at least one of the two are listed.
+//    gaps filled from the Russian Wiktionary entries of the English words —
+//    the «Значение» lists of their noun blocks, then adjective, verb and
+//    adverb ones — and the remaining gap from the English Wiktionary's
+//    translation tables ({{t|ru|…}}) of the same sections, noun first. The
+//    popup's marker follows the sense that supplied the translations: noun
+//    unless only another part of speech had them.
+// A value is "ipa|ru,ru" (a noun translation; either side may be empty) or
+// "ipa|ru,ru|a"/"|v"/"|d" when an adjective/verb/adverb sense translated the
+// word; only words with at least one of the two fields are listed.
 `;
   const body = `
 export interface Translation {
   ipa: string; // '' when no source had the word
   ru: string[];
+  pos: 'noun' | 'adj' | 'verb' | 'adv'; // the sense the translations came from
 }
 
 export const EN_RU: Record<string, string> = ${JSON.stringify(Object.fromEntries(entries))};
 
 const cache = new Map<string, Translation>();
 
+const POS: Record<string, Translation['pos']> = { a: 'adj', v: 'verb', d: 'adv' };
+
 export function translateEn(word: string): Translation | null {
   const value = EN_RU[word];
   if (value === undefined) return null;
   let t = cache.get(word);
   if (t === undefined) {
-    const bar = value.indexOf('|');
-    t = { ipa: value.slice(0, bar), ru: value.slice(bar + 1).split(',').filter(Boolean) };
+    const [ipa, ru, pos] = value.split('|');
+    t = { ipa, ru: ru.split(',').filter(Boolean), pos: POS[pos] ?? 'noun' };
     cache.set(word, t);
   }
   return t;

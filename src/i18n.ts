@@ -46,7 +46,8 @@ export interface Texts {
   statusBotMove: string; // the bot's-move label; the word and points follow it, styled (StatusBar)
   statusBotSkip: string;
   word: {
-    noun: string;                // the noun marker beside the popup's word
+    // the marker beside the popup's word — the sense its translations came from
+    pos: Record<'noun' | 'adj' | 'verb' | 'adv', string>;
     noTranslation: string;       // no bundled translation for the word
     yandex: string;              // the Yandex Translate link text (the popup)
     close: string;               // the popup close button
@@ -111,7 +112,7 @@ export const TEXTS: Record<Lang, Texts> = {
     statusBotMove: 'Бот:',
     statusBotSkip: 'У бота нет хода — ваш ход',
     word: {
-      noun: 'сущ.',
+      pos: { noun: 'сущ.', adj: 'прил.', verb: 'глаг.', adv: 'нареч.' },
       noTranslation: 'Перевода нет в словаре',
       yandex: 'Яндекс Переводчик',
       close: 'Закрыть',
@@ -182,7 +183,7 @@ export const TEXTS: Record<Lang, Texts> = {
     statusBotMove: 'Bot:',
     statusBotSkip: 'The bot has no move — your turn',
     word: {
-      noun: 'noun',
+      pos: { noun: 'noun', adj: 'adj.', verb: 'v.', adv: 'adv.' },
       noTranslation: 'No translation in the dictionary',
       yandex: 'Yandex Translate',
       close: 'Close',
