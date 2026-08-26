@@ -1412,13 +1412,22 @@ button.status-start:focus-visible,
   }
 }
 
-/* --- phones (the same 560px as the Keyboard component): an app shell — the
-   page itself never scrolls. The switchers footer is pinned to the bottom
-   edge in its two rows; what scrolls is the word lists, inside their score
-   columns and without a visible scrollbar (the finger is the indicator). The
-   board caps its size by the viewport height left over, so short screens
-   trade board pixels for list room instead of overflowing --- */
-@media (max-width: 560px) {
+/* --- the app shell: phones, and tablets held upright (a portrait tablet has
+   the height to stack the lists under the board — the landscape query above
+   is what moves them out to the sides — but the words should read there the
+   same way they do on a phone). The page itself never scrolls: the switchers
+   footer is pinned to the bottom edge in its two rows, and what scrolls is the
+   word lists, inside their score columns and without a visible scrollbar (the
+   finger is the indicator). The board caps its size by the viewport height
+   left over, so short screens trade board pixels for list room instead of
+   overflowing.
+
+   Note this query is deliberately NOT the 560px the Keyboard component
+   matches: the letter keyboard keeps floating at its cell on a tablet (its
+   full-screen-width form is a phone thing, and the `.keyboard-panel` rule for
+   it stays on its own `max-width: 560px` query above, in step with
+   Keyboard.tsx's `NARROW`) --- */
+@media (max-width: 560px), (max-width: 1024px) and (orientation: portrait) {
   html,
   body {
     height: 100%;
@@ -1552,5 +1561,152 @@ button.status-start:focus-visible,
     box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* --- landscape tablets (561–1024px, wider than tall): the board keeps the
+   center of the screen and the two score columns move out to its sides — the
+   width a tablet held sideways has to spare is horizontal, and stacking the
+   lists under the board wasted it while pushing them below the fold. Held
+   upright the same tablet has the height instead, so a portrait one keeps the
+   ordinary stacked layout — hence the `orientation: landscape` half of the
+   query. `.context` becomes a three-column grid (words | board | words) and
+   the existing children are placed into it by `grid-area`;
+   `.score-panel`/`.score-columns` are `display: contents`, so the two columns
+   the phone/desktop layouts stack side by side become grid items of this
+   outer grid instead — no extra wrapper in the JSX. The word rows themselves
+   take the phone's chip form (framed, full-row tap target) and their lists
+   scroll inside the columns, which are height-capped to the board's row: the
+   game's chrome stays put while the lists grow --- */
+
+@media (min-width: 561px) and (max-width: 1024px) and (orientation: landscape) {
+  .context {
+    /* the board's size, shared by the three rules below (it is square, so
+       this is both its width and its height): capped by the width left for
+       the side columns, and by the viewport height minus the chrome above and
+       below it — a tablet held sideways is short, and an uncapped board would
+       push the footer off a 600px-tall screen */
+    --tablet-board: min(520px, 52vw, 100dvh - 230px);
+    /* the side columns share what is left of the row after the board; the
+       board column sizes to its content and is capped below */
+    max-width: 1000px;
+    display: grid;
+    grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
+    grid-template-areas:
+      'status status status'
+      'left   board  right'
+      'left   controls right'
+      'footer footer footer';
+    align-items: start;
+    column-gap: 20px;
+  }
+
+  .status-bar {
+    grid-area: status;
+  }
+
+  .board-wrap {
+    grid-area: board;
+  }
+
+  .controls {
+    grid-area: controls;
+  }
+
+  .footer {
+    grid-area: footer;
+  }
+
+  /* the board column drives the row's width: without a cap it would eat the
+     whole grid on a wide tablet and squeeze the lists to their minmax floor */
+  .board {
+    width: var(--tablet-board);
+  }
+
+  /* the floating letter keyboard is clamped into its offsetParent, the board
+     column (Keyboard.tsx's wide-screen branch) — its own 420px would overhang
+     the narrower board here and cover a score column, so it follows the
+     board's width instead */
+  .keyboard-panel {
+    width: var(--tablet-board);
+  }
+
+  /* the panel and its inner row are pass-through: the two columns below
+     become items of the page grid, landing in the side areas */
+  .score-panel,
+  .score-columns {
+    display: contents;
+  }
+
+  .column-left {
+    grid-area: left;
+  }
+
+  .column-right {
+    grid-area: right;
+  }
+
+  /* the columns are their own scroll containers, as tall as the board beside
+     them — an explicit `height`, not a `max-height`: the grid's
+     `align-items: start` sizes an item to its content, and the list below
+     (`flex: 1 1 0`) then resolves against an undefined height and collapses to
+     nothing, showing the header and no words. The board is square, so its own
+     width expression is also its height */
+  .column-left,
+  .column-right {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: var(--tablet-board);
+  }
+
+  /* both columns read left-aligned here: the mirroring existed to face the
+     lists across a shared center line when they sat under the board — at the
+     screen's edges it only pushed the bot's words away from the board */
+  .column-right,
+  .column-right .score-head {
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .score-head {
+    margin-bottom: 8px;
+  }
+
+  /* the phone's list behavior: scrolls inside the column, no visible
+     scrollbar (see the phones query), the rows separated by gap */
+  .words {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .words::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* the phone's word format: every row is a framed chip and the whole row is
+     the tap target, the word line centered in it (see the phones query for
+     why .word-inner is the flex item) */
+  .words > a,
+  .words > button.word-link {
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 10px;
+    border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
+    border-radius: 8px;
+    text-decoration: none;
+  }
+
+  .words > a:active,
+  .words > button.word-link:active {
+    background: color-mix(in srgb, var(--text) 10%, transparent);
   }
 }
