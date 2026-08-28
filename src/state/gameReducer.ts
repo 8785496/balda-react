@@ -16,10 +16,12 @@
 //   - in the letter phase a click on another empty cell moves the pending letter there
 //     (the floating keyboard sits at the cell, so the field around it stays clickable),
 //     and a click on the selected cell itself dismisses the keyboard;
-//   - the added letter can be changed: a click on its cell in the word phase reopens
-//     the keyboard, the picked letter replaces the pending one (a changed letter
-//     resets the drawn track), and any cell click — or a drag, or Escape — closes
-//     the reopened panel;
+//   - the move can be restarted without "Отмена": in the word phase a click on another
+//     legal spot — an empty cell that still adjoins letters once the added letter is
+//     lifted — drops the letter and reopens the keyboard there, as if the cell had
+//     been chosen in idle; a click on the letter's own cell reopens the keyboard to
+//     change the letter (a changed letter resets the drawn track), and any other cell
+//     click — or a drag, or Escape — closes the reopened panel;
 //   - an empty cell with no letters around it cannot be chosen for the new letter
 //     (the original allowed any empty cell, and an isolated letter could enter no word).
 import { SIZE, START_ROW, MAX_WORDS } from '../game/constants';
@@ -95,9 +97,32 @@ export function gameReducer(state: GameState, action: Action): GameState {
         };
       }
       if (state.phase === 'word') {
-        // the added letter can be reworked: a tap on its cell reopens the
-        // keyboard anchored there; while the panel is open, any cell tap
-        // closes it again (the letter and the track stay as they are)
+        // the move can be restarted without "Отмена": a tap on another legal
+        // spot — an empty cell that still adjoins letters once the added letter
+        // is lifted (the check runs on the board before the letter, or the new
+        // cell could end up isolated) — drops the letter and reopens the
+        // keyboard anchored there, exactly as if the cell had been chosen in
+        // idle; a tap on the letter's own cell reopens the keyboard on it (to
+        // change the letter), and while the panel is open any other tap closes
+        // it again
+        const base = state.boardBackup ?? state.board;
+        if (
+          state.numChar !== null &&
+          i !== state.numChar &&
+          state.board[i] === '' &&
+          hasFilledNeighbor(base, i)
+        ) {
+          return {
+            ...state,
+            board: base.slice(),
+            numChar: null,
+            selectedCell: i,
+            track: [],
+            phase: 'letter',
+            error: null,
+            status: null,
+          };
+        }
         if (state.selectedCell !== null)
           return { ...state, selectedCell: null };
         if (state.numChar !== null && i === state.numChar)

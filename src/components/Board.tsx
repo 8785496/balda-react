@@ -139,8 +139,8 @@ export function Board({ board, track, numChar, selectedCell, phase, botMove, boa
   // idle — choosing an empty cell; letter — the keyboard is open: a tap on
   // another empty cell moves the pending letter there, on the selected cell
   // it dismisses the panel; word — the drag builds the word, and a plain
-  // click only reopens the keyboard on the added letter's cell (or closes
-  // the reopened panel) — the reducer tells the cases apart
+  // click reopens the keyboard on the added letter's cell or restarts the
+  // move at another legal spot (the reducer tells the cases apart)
   const clickable = phase === 'idle' || phase === 'letter' || phase === 'word';
   // while a spot for the new letter is being chosen, empty cells with no
   // letters around them are not legal spots — dimmed and unclickable
