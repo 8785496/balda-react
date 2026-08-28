@@ -448,7 +448,7 @@ assert(escaped.phase === 'word' && escaped.selectedCell === null && escaped.boar
   'CLOSE_KEYBOARD (Escape) dismisses the panel without touching the move');
 
 
-// --- reducer: a tap on another legal spot restarts the move there (no «Отмена») ---
+// --- reducer: the added letter moves to another legal spot without «Отмена» ---
 let mv = freshGame('ru', 'балда');
 mv = gameReducer(mv, { type: 'CLICK_CELL', index: 6 });
 mv = gameReducer(mv, { type: 'SET_LETTER', char: 'ф' });
@@ -458,33 +458,30 @@ mv = gameReducer(mv, { type: 'SUBMIT_MOVE' }); // "фалд" is not a word
 assert(mv.error !== null && mv.error.code === 'wordNotFound' && mv.track.length === 4,
   'move fixture: "ф" at cell 6, a path drawn, a stale error showing');
 mv = gameReducer(mv, { type: 'CLICK_CELL', index: 18 });
-assert(mv.phase === 'letter' && mv.selectedCell === 18 && mv.numChar === null &&
-  mv.board[6] === '' && mv.board[18] === '' && mv.track.length === 0 && mv.error === null &&
-  mv.boardBackup !== null,
-  'a tap on another legal spot drops the added letter and reopens the keyboard there');
+assert(mv.phase === 'word' && mv.numChar === 18 && mv.board[18] === 'ф' && mv.board[6] === '' &&
+  mv.track.length === 0 && mv.selectedCell === 18 && mv.error === null && mv.boardBackup !== null,
+  'a tap on another legal spot moves the added letter there and reopens the keyboard on it');
 mv = gameReducer(mv, { type: 'SET_LETTER', char: 'ф' });
-assert(mv.phase === 'word' && mv.numChar === 18 && mv.board[18] === 'ф' && mv.board[6] === '',
-  'the letter is placed at the new cell and the word is drawn from there');
-// with the panel open on the placed letter, a tap on a legal spot restarts the same way
+assert(mv.phase === 'word' && mv.numChar === 18 && mv.board[18] === 'ф' && mv.selectedCell === null,
+  'picking the letter again at its new cell keeps it and closes the keyboard');
+// with the panel open on the moved letter, a tap on a legal spot moves it again
 mv = gameReducer(mv, { type: 'CLICK_CELL', index: 18 });
-assert(mv.phase === 'word' && mv.selectedCell === 18,
-  'move fixture: the keyboard is reopened on the placed letter');
 mv = gameReducer(mv, { type: 'CLICK_CELL', index: 17 });
-assert(mv.phase === 'letter' && mv.selectedCell === 17 && mv.numChar === null && mv.board[18] === '',
-  'with the panel open, a tap on a legal spot also restarts the move there — the panel follows');
-const rechosen = gameReducer(mv, { type: 'SET_LETTER', char: 'ф' });
-const panelBack = gameReducer(rechosen, { type: 'CLICK_CELL', index: 17 });
-const closedAt = gameReducer(panelBack, { type: 'CLICK_CELL', index: 17 });
+assert(mv.numChar === 17 && mv.board[17] === 'ф' && mv.board[18] === '' && mv.selectedCell === 17,
+  'with the panel open, a tap on a legal spot moves the letter and the panel follows');
+const closedAt = gameReducer(mv, { type: 'CLICK_CELL', index: 17 });
 assert(closedAt.phase === 'word' && closedAt.selectedCell === null && closedAt.board[17] === 'ф',
   'a tap on the letter cell itself still just closes the panel');
+assert(gameReducer(mv, { type: 'CLICK_CELL', index: 0 }) === mv &&
+  gameReducer(mv, { type: 'CLICK_CELL', index: 22 }) === mv,
+  'with the panel open, a tap on an empty cell that cannot take the letter does not close it');
 assert(gameReducer(closedAt, { type: 'CLICK_CELL', index: 0 }) === closedAt,
   'a cell with no letters around (on the board before the letter) is not a legal spot');
 assert(gameReducer(closedAt, { type: 'CLICK_CELL', index: 22 }) === closedAt,
   'a cell that only adjoins the added letter itself is not a legal spot — it would end up isolated');
-const escapedAfter = gameReducer(mv, { type: 'CLOSE_KEYBOARD' });
-assert(escapedAfter.phase === 'idle' && escapedAfter.board[17] === '' && escapedAfter.board[18] === '' &&
-  escapedAfter.boardBackup === null,
-  'Escape after the restart cancels the whole move (the letter-phase semantics)');
+const keptEscape = gameReducer(mv, { type: 'CLOSE_KEYBOARD' });
+assert(keptEscape.phase === 'word' && keptEscape.board[17] === 'ф' && keptEscape.selectedCell === null,
+  'Escape from the reopened keyboard only closes it — the moved letter stays');
 const back = gameReducer(closedAt, { type: 'CANCEL_MOVE' });
 assert(back.phase === 'idle' && back.board[17] === '' && back.board[6] === '' && back.numChar === null,
   '«Отмена» rolls the letter back from wherever it stands');

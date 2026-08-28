@@ -16,12 +16,12 @@
 //   - in the letter phase a click on another empty cell moves the pending letter there
 //     (the floating keyboard sits at the cell, so the field around it stays clickable),
 //     and a click on the selected cell itself dismisses the keyboard;
-//   - the move can be restarted without "Отмена": in the word phase a click on another
-//     legal spot — an empty cell that still adjoins letters once the added letter is
-//     lifted — drops the letter and reopens the keyboard there, as if the cell had
-//     been chosen in idle; a click on the letter's own cell reopens the keyboard to
-//     change the letter (a changed letter resets the drawn track), and any other cell
-//     click — or a drag, or Escape — closes the reopened panel;
+//   - the added letter can be reworked without "Отмена": a click on its cell in the
+//     word phase reopens the keyboard, the picked letter replaces the pending one,
+//     and a click on another legal spot moves the letter there and reopens the
+//     keyboard at its new cell — both reset the drawn track; while the panel is open
+//     a filled-cell tap — or a drag, or Escape — closes it, a tap on an empty cell
+//     that cannot take the letter leaves it alone;
 //   - an empty cell with no letters around it cannot be chosen for the new letter
 //     (the original allowed any empty cell, and an isolated letter could enter no word).
 import { SIZE, START_ROW, MAX_WORDS } from '../game/constants';
@@ -97,14 +97,14 @@ export function gameReducer(state: GameState, action: Action): GameState {
         };
       }
       if (state.phase === 'word') {
-        // the move can be restarted without "Отмена": a tap on another legal
-        // spot — an empty cell that still adjoins letters once the added letter
+        // the added letter can be reworked without "Отмена": a tap on another
+        // legal spot — an empty cell that still adjoins letters once the letter
         // is lifted (the check runs on the board before the letter, or the new
-        // cell could end up isolated) — drops the letter and reopens the
-        // keyboard anchored there, exactly as if the cell had been chosen in
-        // idle; a tap on the letter's own cell reopens the keyboard on it (to
-        // change the letter), and while the panel is open any other tap closes
-        // it again
+        // cell could end up isolated) — moves the letter there and reopens the
+        // keyboard anchored at its new cell (a different pick replaces it; the
+        // drawn track resets — the word is to be drawn anew); a tap on the
+        // letter's own cell reopens the keyboard on it, and while the panel is
+        // open any other tap closes it again
         const base = state.boardBackup ?? state.board;
         if (
           state.numChar !== null &&
@@ -112,18 +112,22 @@ export function gameReducer(state: GameState, action: Action): GameState {
           state.board[i] === '' &&
           hasFilledNeighbor(base, i)
         ) {
+          const board = base.slice();
+          board[i] = state.board[state.numChar];
           return {
             ...state,
-            board: base.slice(),
-            numChar: null,
+            board,
+            numChar: i,
             selectedCell: i,
             track: [],
-            phase: 'letter',
             error: null,
-            status: null,
           };
         }
-        if (state.selectedCell !== null)
+        // while the panel is open the remaining taps close it — except an
+        // empty cell that is not a legal spot: it cannot take the letter, and
+        // its tap must not dismiss the keyboard by accident (in the letter
+        // phase an isolated cell behaves the same way)
+        if (state.selectedCell !== null && state.board[i] !== '')
           return { ...state, selectedCell: null };
         if (state.numChar !== null && i === state.numChar)
           return { ...state, selectedCell: i };

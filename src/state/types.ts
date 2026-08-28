@@ -7,7 +7,7 @@ export type Phase =
   | 'letter' // entering a letter (the keyboard floats at the selected cell)
   | 'word'  // a drag over adjacent cells builds the path; releasing submits it;
            // a click on the added letter's cell reopens the keyboard to change it,
-           // a click on another legal spot restarts the move there
+           // a click on another legal spot moves the letter and the keyboard there
   | 'bot'   // the computer's turn
   | 'over'; // the game is over
 
@@ -51,7 +51,7 @@ export interface GameState {
 
 export type Action =
   | { type: 'NEW_GAME'; lang?: Lang } // restarts, optionally switching the game language
-  | { type: 'CLICK_CELL'; index: number } // choose the cell for the new letter (idle) / re-target or dismiss the keyboard (letter) / reopen it on the added letter, restart the move on another legal spot, or close the panel (word)
+  | { type: 'CLICK_CELL'; index: number } // choose the cell for the new letter (idle) / re-target or dismiss the keyboard (letter) / reopen it on the added letter, move the letter to another legal spot (the keyboard reopens there), or close the panel (word)
   | { type: 'DRAG_START'; index: number } // a drag left its start cell — anchor the path there
   | { type: 'DRAG_CELL'; index: number } // the pointer entered a cell mid-drag
   | { type: 'SET_LETTER'; char: string } // place the pending letter (letter phase) / replace it (word phase, the keyboard reopened; a changed letter resets the track)
