@@ -1622,13 +1622,19 @@ button.status-start:focus-visible,
   }
 }
 
-/* --- landscape tablets (561–1024px, wider than tall): the board keeps the
-   center of the screen and the two score columns move out to its sides — the
-   width a tablet held sideways has to spare is horizontal, and stacking the
-   lists under the board wasted it while pushing them below the fold. Held
-   upright the same tablet has the height instead, so a portrait one keeps the
-   ordinary stacked layout — hence the `orientation: landscape` half of the
-   query. `.context` becomes a three-column grid (words | board | words) and
+/* --- landscape tablets (wider than tall, never taller than 1024px): the
+   board keeps the center of the screen and the two score columns move out to
+   its sides — the width a tablet held sideways has to spare is horizontal, and
+   stacking the lists under the board wasted it while pushing them below the
+   fold. Held upright the same tablet has the height instead, so a portrait one
+   keeps the ordinary stacked layout — hence the `orientation: landscape` half
+   of the query. The height cap is what tells a tablet from a desktop monitor:
+   even the tallest of them, the 12.9" iPad, stands exactly 1024px tall held
+   sideways, while monitors are 1080px and up — an earlier `max-width: 1024px`
+   cap missed most tablets outright (1080–1366px wide in landscape). Every
+   landscape tablet takes this layout and a desktop screen keeps the classic
+   centered column; a desktop window resized squat joins in, its proportions
+   being tablet ones. `.context` becomes a three-column grid (words | board | words) and
    the existing children are placed into it by `grid-area`;
    `.score-panel`/`.score-columns` are `display: contents`, so the two columns
    the phone/desktop layouts stack side by side become grid items of this
@@ -1637,7 +1643,7 @@ button.status-start:focus-visible,
    scroll inside the columns, which are height-capped to the board's row: the
    game's chrome stays put while the lists grow --- */
 
-@media (min-width: 561px) and (max-width: 1024px) and (orientation: landscape) {
+@media (min-width: 561px) and (max-height: 1024px) and (orientation: landscape) {
   .context {
     /* the board's size, shared by the three rules below (it is square, so
        this is both its width and its height): capped by the width left for
@@ -1646,8 +1652,11 @@ button.status-start:focus-visible,
        push the footer off a 600px-tall screen */
     --tablet-board: min(520px, 52vw, 100dvh - 230px);
     /* the side columns share what is left of the row after the board; the
-       board column sizes to its content and is capped below */
-    max-width: 1000px;
+       board column sizes to its content and is capped below. The 1080 cap is
+       out of reach for the 1024px-wide tablets; the 1280–1366px ones spend the
+       extra width on wider word chips — a word plus its IPA wraps inside a
+       220px column */
+    max-width: 1080px;
     display: grid;
     grid-template-columns: minmax(150px, 1fr) auto minmax(150px, 1fr);
     grid-template-areas:
