@@ -1194,6 +1194,33 @@ button.status-start:focus-visible,
     right: 0;
     width: auto;
     border-radius: 0;
+    padding: 4px 8px 10px;
+  }
+
+  /* the Samsung-keyboard proportions: a roomy row gap over the tight key
+     gap, keys taller than the old padding-only sizing grew them, and big
+     bold letters (the widths below resolve against the 5px gaps set here) */
+  .keyboard {
+    gap: 14px 5px;
+  }
+
+  .keyboard-row {
+    gap: 5px;
+  }
+
+  .keyboard button {
+    height: clamp(38px, 11vw, 52px);
+    padding: 0;
+    font-size: clamp(16px, 4.6vw, 22px);
+    font-weight: 700;
+  }
+
+  .keyboard.kb-ru button {
+    width: calc((100% - 55px) / 12);
+  }
+
+  .keyboard.kb-en button {
+    width: calc((100% - 45px) / 10);
   }
 }
 
