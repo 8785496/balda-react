@@ -35,8 +35,11 @@ import type { Action, GameState } from './types';
 // the original's "Старт" screen was dropped.
 export function freshGame(lang: Lang, startWord = startWordFor(lang)): GameState {
   const board: string[] = new Array(SIZE * SIZE).fill('');
-  for (let i = 0; i < startWord.length; i++)
+  const startTrack: number[] = [];
+  for (let i = 0; i < startWord.length; i++) {
     board[START_ROW + i] = startWord[i];
+    startTrack.push(START_ROW + i);
+  }
   return {
     lang,
     phase: 'idle',
@@ -44,6 +47,7 @@ export function freshGame(lang: Lang, startWord = startWordFor(lang)): GameState
     usedWords: [startWord],
     playerWords: [],
     botWords: [],
+    tracks: { [startWord]: startTrack },
     selectedCell: null,
     numChar: null,
     track: [],
@@ -254,6 +258,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
           ...state,
           usedWords,
           playerWords: state.playerWords.concat([result]),
+          tracks: { ...state.tracks, [result]: state.track.slice() },
           track: [],
           numChar: null,
           boardBackup: null,
@@ -308,6 +313,7 @@ export function gameReducer(state: GameState, action: Action): GameState {
         board,
         usedWords,
         botWords: state.botWords.concat([action.move.word]),
+        tracks: { ...state.tracks, [action.move.word]: action.move.track },
         lastBotMove: action.move,
         // report what the computer played — until the player's next action
         status: { kind: 'botMove', word: action.move.word },

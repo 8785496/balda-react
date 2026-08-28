@@ -874,6 +874,15 @@ button:disabled {
   box-shadow: var(--cell-empty-shadow);
 }
 
+/* a played word's path tapped in a score list or the status line: a muted
+   «history» highlight under the live ones — the dashed .selected look, not
+   the active .select. The cells carry the word's letter order numbers
+   (.cell-num) and the path stays until the next game action clears it */
+.cell.shown {
+  background: var(--cell-selected-bg);
+  border: var(--cell-selected-border);
+}
+
 /* the computer's last move — its word path and the added letter, tinted with
    the theme's bot accent and shown for a few seconds after the move */
 .cell.bot {
@@ -1137,6 +1146,25 @@ button.status-start:focus-visible,
   color: color-mix(in srgb, var(--card-color) 85%, transparent);
 }
 
+/* in the wood theme alone the panel is a dark plate against the light
+   wooden board — the dark-system-keyboard look. The card variables stay
+   untouched (the rules modal and the word popup share them); the title
+   and the ✕ switch to the theme's cream, the keys keep their light
+   button chrome */
+[data-theme='wood'] .keyboard-panel {
+  background: #3a2914;
+  color: #fdf4dd;
+}
+
+[data-theme='wood'] .keyboard-close {
+  color: color-mix(in srgb, #fdf4dd 60%, transparent);
+}
+
+[data-theme='wood'] .keyboard-close:hover,
+[data-theme='wood'] .keyboard-close:active {
+  color: color-mix(in srgb, #fdf4dd 85%, transparent);
+}
+
 /* three keyboard rows (QWERTY / ЙЦУКЕН), not a wrapped cloud. The block
    stretches to the panel's inner width, so the key width calc below resolves
    against a definite size — a centered fit-content box would be circular */
@@ -1341,9 +1369,12 @@ button.status-start:focus-visible,
 
 /* a compact centered card over the same substrate as the rules modal — a
    quick reference, not a document: the word, its transcription, the russian
-   equivalents and the outbound Yandex link */
+   equivalents and the outbound Yandex link. Slightly translucent and frosted:
+   the board with the tapped word's track keeps faintly showing through */
 .word-card {
-  background: var(--card-bg);
+  background: color-mix(in srgb, var(--card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: var(--card-border);
   border-radius: 8px;
   color: var(--card-color);

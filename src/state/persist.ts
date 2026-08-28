@@ -5,7 +5,8 @@
 // localStorage on every change and read back at startup.
 //
 // What is NOT restored is as important as what is. The saved snapshot keeps
-// only the finished game — board, words, language. The half-made move
+// only the finished game — board, words, their tracks, language. The
+// half-made move
 // (selectedCell, numChar, track, boardBackup) and the transient chatter
 // (error, status, lastBotMove) are dropped: a pointer drag interrupted by the
 // app closing is not a state the player can meaningfully resume into, and a
@@ -30,7 +31,7 @@ const STORAGE_KEY = 'balda-game';
 
 // bumped whenever the shape below changes — an old snapshot is then ignored
 // rather than half-read into a state the reducer cannot handle
-const VERSION = 1;
+const VERSION = 2;
 
 interface Snapshot {
   v: number;
@@ -40,6 +41,7 @@ interface Snapshot {
   usedWords: string[];
   playerWords: string[];
   botWords: string[];
+  tracks: Record<string, number[]>; // each played word's board path (types.ts)
 }
 
 export function saveGame(state: GameState): void {
@@ -59,6 +61,7 @@ export function saveGame(state: GameState): void {
     usedWords: state.usedWords,
     playerWords: state.playerWords,
     botWords: state.botWords,
+    tracks: state.tracks,
   };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
@@ -106,13 +109,16 @@ export function loadGame(lang: Lang): GameState | null {
     return null;
   }
 
-  // the transient half of the state is rebuilt empty — see the header
+  // the transient half of the state is rebuilt empty — see the header.
+  // tracks fully replaces freshGame's own (its random starting word is not
+  // the saved game's one)
   return {
     ...freshGame(snapshot.lang),
     board: snapshot.board,
     usedWords: snapshot.usedWords,
     playerWords: snapshot.playerWords,
     botWords: snapshot.botWords,
+    tracks: snapshot.tracks,
     phase: snapshot.over ? 'over' : 'idle',
   };
 }
@@ -134,6 +140,7 @@ function isSnapshot(value: unknown): value is Snapshot {
     isWordList(s.usedWords) &&
     isWordList(s.playerWords) &&
     isWordList(s.botWords) &&
+    isTrackMap(s.tracks) &&
     // the board is the fixed 25 cells of strings, and the words played must
     // fit the game's own limit — a snapshot outside them is corrupt
     Array.isArray(s.board) &&
@@ -146,4 +153,18 @@ function isSnapshot(value: unknown): value is Snapshot {
 
 function isWordList(value: unknown): boolean {
   return Array.isArray(value) && value.every((w) => typeof w === 'string');
+}
+
+// word -> board path: every track is a non-empty list of cell indices in
+// range (the shape only — which words the keys name is the game's own
+// business)
+function isTrackMap(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null)
+    return false;
+  return Object.values(value).every(
+    (t) =>
+      Array.isArray(t) &&
+      t.length >= 1 &&
+      t.every((n) => typeof n === 'number' && Number.isInteger(n) && n >= 0 && n < SIZE * SIZE),
+  );
 }

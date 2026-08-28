@@ -50,6 +50,11 @@ export default function App() {
   const [rulesOpen, setRulesOpen] = useState(false);
   // an english word tapped for its translation (WordPopup); null = closed
   const [wordPopup, setWordPopup] = useState<string | null>(null);
+  // the path of a word tapped in a score list or the status line, laid back
+  // on the board with the word's letter order (state.tracks); null = none.
+  // It stays on the board after the popup closes — the next game action
+  // clears it (the effect below)
+  const [shownTrack, setShownTrack] = useState<number[] | null>(null);
   const texts = TEXTS[lang];
   // the board grid element: the floating letter keyboard anchors to its cells
   const boardRef = useRef<HTMLDivElement | null>(null);
@@ -74,6 +79,13 @@ export default function App() {
   // actions rewrite the same snapshot, which is cheap and always current.
   useEffect(() => {
     saveGame(state);
+  }, [state]);
+
+  // the shown path belongs to the moment of the tap: any game action — a new
+  // move, a restart, a language switch — produces a new state object and
+  // clears it
+  useEffect(() => {
+    setShownTrack(null);
   }, [state]);
 
   // the color theme: data-theme on <html> switches the CSS variable set, and
@@ -173,6 +185,13 @@ export default function App() {
     dispatch({ type: 'NEW_GAME', lang: next });
   }
 
+  // a tapped word opens its translation popup (english words only — the
+  // callers decide) and lays its saved track on the board
+  function handleWordClick(word: string) {
+    setWordPopup(word);
+    setShownTrack(state.tracks[word] ?? null);
+  }
+
   return (
     <div className="context">
       <StatusBar
@@ -183,12 +202,13 @@ export default function App() {
         phase={state.phase}
         lang={state.lang}
         texts={texts}
-        onWordClick={setWordPopup}
+        onWordClick={handleWordClick}
       />
       <div className="board-wrap">
         <Board
           board={state.board}
           track={state.track}
+          shownTrack={shownTrack}
           numChar={state.numChar}
           selectedCell={state.selectedCell}
           phase={state.phase}
@@ -232,7 +252,7 @@ export default function App() {
         botWords={state.botWords}
         lang={state.lang}
         texts={texts}
-        onWordClick={setWordPopup}
+        onWordClick={handleWordClick}
       />
       {/* two rows: the game settings (language, difficulty), then the help
           button and the theme swatches — on phones the footer is pinned to

@@ -3,7 +3,8 @@
 interface CellProps {
   letter: string;
   inTrack: boolean;          // the cell is in the path — highlighted .select
-  trackNumber: number | null; // 1-based order on the cell: the player's path, or the computer's word while its move is highlighted
+  trackNumber: number | null; // 1-based order on the cell: the player's path, the computer's word while its move is highlighted, or a played word's shown track
+  shown: boolean;            // the cell is on a played word's shown track — a muted «history» highlight (.shown), it yields to every live highlight
   isNew: boolean;            // the cell with the added letter — highlighted .add
   isSelected: boolean;       // the cell the letter keyboard is anchored to: the chosen empty cell (letter phase) or the added letter being changed (word phase)
   bot: boolean;              // on the highlighted path of the computer's move
@@ -12,8 +13,11 @@ interface CellProps {
   onClick: () => void;
 }
 
-export function Cell({ letter, inTrack, trackNumber, isNew, isSelected, bot, botNew, disabled, onClick }: CellProps) {
+export function Cell({ letter, inTrack, trackNumber, shown, isNew, isSelected, bot, botNew, disabled, onClick }: CellProps) {
   const classes = ['cell'];
+  // the shown track first: every live highlight (bot, select, add, selected)
+  // must win over it where they overlap
+  if (shown) classes.push('shown');
   if (bot) classes.push('bot');
   if (botNew) classes.push('bot-new');
   if (inTrack) classes.push('select');

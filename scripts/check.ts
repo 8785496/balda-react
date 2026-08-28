@@ -302,6 +302,8 @@ function findWordPath(board: string[], word: string, mustInclude: number): numbe
 let s = freshGame('ru', 'балда');
 assert(s.phase === 'idle' && s.usedWords.length === 1 && s.board[10] === 'б',
   'the game starts immediately: the starting word is in the middle row');
+assert(s.tracks['балда'] !== undefined && s.tracks['балда'].join(',') === '10,11,12,13,14',
+  "the starting word's track is the middle row");
 assert(gameReducer(s, { type: 'NEW_GAME' }).usedWords.length === 1, 'NEW_GAME restarts the game');
 
 // an empty cell with no letters around it (cell 0 on the starting board)
@@ -330,8 +332,12 @@ assert(gameReducer(s, { type: 'CLICK_CELL', index: 11 }) === s,
   'a click on a filled cell in the word phase does nothing (the drag is the only input)');
 s = gameReducer(s, { type: 'SUBMIT_MOVE' });
 assert(s.phase === 'bot' && s.playerWords.length === 1 && s.error === null, 'a successful move switches to the bot phase');
+assert(s.tracks['фалда'] !== undefined && s.tracks['фалда'].join(',') === '6,11,12,13,14',
+  'the played word keeps its track');
 s = gameReducer(s, { type: 'BOT_MOVED', move: { word: 'халда', char: 'х', index: 16, track: [16, 17, 12, 13, 14] } });
 assert(s.phase === 'idle' && s.board[16] === 'х' && s.botWords.length === 1, 'BOT_MOVED writes the letter and the word');
+assert(s.tracks['халда'] !== undefined && s.tracks['халда'].join(',') === '16,17,12,13,14',
+  "the computer's word keeps its track");
 assert(s.status !== null && s.status.kind === 'botMove' && s.status.word === 'халда',
   'BOT_MOVED reports the word in the status (structured, localized on render)');
 
@@ -581,6 +587,10 @@ assert(restored !== null, 'the played game is restored from storage');
 assert(restored !== null && restored.board.join('') === p.board.join(''), 'the restored board matches the saved one');
 assert(restored !== null && restored.usedWords.join(',') === p.usedWords.join(','), 'the restored usedWords match');
 assert(restored !== null && restored.playerWords.join(',') === p.playerWords.join(','), 'the restored playerWords match');
+assert(restored !== null &&
+  restored.tracks['балда']?.join(',') === '10,11,12,13,14' &&
+  restored.tracks['фалда']?.join(',') === '6,11,12,13,14',
+  'the restored tracks match: the starting word and the played word');
 // the bot phase is never restored: the computer forfeits the answer it owed
 assert(restored !== null && restored.phase === 'idle', 'a saved bot phase comes back as idle (phase=' + (restored ? restored.phase : '-') + ')');
 assert(restored !== null && restored.track.length === 0 && restored.numChar === null &&
@@ -608,10 +618,12 @@ assert(loadGame('ru') === null, 'a game on its starting word is not saved');
 // corrupt or foreign data never reaches the reducer
 store.set('balda-game', 'not json at all');
 assert(loadGame('ru') === null, 'unparsable storage is ignored');
-store.set('balda-game', JSON.stringify({ v: 1, lang: 'ru', over: false, board: ['а'], usedWords: ['балда'], playerWords: [], botWords: [] }));
+store.set('balda-game', JSON.stringify({ v: 2, lang: 'ru', over: false, board: ['а'], usedWords: ['балда'], playerWords: [], botWords: [], tracks: {} }));
 assert(loadGame('ru') === null, 'a board of the wrong size is rejected');
-store.set('balda-game', JSON.stringify({ v: 999, lang: 'ru', over: false, board: new Array(25).fill(''), usedWords: ['балда'], playerWords: [], botWords: [] }));
+store.set('balda-game', JSON.stringify({ v: 999, lang: 'ru', over: false, board: new Array(25).fill(''), usedWords: ['балда'], playerWords: [], botWords: [], tracks: {} }));
 assert(loadGame('ru') === null, 'a snapshot of another version is rejected');
+store.set('balda-game', JSON.stringify({ v: 2, lang: 'ru', over: false, board: new Array(25).fill(''), usedWords: ['балда'], playerWords: [], botWords: [], tracks: { 'балда': [99] } }));
+assert(loadGame('ru') === null, 'a track with an out-of-range cell is rejected');
 
 // initGame falls back to a fresh game when there is nothing to restore
 clearGame();

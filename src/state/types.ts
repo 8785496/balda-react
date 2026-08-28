@@ -38,6 +38,12 @@ export interface GameState {
   usedWords: string[];         // all words of the game, [0] = the starting word
   playerWords: string[];       // the player's words; score = sum of lengths
   botWords: string[];          // the computer's words
+  tracks: Record<string, number[]>; // each played word's path on the board,
+                                    // word -> cells in spelling order; the
+                                    // starting word maps to the middle row.
+                                    // Tapping a word in a score list or the
+                                    // status line lays its track back on the
+                                    // board (App's shownTrack)
   selectedCell: number | null; // the cell the letter keyboard is anchored to:
                                // the chosen empty cell (letter phase) or the
                                // added letter being changed (word phase)

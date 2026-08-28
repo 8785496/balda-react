@@ -12,6 +12,7 @@ import { Cell } from './Cell';
 interface BoardProps {
   board: string[];
   track: number[];
+  shownTrack: number[] | null; // a played word's path tapped in a score list — shown on the board
   numChar: number | null;
   selectedCell: number | null;
   phase: Phase;
@@ -134,7 +135,7 @@ function useWordDrag(
   return { onPointerDown };
 }
 
-export function Board({ board, track, numChar, selectedCell, phase, botMove, boardRef, texts, onCellClick, onDragStartCell, onDragCell, onDragSubmit }: BoardProps) {
+export function Board({ board, track, shownTrack, numChar, selectedCell, phase, botMove, boardRef, texts, onCellClick, onDragStartCell, onDragCell, onDragSubmit }: BoardProps) {
   const drag = useWordDrag(phase, board, track, onDragStartCell, onDragCell, onDragSubmit);
   // idle — choosing an empty cell; letter — the keyboard is open: a tap on
   // another empty cell moves the pending letter there, on the selected cell
@@ -161,15 +162,24 @@ export function Board({ board, track, numChar, selectedCell, phase, botMove, boa
         const trackPos = track.indexOf(i);
         // while the computer's move is highlighted, its word path carries the
         // same order numbers — so the word can be read off the board; where
-        // the player is already drawing their own next word, their track wins
+        // the player is already drawing their own next word, their track wins,
+        // and the shown (tapped-in-a-list) path yields to both live highlights
         const botPos = botMove !== null ? botMove.track.indexOf(i) : -1;
-        const num = trackPos !== -1 ? trackPos + 1 : botPos !== -1 ? botPos + 1 : null;
+        const shownPos = shownTrack !== null ? shownTrack.indexOf(i) : -1;
+        const num = trackPos !== -1
+          ? trackPos + 1
+          : botPos !== -1
+            ? botPos + 1
+            : shownPos !== -1
+              ? shownPos + 1
+              : null;
         return (
           <Cell
             key={i}
             letter={letter}
             inTrack={trackPos !== -1}
             trackNumber={num}
+            shown={shownPos !== -1}
             isNew={numChar === i}
             isSelected={selectedCell === i}
             bot={botMove !== null && botMove.track.indexOf(i) !== -1}
