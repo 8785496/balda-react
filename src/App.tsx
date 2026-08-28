@@ -32,6 +32,10 @@ function scoreOf(words: string[]): number {
 // how long the computer's move stays highlighted on the board
 const BOT_MOVE_HIGHLIGHT_MS = 3000;
 
+// how long a tapped word's track stays on the board after its translation
+// popup closes
+const SHOWN_TRACK_LINGER_MS = 3000;
+
 // the artificial pause before the computer's move lands: the search is
 // near-instant early on, and without it the «Думаю…» badge flashes for a
 // split second — unreadable, and its flip animation has no time to play
@@ -52,9 +56,12 @@ export default function App() {
   const [wordPopup, setWordPopup] = useState<string | null>(null);
   // the path of a word tapped in a score list or the status line, laid back
   // on the board with the word's letter order (state.tracks); null = none.
-  // It stays on the board after the popup closes — the next game action
-  // clears it (the effect below)
+  // It stays on the board for a few seconds after the popup closes (see
+  // closeWordPopup) and any game action clears it right away (the effect
+  // below)
   const [shownTrack, setShownTrack] = useState<number[] | null>(null);
+  // the pending SHOWN_TRACK_LINGER_MS countdown of the popup just closed
+  const trackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const texts = TEXTS[lang];
   // the board grid element: the floating letter keyboard anchors to its cells
   const boardRef = useRef<HTMLDivElement | null>(null);
@@ -83,10 +90,14 @@ export default function App() {
 
   // the shown path belongs to the moment of the tap: any game action — a new
   // move, a restart, a language switch — produces a new state object and
-  // clears it
+  // clears it; the lingering countdown has nothing left to clear
   useEffect(() => {
     setShownTrack(null);
+    clearTrackTimer();
   }, [state]);
+
+  // no stray countdown outlives the component
+  useEffect(() => () => clearTrackTimer(), []);
 
   // the color theme: data-theme on <html> switches the CSS variable set, and
   // meta theme-color re-points the browser/OS chrome above the page — the
@@ -152,7 +163,7 @@ export default function App() {
       }
       if (wordPopup !== null) {
         if (e.key === 'Escape')
-          setWordPopup(null);
+          closeWordPopup();
         return;
       }
       const keyboardOpen = state.selectedCell !== null &&
@@ -186,10 +197,31 @@ export default function App() {
   }
 
   // a tapped word opens its translation popup (english words only — the
-  // callers decide) and lays its saved track on the board
+  // callers decide) and lays its saved track on the board; a new tap replaces
+  // the shown track and restarts its countdown from scratch
   function handleWordClick(word: string) {
+    clearTrackTimer();
     setWordPopup(word);
     setShownTrack(state.tracks[word] ?? null);
+  }
+
+  // closing the popup is not the end of the track's visit: it lingers on the
+  // board for a few seconds, then clears itself — unless a game action (the
+  // effect keyed on state) or another tap gets there first
+  function closeWordPopup() {
+    setWordPopup(null);
+    clearTrackTimer();
+    trackTimerRef.current = setTimeout(() => {
+      trackTimerRef.current = null;
+      setShownTrack(null);
+    }, SHOWN_TRACK_LINGER_MS);
+  }
+
+  function clearTrackTimer() {
+    if (trackTimerRef.current !== null) {
+      clearTimeout(trackTimerRef.current);
+      trackTimerRef.current = null;
+    }
   }
 
   return (
@@ -286,7 +318,7 @@ export default function App() {
       </footer>
       {rulesOpen && <RulesModal texts={texts} onClose={() => setRulesOpen(false)} />}
       {wordPopup !== null && (
-        <WordPopup word={wordPopup} texts={texts} onClose={() => setWordPopup(null)} />
+        <WordPopup word={wordPopup} texts={texts} onClose={closeWordPopup} />
       )}
     </div>
   );
