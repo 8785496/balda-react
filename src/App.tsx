@@ -3,6 +3,7 @@ import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 import { DifficultyPicker } from './components/DifficultyPicker';
 import { EndPanel } from './components/EndPanel';
+import { HistoryModal } from './components/HistoryModal';
 import { Keyboard } from './components/Keyboard';
 import { LangPicker } from './components/LangPicker';
 import { RulesModal } from './components/RulesModal';
@@ -15,6 +16,7 @@ import { MAX_WORDS } from './game/constants';
 import { findBestMove } from './game/finder';
 import { gameReducer } from './state/gameReducer';
 import { initGame, saveGame } from './state/persist';
+import { addGame, entryToState, type HistoryEntry } from './state/history';
 import { wordFromTrack } from './state/helpers';
 import { chromeColorFor, loadTheme, saveTheme, type ThemeId } from './theme';
 import { loadLang, saveLang } from './lang';
@@ -52,6 +54,8 @@ export default function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>(loadDifficulty);
   const [theme, setTheme] = useState<ThemeId>(loadTheme);
   const [rulesOpen, setRulesOpen] = useState(false);
+  // the game history modal (the footer clock button)
+  const [historyOpen, setHistoryOpen] = useState(false);
   // the end panel is dismissible (its ✕ / Escape): the flag follows the
   // finished game it belongs to — a fresh 'over' phase reopens it, so it
   // starts from whether the restored save is already finished
@@ -110,6 +114,16 @@ export default function App() {
       setEndPanelOpen(true);
   }, [state.phase]);
 
+  // each finished game lands in the history (state/history.ts): the effect
+  // runs once per transition into 'over' — the computer's closing word
+  // included. A game loaded back from the history re-fires this on its load,
+  // and addGame's duplicate check keeps it from being archived twice (the
+  // double effect run of StrictMode's dev mount is caught the same way)
+  useEffect(() => {
+    if (state.phase === 'over')
+      addGame(state);
+  }, [state.phase]);
+
   // the color theme: data-theme on <html> switches the CSS variable set, and
   // meta theme-color re-points the browser/OS chrome above the page — the
   // status bar of the installed standalone app on Android follows it live,
@@ -163,13 +177,18 @@ export default function App() {
   // physical keyboard: a letter (ё → е) while the letter keyboard is open (the
   // letter phase, or the word phase with the panel reopened on the added
   // letter); Escape closes the open keyboard, cancels the move, closes the
-  // rules modal or the word popup. The word itself is drawn with the
-  // mouse/touch and submitted by the drag release.
+  // rules modal, the history modal or the word popup. The word itself is
+  // drawn with the mouse/touch and submitted by the drag release.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (rulesOpen) {
         if (e.key === 'Escape')
           setRulesOpen(false);
+        return;
+      }
+      if (historyOpen) {
+        if (e.key === 'Escape')
+          setHistoryOpen(false);
         return;
       }
       if (wordPopup !== null) {
@@ -203,13 +222,23 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.phase, state.selectedCell, state.lang, rulesOpen, wordPopup, endPanelOpen]);
+  }, [state.phase, state.selectedCell, state.lang, rulesOpen, historyOpen, wordPopup, endPanelOpen]);
 
   // switching the language starts a new game in it (the confirmation for a
   // game in progress lives in the picker itself)
   function switchLang(next: Lang) {
     setLang(next);
     dispatch({ type: 'NEW_GAME', lang: next });
+  }
+
+  // a game from the history replaces the current one outright: its board,
+  // words and tracks come back as a finished game, and the UI language
+  // follows the game's own (the texts with it) — the same pairing as
+  // switchLang. The confirmation for a game in progress lives in the modal
+  function loadHistoryGame(entry: HistoryEntry) {
+    setLang(entry.lang);
+    dispatch({ type: 'LOAD_GAME', game: entryToState(entry) });
+    setHistoryOpen(false);
   }
 
   // a tapped word opens its translation popup (english words only — the
@@ -303,9 +332,9 @@ export default function App() {
         texts={texts}
         onWordClick={handleWordClick}
       />
-      {/* two rows: the game settings (language, difficulty), then the help
-          button and the theme swatches — on phones the footer is pinned to
-          the screen's bottom edge in this shape */}
+      {/* two rows: the game settings (language, difficulty), then the history
+          and rules buttons and the theme swatches — on phones the footer is
+          pinned to the screen's bottom edge in this shape */}
       <footer className="footer">
         <div className="footer-row">
           <LangPicker
@@ -323,7 +352,22 @@ export default function App() {
         <div className="footer-row">
           <button
             type="button"
-            className="rules-icon"
+            className="footer-icon"
+            onClick={() => setHistoryOpen(true)}
+            title={texts.history.title}
+            aria-label={texts.history.title}
+          >
+            {/* a clock drawn in strokes: currentColor keeps it on the
+                button's palette through every theme (an emoji clock cannot
+                be recolored) */}
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+              <circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.6" />
+              <path d="M8 4.75V8l2.4 1.6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="footer-icon"
             onClick={() => setRulesOpen(true)}
             title={texts.rules.title}
             aria-label={texts.rules.title}
@@ -334,6 +378,15 @@ export default function App() {
         </div>
       </footer>
       {rulesOpen && <RulesModal texts={texts} onClose={() => setRulesOpen(false)} />}
+      {historyOpen && (
+        <HistoryModal
+          lang={lang}
+          needsConfirm={state.phase !== 'over' && state.usedWords.length > 1}
+          texts={texts}
+          onLoad={loadHistoryGame}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
       {wordPopup !== null && (
         <WordPopup word={wordPopup} texts={texts} onClose={closeWordPopup} />
       )}

@@ -65,6 +65,11 @@ export function gameReducer(state: GameState, action: Action): GameState {
     case 'NEW_GAME':
       return freshGame(action.lang ?? state.lang);
 
+    // the game arrives ready-made (entryToState in state/history.ts) — the
+    // loaded game simply is the state now
+    case 'LOAD_GAME':
+      return action.game;
+
     case 'CLICK_CELL': {
       const i = action.index;
       if (state.phase === 'idle') {

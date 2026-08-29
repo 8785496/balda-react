@@ -454,8 +454,9 @@ a:hover {
   gap: 10px 14px;
 }
 
-/* a round "?" button opening the rules modal (the former external link) */
-.rules-icon {
+/* round footer icon buttons: the history clock and the rules "?" (both open
+   their modals) */
+.footer-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -474,7 +475,7 @@ a:hover {
   box-shadow: none;
 }
 
-.rules-icon:hover {
+.footer-icon:hover {
   border: var(--btn-hover-border);
   background: var(--btn-hover-bg);
   color: var(--btn-hover-color);
@@ -942,8 +943,10 @@ button:disabled {
 .cell:focus-visible,
 .keyboard button:focus-visible,
 .keyboard-close:focus-visible,
+.footer-icon:focus-visible,
+.history-close:focus-visible,
+.history-row:focus-visible,
 .rules-close:focus-visible,
-.rules-icon:focus-visible,
 .seg-btn:focus-visible,
 .theme-swatch:focus-visible,
 .word-link:focus-visible,
@@ -1413,6 +1416,109 @@ button.status-start:focus-visible,
 
 .rules-link {
   font-size: 14px;
+}
+
+/* --- the game history modal (the footer clock button) --- */
+
+/* the same card as the rules modal, holding the list of finished games */
+.history-card {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: 8px;
+  color: var(--card-color);
+  padding: 16px 22px 18px;
+  max-width: min(430px, 92%);
+  max-height: 82vh;
+  overflow-y: auto;
+}
+
+/* the head carries the title; the ✕ sits absolutely in its right corner
+   (the rules modal / word popup pattern) */
+.history-head {
+  position: relative;
+}
+
+.history-head h2 {
+  font-family: 'Play', sans-serif;
+  margin: 0;
+  font-size: 22px;
+}
+
+/* the list's ✕: the same quiet way out as the rules modal's close */
+.history-close {
+  position: absolute;
+  top: 0; /* rides the row's top edge: level with the title's cap */
+  right: -10px; /* pulls onto the card's padding, into the row's corner */
+  min-width: 0;
+  margin: 0;
+  padding: 2px 5px;
+  font-size: 13px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+  background: transparent;
+  border-color: transparent; /* keeps the base 1px box: no size jump on hover */
+  box-shadow: none;
+}
+
+.history-close:hover,
+.history-close:active {
+  border-color: transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--card-color) 85%, transparent);
+}
+
+.history-list {
+  margin: 12px 0 14px;
+  display: grid;
+  gap: 8px;
+}
+
+/* a framed row, the whole row the tap target (the phone score chip pattern);
+   two lines — the outcome with the score, then the muted language and date */
+.history-row {
+  min-width: 0;
+  margin: 0;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.history-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.history-score-sep {
+  margin: 0 5px;
+  color: color-mix(in srgb, var(--card-color) 55%, transparent);
+}
+
+.history-meta {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+}
+
+/* the armed row — the load confirmation over a game in progress, tinted with
+   the theme's error color like every armed confirmation. Must repeat on
+   :hover — the generic button:hover wins over the plain class */
+.history-row.armed,
+.history-row.armed:hover {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--error);
+}
+
+/* nothing finished yet — a quiet line, not an empty frame */
+.history-none {
+  margin: 14px 0 12px;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
 }
 
 /* --- the word popup (an english word tapped for its translation) --- */

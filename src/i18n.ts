@@ -59,6 +59,17 @@ export interface Texts {
     link: string;                // the wiki link text at the end
     close: string;               // the modal close button
   };
+  history: {
+    title: string;               // the footer clock button and the modal heading
+    load: string;                // a row's tooltip: what a tap does
+    empty: string;               // no finished games yet
+    win: string;                 // a row's outcome — short labels; the end
+    lose: string;                // panel's phrases («Вы победили…») are too
+    draw: string;                // long for a list row
+    confirm: string;             // the armed «Точно?»
+    confirmTitle: string;        // the armed row's tooltip: the warning
+    close: string;               // the modal close button
+  };
   langAria: string;              // the footer switchers
   difficultyAria: string;
   difficultyName(d: Difficulty): string;
@@ -133,6 +144,17 @@ export const TEXTS: Record<Lang, Texts> = {
       link: 'Подробнее — в русской Википедии',
       close: 'Закрыть',
     },
+    history: {
+      title: 'История игр',
+      load: 'Загрузить игру',
+      empty: 'Завершённых игр ещё нет',
+      win: 'Победа',
+      lose: 'Поражение',
+      draw: 'Ничья',
+      confirm: 'Точно?',
+      confirmTitle: 'Текущая игра будет потеряна',
+      close: 'Закрыть',
+    },
     langAria: 'Язык игры',
     difficultyAria: 'Сложность',
     difficultyName(d) {
@@ -203,6 +225,17 @@ export const TEXTS: Record<Lang, Texts> = {
         'A word scores its length. The game lasts until 21 words (including the starting one); the higher total wins.',
       ],
       link: 'More details — in the Russian Wikipedia',
+      close: 'Close',
+    },
+    history: {
+      title: 'Game history',
+      load: 'Load this game',
+      empty: 'No finished games yet',
+      win: 'Win',
+      lose: 'Loss',
+      draw: 'Draw',
+      confirm: 'Sure?',
+      confirmTitle: 'The current game will be lost',
       close: 'Close',
     },
     langAria: 'Game language',

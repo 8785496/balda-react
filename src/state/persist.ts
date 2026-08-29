@@ -151,14 +151,16 @@ function isSnapshot(value: unknown): value is Snapshot {
   );
 }
 
-function isWordList(value: unknown): boolean {
+// exported for state/history.ts, whose entries carry the same fields
+export function isWordList(value: unknown): boolean {
   return Array.isArray(value) && value.every((w) => typeof w === 'string');
 }
 
 // word -> board path: every track is a non-empty list of cell indices in
 // range (the shape only — which words the keys name is the game's own
-// business)
-function isTrackMap(value: unknown): boolean {
+// business). Exported for state/history.ts, whose entries carry the same
+// fields
+export function isTrackMap(value: unknown): boolean {
   if (typeof value !== 'object' || value === null)
     return false;
   return Object.values(value).every(

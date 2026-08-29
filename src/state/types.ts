@@ -57,6 +57,7 @@ export interface GameState {
 
 export type Action =
   | { type: 'NEW_GAME'; lang?: Lang } // restarts, optionally switching the game language
+  | { type: 'LOAD_GAME'; game: GameState } // replaces the whole state with a game loaded from the history (state/history.ts): a finished game restored by entryToState — its board, words, tracks and the 'over' phase
   | { type: 'CLICK_CELL'; index: number } // choose the cell for the new letter (idle) / re-target or dismiss the keyboard (letter) / reopen it on the added letter, move the letter to another legal spot (the keyboard reopens there), or close the panel (word)
   | { type: 'DRAG_START'; index: number } // a drag left its start cell — anchor the path there
   | { type: 'DRAG_CELL'; index: number } // the pointer entered a cell mid-drag

@@ -1,7 +1,7 @@
 // Checks the ported logic without a test framework (see AGENTS.md):
 // the dictionaries, board geometry, the move search on reference positions
-// (both languages, all difficulties), the reducer state machine and the
-// saved-game round trip.
+// (both languages, all difficulties), the reducer state machine, the
+// saved-game round trip and the game history.
 // Run: npm run check
 import { dictionary } from '../src/game/dictionary';
 import { dictionary as dictionaryEn } from '../src/game/dictionary-en';
@@ -11,6 +11,7 @@ import { SIZE, START_ROW, MAX_WORDS } from '../src/game/constants';
 import { neighbors, areAdjacent, wordFromTrack } from '../src/state/helpers';
 import { gameReducer, freshGame, initialState } from '../src/state/gameReducer';
 import { saveGame, loadGame, clearGame, initGame } from '../src/state/persist';
+import { addGame, listGames, clearHistory, entryToState, MAX_GAMES } from '../src/state/history';
 
 const dic = dicFor('ru');
 const ALPHABET = alphabetFor('ru');
@@ -631,6 +632,77 @@ const fresh = initGame('ru');
 assert(fresh.usedWords.length === 1 && fresh.phase === 'idle', 'initGame starts a new game with no save');
 saveGame(p);
 assert(initGame('ru').usedWords.length === p.usedWords.length, 'initGame returns the saved game when there is one');
+
+// --- the game history (state/history.ts) ---
+
+clearHistory();
+assert(listGames().length === 0, 'the history starts empty');
+
+// only finished games are archived — the game in progress above is not
+addGame(p);
+assert(listGames().length === 0, 'a game in progress is not archived');
+
+// the finished game of the simulation above lands in the history, whole
+addGame(g);
+const archived = listGames();
+assert(archived.length === 1, 'the finished game is archived');
+assert(archived.length === 1 &&
+  archived[0].lang === g.lang &&
+  archived[0].board.join('') === g.board.join('') &&
+  archived[0].usedWords.join(',') === g.usedWords.join(',') &&
+  archived[0].playerWords.join(',') === g.playerWords.join(',') &&
+  archived[0].botWords.join(',') === g.botWords.join(','),
+  'the archived entry holds the game\'s board, words and language');
+assert(archived.length === 1 &&
+  JSON.stringify(archived[0].tracks) === JSON.stringify(g.tracks),
+  'the archived entry holds the word tracks');
+
+// an exact re-archive is a no-op: loading the game back re-fires the archiving
+// effect on its phase change, and the same game must not land twice
+addGame(g);
+assert(listGames().length === 1, 'the same game archived twice stays one entry');
+
+// the entry restores as the finished game itself
+const loaded = entryToState(archived[0]);
+assert(loaded.phase === 'over' &&
+  loaded.board.join('') === g.board.join('') &&
+  loaded.usedWords.join(',') === g.usedWords.join(','),
+  'entryToState restores the board, the words and the over phase');
+assert(loaded.track.length === 0 && loaded.numChar === null && loaded.selectedCell === null &&
+  loaded.boardBackup === null && loaded.lastBotMove === null,
+  'entryToState rebuilds the transient fields empty');
+assert(gameReducer(freshGame('ru', START_WORD), { type: 'LOAD_GAME', game: loaded }) === loaded,
+  'LOAD_GAME replaces the state with the loaded game');
+
+// the cap: only the newest MAX_GAMES games stay, the oldest fall off. The
+// variants are built small — an entry's word count is capped at 21 like the
+// game's own, and the duplicate check knows a game by its words
+clearHistory();
+for (let i = 0; i < MAX_GAMES + 2; i++)
+  addGame({ ...freshGame('ru', START_WORD), phase: 'over', usedWords: [START_WORD, 'игра' + i] });
+const capped = listGames();
+assert(capped.length === MAX_GAMES,
+  'the history is capped at ' + MAX_GAMES + ' games (got ' + capped.length + ')');
+assert(capped.length === MAX_GAMES && capped[0].usedWords[1] === 'игра' + (MAX_GAMES + 1),
+  'the newest game stays on top');
+assert(capped.every((e) => e.usedWords[1] !== 'игра0'),
+  'the oldest games beyond the cap are dropped');
+
+// corrupt storage never reaches the modal
+store.set('balda-history', 'not json at all');
+assert(listGames().length === 0, 'unparsable history is ignored');
+store.set('balda-history', JSON.stringify({ v: 999, games: [] }));
+assert(listGames().length === 0, 'a history of another version is rejected');
+
+// one corrupt entry among valid ones is dropped on read, the rest survive
+addGame(g);
+const rawHistory = JSON.parse(store.get('balda-history')!);
+rawHistory.games.push({ v: 1, junk: true });
+store.set('balda-history', JSON.stringify(rawHistory));
+const filtered = listGames();
+assert(filtered.length === 1 && filtered[0].usedWords.join(',') === g.usedWords.join(','),
+  'a corrupt entry is dropped, the valid ones survive');
+clearHistory();
 
 if (failures > 0) {
   console.error('\nFailed checks: ' + failures);
