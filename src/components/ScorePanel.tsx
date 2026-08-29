@@ -70,8 +70,14 @@ function renderWords(words: string[], lang: Lang, onWordClick: (word: string) =>
         <button key={word} type="button" className="word-link" onClick={() => onWordClick(word)}>
           <span className="word-inner">
             {word}
-            <WordIpa word={word} />
-            <span className="word-len">{word.length}</span>
+            {/* the transcription and the count in one non-breaking group:
+                a too-narrow row wraps between the word and its metadata,
+                not between the two — a bare count on its own line reads
+                as a stray digit (see .word-meta in styles) */}
+            <span className="word-meta">
+              <WordIpa word={word} />
+              <span className="word-len">{word.length}</span>
+            </span>
           </span>
         </button>
       ) : (

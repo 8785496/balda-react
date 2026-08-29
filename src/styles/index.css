@@ -1050,6 +1050,16 @@ button.status-start:focus-visible,
   text-decoration: none;
 }
 
+/* the transcription and the count as one non-breaking group (ScorePanel's
+   english rows, StatusBar's bot word): both are atomic inline boxes, so a
+   too-narrow line can only wrap between them — and a bare count alone on
+   the wrapped line reads as a stray digit. Inside this group they travel
+   together: the wrap falls between the word and its metadata, and the
+   second line carries the transcription with the count after it */
+.word-meta {
+  white-space: nowrap;
+}
+
 /* the link is the row: block stacking keeps one word per line (an inline
    link would run the words into a wrapping ribbon); phones restyle it into
    the 44px tap target */

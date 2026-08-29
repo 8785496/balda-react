@@ -65,19 +65,27 @@ export function StatusBar({ result, startWord, error, status, phase, lang, texts
             <button type="button" className="status-word" onClick={() => onWordClick(status.word)}>
               {status.word}
             </button>
-            <WordIpa word={status.word} />
+            {/* the transcription and the points as one non-breaking group:
+                a too-narrow line wraps between the word and its metadata,
+                not before the "+n" (see .word-meta in styles) */}
+            <span className="word-meta">
+              <WordIpa word={status.word} />
+              <span className="word-len">+{status.word.length}</span>
+            </span>
           </>
         ) : (
-          <a
-            className="status-word"
-            href={wordUrl(lang, status.word)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {status.word}
-          </a>
+          <>
+            <a
+              className="status-word"
+              href={wordUrl(lang, status.word)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {status.word}
+            </a>
+            <span className="word-len">+{status.word.length}</span>
+          </>
         )}
-        <span className="word-len">+{status.word.length}</span>
       </>
     ) : (
       texts.statusBotSkip
