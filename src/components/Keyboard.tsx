@@ -15,8 +15,12 @@ import type { Texts } from '../i18n';
 import { keyboardFor, type Lang } from '../game/lang';
 import { SIZE } from '../game/constants';
 
-// kept in sync with the .keyboard-panel media query in styles/index.css
+// kept in sync with the .keyboard-panel media queries in styles/index.css
 const NARROW = '(max-width: 560px)';
+// landscape phones: wide enough to take the tablet's three-column grid, but
+// too short for a board-width floating panel (its keys would be ~16px) — they
+// get the same full-width pinned form as a portrait phone
+const SHORT_LANDSCAPE = '(min-width: 561px) and (max-height: 500px) and (orientation: landscape)';
 
 interface KeyboardProps {
   boardRef: RefObject<HTMLDivElement | null>; // the .board grid, for the cell's position
@@ -47,7 +51,9 @@ export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter, onClose }
       if (!cell)
         return;
       const below = Math.floor(cellIndex / SIZE) < SIZE / 2;
-      if (window.matchMedia(NARROW).matches) {
+      const fullPanel =
+        window.matchMedia(NARROW).matches || window.matchMedia(SHORT_LANDSCAPE).matches;
+      if (fullPanel) {
         // the full-width panel is fixed to the viewport (styles/index.css):
         // the vertical anchor is measured in viewport coordinates and
         // clamped, so the panel never leaves the screen — and stays clear of

@@ -1787,3 +1787,152 @@ button.status-start:focus-visible,
     background: color-mix(in srgb, var(--text) 10%, transparent);
   }
 }
+
+/* --- landscape phones (wider than 560px, under 500px tall): a phone held
+   sideways matches the landscape-tablet query above, but its ~400px of
+   height are tablet-unfriendly — the tablet's 230px chrome reserve left the
+   board a ~130px stamp, the «Слово 7 из 21» counter rode the board-width
+   controls row right on top of «Заново», and a board-width letter keyboard
+   would have ~16px keys. The same three-column grid stays, with the chrome
+   compacted to earn the board its height back: the status row, the controls
+   row and the one-line footer all slim down; the controls row leaves the
+   board column and spans the whole width, so the centered counter is clear
+   of the buttons at the screen edges; the board's height reserve drops to
+   ~150px; and the shell stops scrolling, like the portrait phone's --- */
+
+@media (min-width: 561px) and (orientation: landscape) and (max-height: 500px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    height: 100vh;
+    height: 100dvh; /* follows the browser UI bars instead of being cut by them */
+    overscroll-behavior: none;
+    /* max() on both sides: in landscape the notch's inset may fall on the
+       left or on the right edge */
+    padding:
+      6px
+      max(12px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px))
+      calc(6px + env(safe-area-inset-bottom, 0px))
+      max(12px, env(safe-area-inset-right, 0px), env(safe-area-inset-left, 0px));
+  }
+
+  #root {
+    min-height: 0;
+  }
+
+  .context {
+    min-height: 0;
+    /* the compacted chrome leaves ~150px of the viewport height for
+       everything but the board (the tablet query's reserve is 230px) */
+    --tablet-board: min(520px, 52vw, 100dvh - 150px - env(safe-area-inset-bottom, 0px));
+    /* the controls row leaves the board column: spanning the full width it
+       gives the centered «Слово 7 из 21» clear room between the edge buttons
+       — on the board-width row the two collided (the reason for this query) */
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'status   status   status'
+      'left     board    right'
+      'controls controls controls'
+      'footer   footer   footer';
+  }
+
+  /* whatever height is left concentrates in the middle row: the board and
+     the two columns center in it while the footer keeps the bottom edge */
+  .board-wrap,
+  .column-left,
+  .column-right {
+    align-self: center;
+  }
+
+  /* the compact chrome: the badge and the status line, the controls row and
+     the footer each give back a few of the pixels the board lost */
+  .status-row {
+    margin-bottom: 6px;
+  }
+
+  .turn {
+    font-size: 12px;
+    padding: 3px 9px;
+  }
+
+  .result {
+    font-size: 16px;
+  }
+
+  .controls-row {
+    margin: 4px 0 6px;
+  }
+
+  .btn-secondary {
+    padding: 3px 12px;
+    font-size: 13px;
+  }
+
+  .words-progress {
+    font-size: 12px;
+  }
+
+  .footer {
+    margin-top: 0;
+    padding-top: 6px;
+    gap: 4px 18px;
+  }
+
+  .footer-row {
+    gap: 6px 10px;
+  }
+
+  /* shorter list rows: each column is only as tall as the board beside it */
+  .score-head {
+    margin-bottom: 4px;
+  }
+
+  .words {
+    gap: 3px;
+  }
+
+  .words > a,
+  .words > button.word-link {
+    min-height: 30px;
+  }
+
+  /* the letter keyboard takes the portrait phone's full-width pinned form
+     (Keyboard.tsx matches this same query): board-width keys would be ~16px.
+     The key heights read off vh — width is plentiful here, height is the
+     scarce dimension */
+  .keyboard-panel {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: auto;
+    border-radius: 0;
+    padding: 4px 8px 10px;
+  }
+
+  .keyboard {
+    gap: 10px 5px;
+  }
+
+  .keyboard-row {
+    gap: 5px;
+  }
+
+  .keyboard button {
+    height: clamp(32px, 9vh, 40px);
+    padding: 0;
+    font-size: clamp(16px, 4.6vh, 21px);
+    font-weight: 700;
+  }
+
+  .keyboard.kb-ru button {
+    width: calc((100% - 55px) / 12);
+  }
+
+  .keyboard.kb-en button {
+    width: calc((100% - 45px) / 10);
+  }
+}
