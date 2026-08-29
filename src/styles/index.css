@@ -1235,9 +1235,16 @@ button.status-start:focus-visible,
     padding: 4px 8px 10px;
   }
 
+  /* the panel's 4px top padding leaves the title glued to the screen edge —
+     the title carries its own vertical breathing room instead */
+  .keyboard-title {
+    padding: 5px 0;
+  }
+
   /* the Samsung-keyboard proportions: a roomy row gap over the tight key
      gap, keys taller than the old padding-only sizing grew them, and big
-     bold letters (the widths below resolve against the 5px gaps set here) */
+     regular-weight letters (the widths below resolve against the 5px gaps
+     set here) */
   .keyboard {
     gap: 14px 5px;
   }
@@ -1249,8 +1256,7 @@ button.status-start:focus-visible,
   .keyboard button {
     height: clamp(38px, 11vw, 52px);
     padding: 0;
-    font-size: clamp(18px, 5.2vw, 26px);
-    font-weight: 700;
+    font-size: clamp(20px, 5.8vw, 28px);
   }
 
   .keyboard.kb-ru button {
@@ -1913,6 +1919,10 @@ button.status-start:focus-visible,
     padding: 4px 8px 10px;
   }
 
+  .keyboard-title {
+    padding: 5px 0;
+  }
+
   .keyboard {
     gap: 10px 5px;
   }
@@ -1924,8 +1934,7 @@ button.status-start:focus-visible,
   .keyboard button {
     height: clamp(32px, 9vh, 40px);
     padding: 0;
-    font-size: clamp(16px, 4.6vh, 21px);
-    font-weight: 700;
+    font-size: clamp(17px, 5vh, 23px);
   }
 
   .keyboard.kb-ru button {
