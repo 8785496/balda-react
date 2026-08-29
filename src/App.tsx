@@ -52,6 +52,10 @@ export default function App() {
   const [difficulty, setDifficulty] = useState<Difficulty>(loadDifficulty);
   const [theme, setTheme] = useState<ThemeId>(loadTheme);
   const [rulesOpen, setRulesOpen] = useState(false);
+  // the end panel is dismissible (its ✕ / Escape): the flag follows the
+  // finished game it belongs to — a fresh 'over' phase reopens it, so it
+  // starts from whether the restored save is already finished
+  const [endPanelOpen, setEndPanelOpen] = useState(state.phase === 'over');
   // an english word tapped for its translation (WordPopup); null = closed
   const [wordPopup, setWordPopup] = useState<string | null>(null);
   // the path of a word tapped in a score list or the status line, laid back
@@ -98,6 +102,13 @@ export default function App() {
 
   // no stray countdown outlives the component
   useEffect(() => () => clearTrackTimer(), []);
+
+  // each finished game gets its panel back: a closed ✕ dismisses only the
+  // panel of the game it belonged to
+  useEffect(() => {
+    if (state.phase === 'over')
+      setEndPanelOpen(true);
+  }, [state.phase]);
 
   // the color theme: data-theme on <html> switches the CSS variable set, and
   // meta theme-color re-points the browser/OS chrome above the page — the
@@ -166,6 +177,11 @@ export default function App() {
           closeWordPopup();
         return;
       }
+      if (state.phase === 'over' && endPanelOpen) {
+        if (e.key === 'Escape')
+          setEndPanelOpen(false);
+        return;
+      }
       const keyboardOpen = state.selectedCell !== null &&
         (state.phase === 'letter' || state.phase === 'word');
       if (keyboardOpen) {
@@ -187,7 +203,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.phase, state.selectedCell, state.lang, rulesOpen, wordPopup]);
+  }, [state.phase, state.selectedCell, state.lang, rulesOpen, wordPopup, endPanelOpen]);
 
   // switching the language starts a new game in it (the confirmation for a
   // game in progress lives in the picker itself)
@@ -262,12 +278,13 @@ export default function App() {
             onClose={() => dispatch({ type: 'CLOSE_KEYBOARD' })}
           />
         )}
-        {state.phase === 'over' && (
+        {state.phase === 'over' && endPanelOpen && (
           <EndPanel
             playerScore={scoreOf(state.playerWords)}
             botScore={scoreOf(state.botWords)}
             texts={texts}
             onRestart={() => dispatch({ type: 'NEW_GAME' })}
+            onClose={() => setEndPanelOpen(false)}
           />
         )}
       </div>

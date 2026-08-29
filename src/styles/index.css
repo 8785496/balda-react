@@ -1296,12 +1296,46 @@ button.status-start:focus-visible,
   color: var(--card-color);
   padding: 20px 28px;
   text-align: center;
+  /* a short title must not shrink the card under the corner ✕'s room; the
+     min() keeps the floor below the same 90% viewport cap as the max */
+  min-width: min(240px, 90%);
   max-width: 90%;
 }
 
 .end-card h2 {
   font-family: 'Play', sans-serif;
   margin: 0 0 8px;
+}
+
+/* the head carries the title; the ✕ sits absolutely in its right corner */
+.end-head {
+  position: relative;
+}
+
+/* the end panel's ✕: the same quiet way out as the rules modal's, at the
+   word popup's visual corner — its own offsets dig through this card's
+   roomier padding to land the same 16px from the top and 12px from the
+   right edge */
+.end-close {
+  position: absolute;
+  top: -4px; /* 20px card padding − 4: level with the title's cap, not below it */
+  right: -16px; /* 28px card padding − 16: into the row's corner */
+  min-width: 0;
+  margin: 0;
+  padding: 2px 5px;
+  font-size: 13px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+  background: transparent;
+  border-color: transparent; /* keeps the base 1px box: no size jump on hover */
+  box-shadow: none;
+}
+
+.end-close:hover,
+.end-close:active {
+  border-color: transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--card-color) 85%, transparent);
 }
 
 .end-card p {

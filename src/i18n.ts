@@ -41,6 +41,7 @@ export interface Texts {
     lose: string;
     score: string;
     restart: string;
+    close: string;               // the ✕ button's aria-label
   };
   error(err: GameError): string;
   statusBotMove: string; // the bot's-move label; the word and points follow it, styled (StatusBar)
@@ -90,10 +91,13 @@ export const TEXTS: Record<Lang, Texts> = {
     },
     end: {
       draw: 'Ничья',
-      win: 'Вы победили :)',
-      lose: 'Вы проиграли :(',
+      // the smileys are the text symbols ☺/☹; VS15 (\uFE0E) keeps them from
+      // being rendered as color emoji on the platforms that offer one
+      win: 'Вы победили \u263A\uFE0E',
+      lose: 'Вы проиграли \u2639\uFE0E',
       score: 'Счёт',
       restart: 'Заново',
+      close: 'Закрыть',
     },
     error(err) {
       switch (err.code) {
@@ -161,10 +165,11 @@ export const TEXTS: Record<Lang, Texts> = {
     },
     end: {
       draw: 'Draw',
-      win: 'You win :)',
-      lose: 'You lose :(',
+      win: 'You win \u263A\uFE0E',
+      lose: 'You lose \u2639\uFE0E',
       score: 'Score',
       restart: 'Restart',
+      close: 'Close',
     },
     error(err) {
       switch (err.code) {
