@@ -1,13 +1,12 @@
 // The archive of finished games (state/history.ts) in a modal, opened by the
-// footer clock button: newest first, each row showing the outcome, the final
-// score, the language and when the game ended. A tap loads the game back onto
-// the board — over a game in progress the first tap only arms the row (the
-// «Заново»/language-switch confirmation pattern), the second one loads and
-// the current game is lost. Closes on the ✕ button, a click on the backdrop
-// or Escape (App.tsx).
+// footer clock button: newest first, each row one line — the game's flag, the
+// outcome, the final score and when the game ended. A tap loads the game back
+// onto the board — over a game in progress the first tap only arms the row
+// (the «Заново»/language-switch confirmation pattern), the second one loads
+// and the current game is lost. Closes on the ✕ button, a click on the
+// backdrop or Escape (App.tsx).
 import { useEffect, useState } from 'react';
 import type { Lang } from '../game/lang';
-import { LANGS } from '../lang';
 import type { HistoryEntry } from '../state/history';
 import { listGames } from '../state/history';
 import type { Texts } from '../i18n';
@@ -31,13 +30,44 @@ function scoreOf(words: string[]): number {
   return n;
 }
 
-// «29.08.2026, 14:32» — the date format of the UI language
+// «30.08.26, 14:32» — the UI language's numeric date, short year, with the
+// time the game ended
 function formatWhen(at: number, lang: Lang): string {
   const locale = lang === 'ru' ? 'ru-RU' : 'en-US';
   return (
-    new Date(at).toLocaleDateString(locale) +
+    new Date(at).toLocaleDateString(locale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+    }) +
     ', ' +
     new Date(at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  );
+}
+
+// the game's language as a small round flag — an inline svg, not an emoji:
+// Windows renders no flag emoji at all (a plain "RU"/"GB" letter pair
+// instead), while these draw everywhere and at 16px. The tricolor and the
+// simplified Union Jack, clipped to the circle by .history-flag's
+// border-radius (the svg's own overflow-hidden does not round it)
+function LangFlag({ lang }: { lang: Lang }) {
+  if (lang === 'ru') {
+    return (
+      <svg className="history-flag" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="12" fill="#ffffff" />
+        <rect x="0" y="8" width="24" height="8" fill="#0039a6" />
+        <rect x="0" y="16" width="24" height="8" fill="#d52b1e" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="history-flag" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="12" fill="#012169" />
+      <path d="M0 0l24 24M24 0L0 24" stroke="#ffffff" strokeWidth="4.8" />
+      <path d="M0 0l24 24M24 0L0 24" stroke="#c8102e" strokeWidth="2" />
+      <path d="M12 0v24M0 12h24" stroke="#ffffff" strokeWidth="8" />
+      <path d="M12 0v24M0 12h24" stroke="#c8102e" strokeWidth="4.4" />
+    </svg>
   );
 }
 
@@ -101,27 +131,22 @@ export function HistoryModal({ lang, needsConfirm, texts, onLoad, onClose }: His
                   onClick={() => pick(i, game)}
                   title={isArmed ? t.confirmTitle : t.load}
                 >
-                  <span className="history-main">
-                    <span className="history-result">
-                      {isArmed
-                        ? t.confirm
-                        : player === bot
-                          ? t.draw
-                          : player > bot
-                            ? t.win
-                            : t.lose}
-                    </span>
-                    <span className="history-score">
-                      {player}
-                      <span className="history-score-sep">–</span>
-                      {bot}
-                    </span>
+                  <LangFlag lang={game.lang} />
+                  <span className="history-result">
+                    {isArmed
+                      ? t.confirm
+                      : player === bot
+                        ? t.draw
+                        : player > bot
+                          ? t.win
+                          : t.lose}
                   </span>
-                  <span className="history-meta">
-                    {LANGS.find((l) => l.id === game.lang)?.label ?? game.lang}
-                    {' · '}
-                    {formatWhen(game.at, lang)}
+                  <span className="history-score">
+                    {player}
+                    <span className="history-score-sep">–</span>
+                    {bot}
                   </span>
+                  <span className="history-meta">{formatWhen(game.at, lang)}</span>
                 </button>
               );
             })}

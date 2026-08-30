@@ -1470,27 +1470,45 @@ button.status-start:focus-visible,
 .history-list {
   margin: 12px 0 14px;
   display: grid;
-  gap: 8px;
+  gap: 4px;
 }
 
-/* a framed row, the whole row the tap target (the phone score chip pattern);
-   two lines — the outcome with the score, then the muted language and date */
+/* one framed line per game — the word-list chip look: the quiet hairline
+   frame (tinted with the card's own text color — the rows live in the modal,
+   not on the page), no button chrome, and everything on a single line: the
+   game's flag, the outcome, the score, the date pushed to the right edge.
+   The whole row stays the tap target (the phone score chip pattern) */
 .history-row {
   min-width: 0;
   margin: 0;
-  padding: 8px 12px;
+  padding: 0 10px;
+  min-height: 36px;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   text-align: left;
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--card-color) 10%, transparent);
+  border-radius: 8px;
+  box-shadow: none;
 }
 
-.history-main {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+/* the chip's hover/press states (the word chips' treatment): the hairline
+   deepens instead of the generic button hover's heavy border, the press
+   fills the row quietly */
+.history-row:hover,
+.history-row:active {
+  border-color: color-mix(in srgb, var(--card-color) 22%, transparent);
+  background: transparent;
+}
+
+.history-row:active {
+  background: color-mix(in srgb, var(--card-color) 10%, transparent);
+}
+
+.history-result,
+.history-score {
   font-weight: 600;
 }
 
@@ -1500,8 +1518,18 @@ button.status-start:focus-visible,
 }
 
 .history-meta {
+  margin-left: auto;
   font-size: 12px;
   color: color-mix(in srgb, var(--card-color) 60%, transparent);
+}
+
+/* the game's flag: a small circle, clipped by the radius (the svg's own
+   overflow-hidden does not round its painting — see LangFlag) */
+.history-flag {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border-radius: 50%;
 }
 
 /* the armed row — the load confirmation over a game in progress, tinted with
