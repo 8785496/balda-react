@@ -1755,6 +1755,24 @@ button.status-start:focus-visible,
     justify-content: flex-end;
   }
 
+  /* the frame is the chip's identity, but the desktop's bare-row hover reset
+     for the english buttons (.words > button.word-link:hover above —
+     border-color: transparent, underline) outranks the chip rule by
+     specificity, so a tap used to strip the frame; on a phone the tap is
+     both a press and a sticky hover (iOS holds :hover until the next tap
+     elsewhere), which kept an english row frameless for good. In the chip
+     form the hover deepens the hairline instead — the tappable affordance,
+     the underline kept out of the framed row — and the press holds the
+     deepened frame and fills the row; the sticky post-tap hover then leaves
+     the row quietly marked while its track shows on the board */
+  .words > a:hover,
+  .words > button.word-link:hover,
+  .words > button.word-link:active {
+    border-color: color-mix(in srgb, var(--text) 22%, transparent);
+    background: transparent;
+    text-decoration: none;
+  }
+
   .words > a:active,
   .words > button.word-link:active {
     background: color-mix(in srgb, var(--text) 10%, transparent);
@@ -1925,6 +1943,17 @@ button.status-start:focus-visible,
     padding: 0 10px;
     border: 1px solid color-mix(in srgb, var(--text) 10%, transparent);
     border-radius: 8px;
+    text-decoration: none;
+  }
+
+  /* the phones query's hover/press states (see them there for why the
+     desktop's bare-row reset must not win in the chip form): the hover
+     deepens the hairline, the press fills the row and keeps it deepened */
+  .words > a:hover,
+  .words > button.word-link:hover,
+  .words > button.word-link:active {
+    border-color: color-mix(in srgb, var(--text) 22%, transparent);
+    background: transparent;
     text-decoration: none;
   }
 
