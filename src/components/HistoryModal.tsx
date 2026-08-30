@@ -1,6 +1,7 @@
 // The archive of finished games (state/history.ts) in a modal, opened by the
 // footer clock button: newest first, each row one line — the game's flag, the
-// outcome, the final score and when the game ended. A tap loads the game back
+// outcome, the final score and when the game ended; the outcome tints its row
+// (green win, red loss, a draw stays neutral). A tap loads the game back
 // onto the board — over a game in progress the first tap only arms the row
 // (the «Заново»/language-switch confirmation pattern), the second one loads
 // and the current game is lost. Closes on the ✕ button, a click on the
@@ -123,11 +124,17 @@ export function HistoryModal({ lang, needsConfirm, texts, onLoad, onClose }: His
               const player = scoreOf(game.playerWords);
               const bot = scoreOf(game.botWords);
               const isArmed = armed === i;
+              const outcome = player === bot ? 'draw' : player > bot ? 'win' : 'lose';
               return (
                 <button
                   type="button"
                   key={i}
-                  className={'history-row' + (isArmed ? ' armed' : '')}
+                  className={
+                    'history-row' +
+                    // no win/lose class while armed: the confirmation's error
+                    // tint must read alone
+                    (isArmed ? ' armed' : outcome === 'draw' ? '' : ' ' + outcome)
+                  }
                   onClick={() => pick(i, game)}
                   title={isArmed ? t.confirmTitle : t.load}
                 >
@@ -135,11 +142,11 @@ export function HistoryModal({ lang, needsConfirm, texts, onLoad, onClose }: His
                   <span className="history-result">
                     {isArmed
                       ? t.confirm
-                      : player === bot
-                        ? t.draw
-                        : player > bot
-                          ? t.win
-                          : t.lose}
+                      : outcome === 'win'
+                        ? t.win
+                        : outcome === 'lose'
+                          ? t.lose
+                          : t.draw}
                   </span>
                   <span className="history-score">
                     {player}

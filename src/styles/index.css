@@ -15,6 +15,7 @@
   --text: #000000;
   --link: #000000;
   --error: red;
+  --success: green;
 
   --board-frame-bg: transparent;
   --board-frame-border: none;
@@ -81,6 +82,7 @@
      text (no underline until hover) — a burnt orange that stays woody */
   --link: #93490b;
   --error: #a13312;
+  --success: #2e7d46;
 
   --board-frame-bg: linear-gradient(135deg, #b07b42, #8a5a2b 60%, #a06a35);
   --board-frame-border: 1px solid #6b431f;
@@ -139,6 +141,7 @@
   --text: #1a1a1a;
   --link: #1a1a1a;
   --error: #c91414;
+  --success: #0f7a33;
 
   --board-frame-bg: #ffffff;
   --board-frame-border: 2px solid #1a1a1a;
@@ -197,6 +200,7 @@
   --text: #e6e9f0;
   --link: #9db8e8;
   --error: #ff8f8f;
+  --success: #8fd694;
 
   --board-frame-bg: #1d232d;
   --board-frame-border: 1px solid #333d4c;
@@ -256,6 +260,7 @@
   --text: #f4efff;
   --link: #c4b0ff;
   --error: #ff7ad9;
+  --success: #0ed392;
 
   --board-frame-bg: rgba(122, 92, 255, 0.14);
   --board-frame-border: 1px solid rgba(170, 145, 255, 0.7);
@@ -1505,6 +1510,38 @@ button.status-start:focus-visible,
 
 .history-row:active {
   background: color-mix(in srgb, var(--card-color) 10%, transparent);
+}
+
+/* the outcome tints its row: the label in the full green/red, the frame in a
+   quiet wash of the same color (the armed row's pattern, weaker) — a win or
+   a loss reads before the words do; a draw keeps the neutral row. Hover and
+   press only deepen the hairline, the wash stays */
+.history-row.win {
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+}
+
+.history-row.lose {
+  border-color: color-mix(in srgb, var(--error) 35%, transparent);
+  background: color-mix(in srgb, var(--error) 8%, transparent);
+}
+
+.history-row.win:hover,
+.history-row.win:active {
+  border-color: color-mix(in srgb, var(--success) 55%, transparent);
+}
+
+.history-row.lose:hover,
+.history-row.lose:active {
+  border-color: color-mix(in srgb, var(--error) 55%, transparent);
+}
+
+.history-row.win .history-result {
+  color: var(--success);
+}
+
+.history-row.lose .history-result {
+  color: var(--error);
 }
 
 .history-result,
