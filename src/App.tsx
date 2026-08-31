@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
+import { syncOverlayBack, watchOverlayBack } from './backButton';
 import { Board } from './components/Board';
 import { Controls } from './components/Controls';
 import { DifficultyPicker } from './components/DifficultyPicker';
@@ -174,6 +175,12 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [lastBotMove]);
 
+  // the floating letter keyboard is on screen: the letter phase, or the word
+  // phase with the panel reopened on the added letter. The physical-keyboard
+  // handler and the Back button both peel it
+  const keyboardOpen =
+    (state.phase === 'letter' || state.phase === 'word') && state.selectedCell !== null;
+
   // physical keyboard: a letter (ё → е) while the letter keyboard is open (the
   // letter phase, or the word phase with the panel reopened on the added
   // letter); Escape closes the open keyboard, cancels the move, closes the
@@ -201,8 +208,6 @@ export default function App() {
           setEndPanelOpen(false);
         return;
       }
-      const keyboardOpen = state.selectedCell !== null &&
-        (state.phase === 'letter' || state.phase === 'word');
       if (keyboardOpen) {
         if (e.key === 'Escape') {
           // the open panel closes first; in the word phase the move itself
@@ -222,7 +227,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.phase, state.selectedCell, state.lang, rulesOpen, historyOpen, wordPopup, endPanelOpen]);
+  }, [state.phase, state.lang, keyboardOpen, rulesOpen, historyOpen, wordPopup, endPanelOpen]);
 
   // switching the language starts a new game in it (the confirmation for a
   // game in progress lives in the picker itself)
@@ -268,6 +273,39 @@ export default function App() {
       trackTimerRef.current = null;
     }
   }
+
+  // The phone's Back button peels the overlays before it may leave the app
+  // (backButton.ts): the same layers Escape closes, topmost first — the rules
+  // and history modals, the word popup, the end panel, the letter keyboard.
+  const overlayOpen = rulesOpen || historyOpen || wordPopup !== null ||
+    (endPanelOpen && state.phase === 'over') || keyboardOpen;
+
+  function closeTopOverlay() {
+    if (rulesOpen)
+      setRulesOpen(false);
+    else if (historyOpen)
+      setHistoryOpen(false);
+    else if (wordPopup !== null)
+      closeWordPopup();
+    else if (endPanelOpen && state.phase === 'over')
+      setEndPanelOpen(false);
+    else if (keyboardOpen)
+      dispatch({ type: 'CLOSE_KEYBOARD' });
+  }
+  // the popstate listener is installed once and reads the flags of the moment
+  // through the ref
+  const closeTopRef = useRef(closeTopOverlay);
+  useEffect(() => {
+    closeTopRef.current = closeTopOverlay;
+  });
+
+  // the parked history entry follows the overlays: pushed with the first
+  // open, consumed when the last one closes by its own UI
+  useEffect(() => {
+    syncOverlayBack(overlayOpen);
+  }, [overlayOpen]);
+
+  useEffect(() => watchOverlayBack(() => closeTopRef.current()), []);
 
   return (
     <div className="context">
