@@ -14,6 +14,7 @@ import type { RefObject } from 'react';
 import type { Texts } from '../i18n';
 import { keyboardFor, type Lang } from '../game/lang';
 import { SIZE } from '../game/constants';
+import { tap } from '../haptics';
 
 // kept in sync with the .keyboard-panel media queries in styles/index.css
 const NARROW = '(max-width: 560px)';
@@ -110,7 +111,7 @@ export function Keyboard({ boardRef, cellIndex, lang, texts, onLetter, onClose }
         {keyboardFor(lang).map((row) => (
           <div className="keyboard-row" key={row}>
             {row.split('').map((char) => (
-              <button key={char} type="button" onClick={() => onLetter(char)}>
+              <button key={char} type="button" onClick={() => { tap(); onLetter(char); }}>
                 {char}
               </button>
             ))}

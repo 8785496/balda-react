@@ -7,6 +7,7 @@ import {
 import type { Texts } from '../i18n';
 import type { BotMove, Phase } from '../state/types';
 import { hasFilledNeighbor } from '../state/helpers';
+import { tap } from '../haptics';
 import { Cell } from './Cell';
 
 interface BoardProps {
@@ -186,7 +187,10 @@ export function Board({ board, track, shownTrack, numChar, selectedCell, phase, 
             botNew={botMove !== null && botMove.index === i}
             disabled={choosing && letter === '' && !hasFilledNeighbor(board, i)}
             onClick={() => {
-              if (clickable) onCellClick(i);
+              if (clickable) {
+                tap();
+                onCellClick(i);
+              }
             }}
           />
         );
