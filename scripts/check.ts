@@ -11,7 +11,7 @@ import { SIZE, START_ROW, MAX_WORDS } from '../src/game/constants';
 import { neighbors, areAdjacent, wordFromTrack } from '../src/state/helpers';
 import { gameReducer, freshGame, initialState } from '../src/state/gameReducer';
 import { saveGame, loadGame, clearGame, initGame } from '../src/state/persist';
-import { addGame, listGames, clearHistory, entryToState, MAX_GAMES } from '../src/state/history';
+import { addGame, listGames, removeGame, clearHistory, entryToState, MAX_GAMES } from '../src/state/history';
 
 const dic = dicFor('ru');
 const ALPHABET = alphabetFor('ru');
@@ -702,6 +702,28 @@ store.set('balda-history', JSON.stringify(rawHistory));
 const filtered = listGames();
 assert(filtered.length === 1 && filtered[0].usedWords.join(',') === g.usedWords.join(','),
   'a corrupt entry is dropped, the valid ones survive');
+clearHistory();
+
+// a removal (the row's ⋮ menu): the tapped game leaves, the others survive;
+// a timestamp matching nothing is a no-op; the last removal empties the slot
+addGame({ ...freshGame('ru', START_WORD), phase: 'over', usedWords: [START_WORD, 'игра1'] });
+addGame({ ...freshGame('ru', START_WORD), phase: 'over', usedWords: [START_WORD, 'игра2'] });
+addGame({ ...freshGame('ru', START_WORD), phase: 'over', usedWords: [START_WORD, 'игра3'] });
+// a fast loop can stamp two games with the same millisecond — space the
+// timestamps apart so a removal targets exactly one entry
+const rawTimes = JSON.parse(store.get('balda-history')!);
+rawTimes.games.forEach((entry: { at: number }, i: number) => { entry.at = 1000 + i; });
+store.set('balda-history', JSON.stringify(rawTimes));
+removeGame(1001);
+const afterRemove = listGames();
+assert(afterRemove.length === 2 && afterRemove.every((e) => e.usedWords[1] !== 'игра2'),
+  'removeGame drops only the game it was given');
+removeGame(99999);
+assert(listGames().length === 2, 'removing an unknown timestamp is a no-op');
+removeGame(afterRemove[0].at);
+removeGame(afterRemove[1].at);
+assert(listGames().length === 0 && store.get('balda-history') === undefined,
+  'removing the last games clears the slot');
 clearHistory();
 
 if (failures > 0) {

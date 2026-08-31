@@ -9,7 +9,7 @@
 // word lists, tracks — everything a restored state needs) plus the finish
 // timestamp. The slot is versioned and shape-checked on read like the saved
 // game is; a corrupt entry is dropped on read rather than repaired, and the
-// next archived game rewrites the slot without it.
+// next archive or removal rewrites the slot without it.
 import { SIZE, MAX_WORDS } from '../game/constants';
 import { LANGS } from '../lang';
 import type { Lang } from '../game/lang';
@@ -25,7 +25,7 @@ const VERSION = 1;
 
 // how many finished games are kept; the oldest beyond the cap is dropped
 // when a new one lands
-export const MAX_GAMES = 10;
+export const MAX_GAMES = 100;
 
 export interface HistoryEntry {
   at: number; // Date.now() when the game ended — the row's key and order
@@ -77,6 +77,25 @@ export function addGame(state: GameState): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
   } catch {
     // quota or a private-mode block — the game just will not be remembered
+  }
+}
+
+// removes one archived game by its finish timestamp (the entry's identity —
+// the row's key and order). A timestamp matching nothing leaves the slot
+// alone; removing the last game clears the slot
+export function removeGame(at: number): void {
+  const games = listGames();
+  const kept = games.filter((g) => g.at !== at);
+  if (kept.length === games.length)
+    return;
+  if (kept.length === 0) {
+    clearHistory();
+    return;
+  }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: VERSION, games: kept }));
+  } catch {
+    // quota or a private-mode block — the game just will not be removed now
   }
 }
 

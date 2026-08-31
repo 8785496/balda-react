@@ -950,7 +950,9 @@ button:disabled {
 .keyboard-close:focus-visible,
 .footer-icon:focus-visible,
 .history-close:focus-visible,
-.history-row:focus-visible,
+.history-load:focus-visible,
+.history-more:focus-visible,
+.history-menu-item:focus-visible,
 .rules-close:focus-visible,
 .seg-btn:focus-visible,
 .theme-swatch:focus-visible,
@@ -1480,23 +1482,51 @@ button.status-start:focus-visible,
 
 /* one framed line per game — the word-list chip look: the quiet hairline
    frame (tinted with the card's own text color — the rows live in the modal,
-   not on the page), no button chrome, and everything on a single line: the
-   game's flag, the outcome, the score, the date pushed to the right edge.
-   The whole row stays the tap target (the phone score chip pattern) */
+   not on the page), and everything on a single line: the game's flag, the
+   outcome, the score, the date pushed to the right edge, then the row's ⋮.
+   The row is a div carrying the frame; inside it the load tap target (most
+   of the chip — the phone score chip pattern) and the ⋮ button */
 .history-row {
   min-width: 0;
-  margin: 0;
-  padding: 0 10px;
   min-height: 36px;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: stretch;
   font-size: 14px;
-  text-align: left;
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--card-color) 10%, transparent);
   border-radius: 8px;
+}
+
+/* the load button: no chrome of its own (the row carries the frame), the
+   content on one line with the chip's rhythm, the row's palette inherited */
+.history-load {
+  min-width: 0;
+  flex: 1;
+  margin: 0;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: inherit;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 8px 0 0 8px;
   box-shadow: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* the generic button hover/press must not repaint the row's two buttons —
+   they go transparent so the row's own states below read through */
+.history-load:hover,
+.history-load:active,
+.history-more:hover,
+.history-more:active {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
 }
 
 /* the chip's hover/press states (the word chips' treatment): the hairline
@@ -1510,6 +1540,33 @@ button.status-start:focus-visible,
 
 .history-row:active {
   background: color-mix(in srgb, var(--card-color) 10%, transparent);
+}
+
+/* the row's ⋮: opens the actions menu — a dimmed glyph like the modal's ✕,
+   darkening on hover, no chrome of its own. min-width: 0 drops the base
+   button's 92px floor — the dots sit flush at the row's right edge */
+.history-more {
+  min-width: 0;
+  flex: none;
+  margin: 0;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: inherit;
+  background: transparent;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  box-shadow: none;
+  color: color-mix(in srgb, var(--card-color) 45%, transparent);
+  cursor: pointer;
+}
+
+.history-more:hover,
+.history-more:active {
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--card-color) 80%, transparent);
 }
 
 /* the outcome tints its row: the label in the full green/red, the frame in a
@@ -1549,6 +1606,11 @@ button.status-start:focus-visible,
   font-weight: 600;
 }
 
+/* the score reads as one pair — never split onto two lines of a cramped row */
+.history-score {
+  white-space: nowrap;
+}
+
 .history-score-sep {
   margin: 0 5px;
   color: color-mix(in srgb, var(--card-color) 55%, transparent);
@@ -1584,6 +1646,55 @@ button.status-start:focus-visible,
   margin: 14px 0 12px;
   font-size: 14px;
   color: color-mix(in srgb, var(--card-color) 60%, transparent);
+}
+
+/* the ⋮ menu: a small card over a transparent click-away layer. Fixed
+   viewport coordinates set from the tapped dots — the card scrolls, so an
+   in-card menu would be clipped by its overflow; both layers sit inside the
+   modal's substrate and stack over the card by their z-index alone */
+.history-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+}
+
+.history-menu {
+  position: fixed;
+  z-index: 3;
+  min-width: 150px;
+  max-width: calc(100vw - 16px);
+  padding: 4px;
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: 8px;
+  color: var(--card-color);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.history-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  box-shadow: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.history-menu-item:hover,
+.history-menu-item:active {
+  border: none;
+  background: color-mix(in srgb, var(--card-color) 10%, transparent);
+  color: inherit;
 }
 
 /* --- the word popup (an english word tapped for its translation) --- */

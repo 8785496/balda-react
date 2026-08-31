@@ -68,6 +68,8 @@ export interface Texts {
     draw: string;                // long for a list row
     confirm: string;             // the armed «Точно?»
     confirmTitle: string;        // the armed row's tooltip: the warning
+    actions: string;             // the row's ⋮ button: opens the actions menu
+    remove: string;              // the ⋮ menu's delete action
     close: string;               // the modal close button
   };
   langAria: string;              // the footer switchers
@@ -153,6 +155,8 @@ export const TEXTS: Record<Lang, Texts> = {
       draw: 'Ничья',
       confirm: 'Точно?',
       confirmTitle: 'Текущая игра будет потеряна',
+      actions: 'Действия',
+      remove: 'Удалить',
       close: 'Закрыть',
     },
     langAria: 'Язык игры',
@@ -236,6 +240,8 @@ export const TEXTS: Record<Lang, Texts> = {
       draw: 'Draw',
       confirm: 'Sure?',
       confirmTitle: 'The current game will be lost',
+      actions: 'Actions',
+      remove: 'Delete',
       close: 'Close',
     },
     langAria: 'Game language',
