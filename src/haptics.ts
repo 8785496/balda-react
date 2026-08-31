@@ -3,6 +3,6 @@
 // every call site is a tap handler, so that holds. iOS Safari has no
 // vibration API at all and desktop browsers ignore it: there the optional
 // call quietly does nothing.
-export function tap(ms = 10) {
+export function tap(ms = 5) {
   navigator.vibrate?.(ms);
 }

@@ -14,10 +14,11 @@ import { WordPopup } from './components/WordPopup';
 import { alphabetFor, type Lang } from './game/lang';
 import { MAX_WORDS } from './game/constants';
 import { findBestMove } from './game/finder';
-import { gameReducer } from './state/gameReducer';
+import { cellClickActs, gameReducer } from './state/gameReducer';
 import { initGame, saveGame } from './state/persist';
 import { addGame, entryToState, type HistoryEntry } from './state/history';
 import { wordFromTrack } from './state/helpers';
+import { tap } from './haptics';
 import { chromeColorFor, loadTheme, saveTheme, type ThemeId } from './theme';
 import { loadLang, saveLang } from './lang';
 import { loadDifficulty, saveDifficulty, type Difficulty } from './difficulty';
@@ -103,6 +104,17 @@ export default function App() {
     setShownTrack(null);
     clearTrackTimer();
   }, [state]);
+
+  // a haptic tick per letter joining the drawn word: the track grows only
+  // when the reducer appends a cell to the path (the drag entering a new
+  // board cell) — unwinding back over the path shrinks it and stays silent,
+  // as does the reset on a submit, a letter move or a cancel
+  const trackLenRef = useRef(state.track.length);
+  useEffect(() => {
+    if (state.track.length > trackLenRef.current)
+      tap();
+    trackLenRef.current = state.track.length;
+  });
 
   // no stray countdown outlives the component
   useEffect(() => () => clearTrackTimer(), []);
@@ -292,7 +304,13 @@ export default function App() {
           botMove={showBotMove ? lastBotMove : null}
           boardRef={boardRef}
           texts={texts}
-          onCellClick={(index) => dispatch({ type: 'CLICK_CELL', index })}
+          onCellClick={(index) => {
+            // tick only on the taps the game acts on (cellClickActs in the
+            // reducer lists the same conditions as CLICK_CELL)
+            if (cellClickActs(state, index))
+              tap();
+            dispatch({ type: 'CLICK_CELL', index });
+          }}
           onDragStartCell={(index) => dispatch({ type: 'DRAG_START', index })}
           onDragCell={(index) => dispatch({ type: 'DRAG_CELL', index })}
           onDragSubmit={() => dispatch({ type: 'SUBMIT_MOVE' })}

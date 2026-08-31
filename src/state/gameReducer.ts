@@ -327,3 +327,28 @@ export function gameReducer(state: GameState, action: Action): GameState {
     }
   }
 }
+
+// Whether a tap on the cell does anything in CLICK_CELL — the view ticks the
+// haptic only on the taps the game acts on, so this must list the same
+// conditions as the reducer's branches above: an actionable cell in the idle
+// phase, the keyboard's own cell or a legal re-target spot in the letter
+// phase, and the three acting taps of the word phase (move the letter to a
+// legal spot, close the reopened panel on a filled cell, reopen it on the
+// added letter).
+export function cellClickActs(state: GameState, i: number): boolean {
+  if (state.phase === 'idle')
+    return state.board[i] === '' && hasFilledNeighbor(state.board, i);
+  if (state.phase === 'letter')
+    return i === state.selectedCell ||
+      (state.board[i] === '' && hasFilledNeighbor(state.board, i));
+  if (state.phase === 'word') {
+    const base = state.boardBackup ?? state.board;
+    return (
+      (state.numChar !== null && i !== state.numChar &&
+        state.board[i] === '' && hasFilledNeighbor(base, i)) ||
+      (state.selectedCell !== null && state.board[i] !== '') ||
+      (state.numChar !== null && i === state.numChar)
+    );
+  }
+  return false;
+}
