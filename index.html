@@ -13,9 +13,15 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <!-- the launch chrome color (matches the splash/icon identity); once the
-         app runs, App.tsx re-points this tag at the active board theme, so
-         the installed app's status bar follows the theme switcher -->
-    <meta name="theme-color" content="#8a5a2b" />
+         app runs, App.tsx re-points these tags at the active board theme, so
+         the browser chrome follows the theme switcher. Two media variants:
+         Chrome prefers the tag matching the system scheme, and in the
+         installed standalone app it ignores a scheme-less tag outright when
+         Android's dark mode is on (Chromium 40634649) — with both variants
+         present it keeps reading the theme color from the page instead of
+         falling back to the manifest's static value -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#8a5a2b" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#8a5a2b" />
     <title>Балда (игра)</title>
     <!-- the installable-app route to a fullscreen phone experience: added to
          the home screen, the game launches standalone, with no address bar.

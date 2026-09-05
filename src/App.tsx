@@ -143,12 +143,14 @@ export default function App() {
   // the color theme: data-theme on <html> switches the CSS variable set, and
   // meta theme-color re-points the browser/OS chrome above the page — the
   // status bar of the installed standalone app on Android follows it live,
-  // which the manifest's static theme_color alone cannot do
+  // which the manifest's static theme_color alone cannot do. The meta ships
+  // as light/dark media variants (see index.html — Chrome's dark-mode
+  // standalone bug ignores a scheme-less tag), so every variant is rewritten
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', chromeColorFor(theme));
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute('content', chromeColorFor(theme));
+    });
     saveTheme(theme);
   }, [theme]);
 
