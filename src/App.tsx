@@ -1,15 +1,14 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { Board } from './components/Board';
 import { Controls } from './components/Controls';
-import { DifficultyPicker } from './components/DifficultyPicker';
 import { EndPanel } from './components/EndPanel';
 import { HistoryModal } from './components/HistoryModal';
 import { Keyboard } from './components/Keyboard';
-import { LangPicker } from './components/LangPicker';
+import { NewGameModal } from './components/NewGameModal';
 import { RulesModal } from './components/RulesModal';
 import { ScorePanel } from './components/ScorePanel';
+import { SettingsModal } from './components/SettingsModal';
 import { StatusBar } from './components/StatusBar';
-import { ThemePicker } from './components/ThemePicker';
 import { WordPopup } from './components/WordPopup';
 import { alphabetFor, type Lang } from './game/lang';
 import { MAX_WORDS } from './game/constants';
@@ -57,6 +56,11 @@ export default function App() {
   const [rulesOpen, setRulesOpen] = useState(false);
   // the game history modal (the footer clock button)
   const [historyOpen, setHistoryOpen] = useState(false);
+  // the new-game modal (the footer plus button): the language and difficulty
+  // of the game its start button begins
+  const [newGameOpen, setNewGameOpen] = useState(false);
+  // the settings modal (the footer gear button): the board themes
+  const [settingsOpen, setSettingsOpen] = useState(false);
   // the end panel is dismissible (its ✕ / Escape): the flag follows the
   // finished game it belongs to — a fresh 'over' phase reopens it, so it
   // starts from whether the restored save is already finished
@@ -188,11 +192,22 @@ export default function App() {
 
   // physical keyboard: a letter (ё → е) while the letter keyboard is open (the
   // letter phase, or the word phase with the panel reopened on the added
-  // letter); Escape closes the open keyboard, cancels the move, closes the
-  // rules modal, the history modal or the word popup. The word itself is
+  // letter); Escape closes the open keyboard, cancels the move, closes one of
+  // the open overlays (the new-game and settings modals, the rules modal, the
+  // history modal, the word popup) or the end panel. The word itself is
   // drawn with the mouse/touch and submitted by the drag release.
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
+      if (newGameOpen) {
+        if (e.key === 'Escape')
+          setNewGameOpen(false);
+        return;
+      }
+      if (settingsOpen) {
+        if (e.key === 'Escape')
+          setSettingsOpen(false);
+        return;
+      }
       if (rulesOpen) {
         if (e.key === 'Escape')
           setRulesOpen(false);
@@ -234,11 +249,13 @@ export default function App() {
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [state.phase, state.selectedCell, state.lang, rulesOpen, historyOpen, wordPopup, endPanelOpen]);
+  }, [state.phase, state.selectedCell, state.lang, newGameOpen, settingsOpen, rulesOpen, historyOpen, wordPopup, endPanelOpen]);
 
-  // switching the language starts a new game in it (the confirmation for a
-  // game in progress lives in the picker itself)
-  function switchLang(next: Lang) {
+  // the new-game modal's start: the chosen language begins a fresh game (the
+  // two-tap confirmation for a game in progress lives in the modal, on the
+  // start button itself)
+  function startGame(next: Lang) {
+    setNewGameOpen(false);
     setLang(next);
     dispatch({ type: 'NEW_GAME', lang: next });
   }
@@ -350,51 +367,94 @@ export default function App() {
         texts={texts}
         onWordClick={handleWordClick}
       />
-      {/* two rows: the game settings (language, difficulty), then the history
-          and rules buttons and the theme swatches — on phones the footer is
-          pinned to the screen's bottom edge in this shape */}
+      {/* one centered row of icon+caption buttons — the standard mobile tab
+          look: new game, history, help, settings; on phones the footer is
+          pinned to the bottom edge in this shape */}
       <footer className="footer">
-        <div className="footer-row">
-          <LangPicker
-            value={lang}
-            hasProgress={state.usedWords.length > 1}
-            texts={texts}
-            onChange={switchLang}
-          />
-          <DifficultyPicker
-            value={difficulty}
-            texts={texts}
-            onChange={setDifficulty}
-          />
-        </div>
-        <div className="footer-row">
-          <button
-            type="button"
-            className="footer-icon"
-            onClick={() => setHistoryOpen(true)}
-            title={texts.history.title}
-            aria-label={texts.history.title}
-          >
-            {/* a clock drawn in strokes: currentColor keeps it on the
-                button's palette through every theme (an emoji clock cannot
-                be recolored) */}
-            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
+        <button
+          type="button"
+          className="footer-btn"
+          onClick={() => setNewGameOpen(true)}
+          title={texts.newGame.title}
+          aria-label={texts.newGame.title}
+        >
+          <span className="footer-btn-icon" aria-hidden="true">
+            {/* every icon is strokes in currentColor, so it follows the
+                button's palette through every theme (an emoji cannot) */}
+            <svg viewBox="0 0 16 16" width="20" height="20" focusable="false">
+              <path d="M8 3.2v9.6M3.2 8h9.6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
+          </span>
+          {texts.footer.newGame}
+        </button>
+        <button
+          type="button"
+          className="footer-btn"
+          onClick={() => setHistoryOpen(true)}
+          title={texts.history.title}
+          aria-label={texts.history.title}
+        >
+          <span className="footer-btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 16 16" width="20" height="20" focusable="false">
               <circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.6" />
               <path d="M8 4.75V8l2.4 1.6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
-          </button>
-          <button
-            type="button"
-            className="footer-icon"
-            onClick={() => setRulesOpen(true)}
-            title={texts.rules.title}
-            aria-label={texts.rules.title}
-          >
-            ?
-          </button>
-          <ThemePicker value={theme} texts={texts} onChange={setTheme} />
-        </div>
+          </span>
+          {texts.footer.history}
+        </button>
+        <button
+          type="button"
+          className="footer-btn"
+          onClick={() => setRulesOpen(true)}
+          title={texts.rules.title}
+          aria-label={texts.rules.title}
+        >
+          <span className="footer-btn-icon" aria-hidden="true">?</span>
+          {texts.footer.help}
+        </button>
+        <button
+          type="button"
+          className="footer-btn"
+          onClick={() => setSettingsOpen(true)}
+          title={texts.settings.title}
+          aria-label={texts.settings.title}
+        >
+          <span className="footer-btn-icon" aria-hidden="true">
+            {/* the gear: a ring with eight teeth and the hub hole */}
+            <svg viewBox="0 0 16 16" width="20" height="20" focusable="false">
+              <circle cx="8" cy="8" r="3.9" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              <circle cx="8" cy="8" r="1.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              <path
+                d="M8 1.6v2.1M8 12.3v2.1M1.6 8h2.1M12.3 8h2.1M3.5 3.5L5 5M11 11l1.5 1.5M12.5 3.5L11 5M5 11l-1.5 1.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          {texts.footer.settings}
+        </button>
       </footer>
+      {newGameOpen && (
+        <NewGameModal
+          lang={lang}
+          difficulty={difficulty}
+          hasProgress={state.usedWords.length > 1}
+          texts={texts}
+          onDifficulty={setDifficulty}
+          onStart={startGame}
+          onClose={() => setNewGameOpen(false)}
+        />
+      )}
+      {settingsOpen && (
+        <SettingsModal
+          theme={theme}
+          texts={texts}
+          onChange={setTheme}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
       {rulesOpen && <RulesModal texts={texts} onClose={() => setRulesOpen(false)} />}
       {historyOpen && (
         <HistoryModal

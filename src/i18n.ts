@@ -72,7 +72,24 @@ export interface Texts {
     remove: string;              // the ⋮ menu's delete action
     close: string;               // the modal close button
   };
-  langAria: string;              // the footer switchers
+  newGame: {
+    title: string;               // the footer plus button and the modal heading
+    lang: string;                // the language section's label
+    difficulty: string;          // the difficulty section's label
+    start: string;               // the start button
+    close: string;               // the modal close button
+  };
+  settings: {
+    title: string;               // the footer gear button and the modal heading
+    close: string;               // the modal close button
+  };
+  footer: {
+    newGame: string;             // the caption under the plus button
+    history: string;             // under the clock
+    help: string;                // under the "?"
+    settings: string;            // under the gear
+  };
+  langAria: string;              // the switcher groups
   difficultyAria: string;
   difficultyName(d: Difficulty): string;
   themeAria: string;
@@ -166,6 +183,23 @@ export const TEXTS: Record<Lang, Texts> = {
     },
     themeAria: 'Оформление поля',
     themeNames: { wood: 'Дерево', paper: 'Бумага', night: 'Ночь', neon: 'Неон' },
+    newGame: {
+      title: 'Новая игра',
+      lang: 'Язык',
+      difficulty: 'Сложность',
+      start: 'Начать игру',
+      close: 'Закрыть',
+    },
+    settings: {
+      title: 'Настройки',
+      close: 'Закрыть',
+    },
+    footer: {
+      newGame: 'Новая игра',
+      history: 'История',
+      help: 'Помощь',
+      settings: 'Настройки',
+    },
   },
   en: {
     title: 'Balda (game)',
@@ -251,5 +285,22 @@ export const TEXTS: Record<Lang, Texts> = {
     },
     themeAria: 'Board theme',
     themeNames: { wood: 'Wood', paper: 'Paper', night: 'Night', neon: 'Neon' },
+    newGame: {
+      title: 'New game',
+      lang: 'Language',
+      difficulty: 'Difficulty',
+      start: 'Start game',
+      close: 'Close',
+    },
+    settings: {
+      title: 'Settings',
+      close: 'Close',
+    },
+    footer: {
+      newGame: 'New game',
+      history: 'History',
+      help: 'Help',
+      settings: 'Settings',
+    },
   },
 };

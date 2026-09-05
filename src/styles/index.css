@@ -431,84 +431,129 @@ a:hover {
   background: color-mix(in srgb, var(--error) 12%, transparent);
 }
 
-/* --- theme picker --- */
-
-/* --- footer: the rules link and the switchers (language, difficulty, theme).
-   Two rows — the game settings (language, difficulty), then the help button
-   and the theme swatches; wide screens keep them side by side on one line,
-   phones pin the whole footer to the bottom edge (the phones media query at
-   the end of the file) --- */
+/* --- footer: four buttons in the standard mobile-tab look — the icon over
+   a small caption, no frames or circles; each opens its modal: the new-game
+   sheet (plus), the history (clock), the rules (?) and the settings sheet
+   (gear). One centered row at every width; phones pin it to the bottom edge
+   and spread the buttons across it (the phones media query at the end of
+   the file) --- */
 
 .footer {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   flex-wrap: wrap;
-  gap: 10px 14px;
+  gap: 2px 4px;
   /* auto pushes the footer to the bottom of the full-height column — the
      bottom of the page — instead of right after the content; padding keeps
      the gap (phones override it: the footer is fixed there) */
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: 10px;
 }
 
-.footer-row {
+/* icon + caption: the caption carries the meaning, so the button stays a
+   quiet text-level element — no circle, no frame; the press tint is the
+   only chrome it ever gets */
+.footer-btn {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px 14px;
-}
-
-/* round footer icon buttons: the history clock and the rules "?" (both open
-   their modals) */
-.footer-icon {
-  display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  gap: 2px;
   min-width: 0;
   margin: 0;
-  padding: 0;
-  border-radius: 50%;
-  border: var(--btn-border);
-  background: var(--btn-bg);
-  color: var(--btn-color);
-  font-size: 15px;
-  font-weight: 600;
-  line-height: 1;
+  padding: 4px 10px 3px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
   box-shadow: none;
+  color: var(--btn-color);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
-.footer-icon:hover {
-  border: var(--btn-hover-border);
-  background: var(--btn-hover-bg);
+/* one 20px box for both the drawn icons and the "?" glyph, so the captions
+   line up under equal-height icons */
+.footer-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  font-size: 17px;
+}
+
+.footer-btn-icon svg {
+  display: block;
+}
+
+.footer-btn:hover {
+  border: none;
+  background: transparent;
   color: var(--btn-hover-color);
   text-decoration: none;
 }
 
+.footer-btn:active {
+  border: none;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  color: var(--btn-hover-color);
+}
+
+/* --- theme picker (the settings modal) --- */
+
+/* a card per theme: the swatch over the localized name, the active theme
+   outlined. The colors mix with the card's own text color — the cards live
+   in the modal, not on the page */
 .theme-row {
   display: flex;
   justify-content: center;
+  gap: 10px;
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--card-color) 16%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--card-color) 65%, transparent);
+  font-size: 12px;
+  line-height: 1.2;
+  box-shadow: none;
+}
+
+.theme-card:hover {
+  border-color: color-mix(in srgb, var(--card-color) 34%, transparent);
+  background: transparent;
+  color: var(--card-color);
+}
+
+/* must repeat the colors on :hover — the generic button:hover wins over the
+   plain class */
+.theme-card.active,
+.theme-card.active:hover {
+  border-color: var(--focus-color);
+  background: transparent;
+  color: var(--card-color);
 }
 
 .theme-swatch {
-  width: 22px;
-  height: 22px;
-  min-width: 0;
-  padding: 0;
-  margin: 0;
+  display: block;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.35);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
-.theme-swatch:hover {
-  border-color: var(--focus-color);
-}
-
-.theme-swatch.active {
+.theme-card.active .theme-swatch {
   outline: 2px solid var(--focus-color);
   outline-offset: 2px;
 }
@@ -948,14 +993,16 @@ button:disabled {
 .cell:focus-visible,
 .keyboard button:focus-visible,
 .keyboard-close:focus-visible,
-.footer-icon:focus-visible,
+.footer-btn:focus-visible,
 .history-close:focus-visible,
 .history-load:focus-visible,
 .history-more:focus-visible,
 .history-menu-item:focus-visible,
 .rules-close:focus-visible,
+.modal-close:focus-visible,
+.newgame-start:focus-visible,
 .seg-btn:focus-visible,
-.theme-swatch:focus-visible,
+.theme-card:focus-visible,
 .word-link:focus-visible,
 button.status-word:focus-visible,
 button.status-start:focus-visible,
@@ -1697,6 +1744,111 @@ button.status-start:focus-visible,
   color: inherit;
 }
 
+/* --- the new-game and settings modals (the footer's plus and gear) --- */
+
+/* the same card as the rules/history modals, shared by the two sheets; the
+   min() keeps the narrow content from shrinking the card under the corner
+   ✕'s room */
+.modal-card {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: 8px;
+  color: var(--card-color);
+  padding: 16px 22px 18px;
+  min-width: min(280px, 92%);
+  max-width: min(430px, 92%);
+  max-height: 82vh;
+  overflow-y: auto;
+}
+
+/* the head carries the title; the ✕ sits absolutely in its right corner
+   (the rules modal / word popup pattern) */
+.modal-head {
+  position: relative;
+}
+
+.modal-head h2 {
+  font-family: 'Play', sans-serif;
+  margin: 0;
+  font-size: 22px;
+}
+
+/* the sheets' ✕: the same quiet way out as the rules modal's close */
+.modal-close {
+  position: absolute;
+  top: 0; /* rides the row's top edge: level with the title's cap */
+  right: -10px; /* pulls onto the card's padding, into the row's corner */
+  min-width: 0;
+  margin: 0;
+  padding: 2px 5px;
+  font-size: 13px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--card-color) 60%, transparent);
+  background: transparent;
+  border-color: transparent; /* keeps the base 1px box: no size jump on hover */
+  box-shadow: none;
+}
+
+.modal-close:hover,
+.modal-close:active {
+  border-color: transparent;
+  background: transparent;
+  color: color-mix(in srgb, var(--card-color) 85%, transparent);
+}
+
+/* a small caption over each picker group («Язык», «Сложность», «Оформление
+   поля») — the groups are plain pills, they do not speak for themselves */
+.modal-label {
+  margin: 14px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--card-color) 55%, transparent);
+}
+
+/* the sheets' segmented groups breathe a little more than the footer's —
+   the modal is a pointer/tap destination, not a squeezed strip */
+.modal-card .seg {
+  padding: 3px;
+}
+
+.modal-card .seg-btn {
+  padding: 4px 14px;
+  font-size: 13px;
+}
+
+/* the new-game sheet's primary action: a full-width button in the theme's
+   primary palette; the armed confirmation takes the error tint, like the
+   armed «Заново» */
+.newgame-start {
+  display: block;
+  width: 100%;
+  margin: 16px 0 0;
+  padding: 8px 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border: var(--btn-primary-border);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+  box-shadow: none;
+}
+
+.newgame-start:hover {
+  border-color: var(--btn-primary-border);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-color);
+  filter: brightness(1.1);
+}
+
+.newgame-start.armed,
+.newgame-start.armed:hover {
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--error);
+  filter: none;
+}
+
 /* --- the word popup (an english word tapped for its translation) --- */
 
 /* a compact centered card over the same substrate as the rules modal — a
@@ -1805,12 +1957,12 @@ button.status-start:focus-visible,
 /* --- the app shell: phones, and tablets held upright (a portrait tablet has
    the height to stack the lists under the board — the landscape query above
    is what moves them out to the sides — but the words should read there the
-   same way they do on a phone). The page itself never scrolls: the switchers
-   footer is pinned to the bottom edge in its two rows, and what scrolls is the
-   word lists, inside their score columns and without a visible scrollbar (the
-   finger is the indicator). The board caps its size by the viewport height
-   left over, so short screens trade board pixels for list room instead of
-   overflowing.
+   same way they do on a phone). The page itself never scrolls: the footer is
+   pinned to the bottom edge as one row of icon buttons, and what scrolls is
+   the word lists, inside their score columns and without a visible scrollbar
+   (the finger is the indicator). The board caps its size by the viewport
+   height left over, so short screens trade board pixels for list room instead
+   of overflowing.
 
    Note this query is deliberately NOT the 560px the Keyboard component
    matches: the letter keyboard keeps floating at its cell on a tablet (its
@@ -1829,8 +1981,9 @@ button.status-start:focus-visible,
     height: 100dvh; /* follows the browser UI bars instead of being cut by them */
     overscroll-behavior: none;
     /* the bottom reserve keeps the in-flow tail (the word lists) clear of
-       the pinned footer stacked above it */
-    padding: 8px 8px calc(88px + env(safe-area-inset-bottom, 0px));
+       the pinned footer stacked above it — one row of buttons plus
+       clearance (~88px served the old two-row footer) */
+    padding: 8px 8px calc(64px + env(safe-area-inset-bottom, 0px));
   }
 
   /* the column must be allowed to shrink below its content — the word lists
@@ -1844,11 +1997,11 @@ button.status-start:focus-visible,
   }
 
   /* everything but the board is fixed chrome (the status bar, the controls
-     row, the score headers, the footer), so ~300px of viewport height is the
-     board's guaranteed share */
+     row, the score headers, the footer), so ~276px of viewport height is the
+     board's guaranteed share — the old 300px, less the footer's second row */
   .board {
-    max-width: calc(100vh - 300px);
-    max-width: calc(100dvh - 300px);
+    max-width: calc(100vh - 276px);
+    max-width: calc(100dvh - 276px);
     margin: 0 auto;
   }
 
@@ -1960,15 +2113,20 @@ button.status-start:focus-visible,
     right: 0;
     bottom: 0;
     z-index: 500; /* above the letter keyboard (30), below the overlays (1000) */
-    flex-direction: column;
-    gap: 6px;
     margin: 0;
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+    padding: 4px 8px calc(4px + env(safe-area-inset-bottom, 0px));
     background: var(--footer-bg);
     border-top: 1px solid var(--footer-border);
     box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.12);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* the tab-bar spread: the four buttons share the screen's width evenly
+     (capped, so a tablet held upright keeps them a centered cluster) */
+  .footer-btn {
+    flex: 1 1 0;
+    max-width: 110px;
   }
 }
 
@@ -2230,11 +2388,7 @@ button.status-start:focus-visible,
   .footer {
     margin-top: 0;
     padding-top: 6px;
-    gap: 4px 18px;
-  }
-
-  .footer-row {
-    gap: 6px 10px;
+    gap: 4px 16px;
   }
 
   /* shorter list rows: each column is only as tall as the board beside it */
