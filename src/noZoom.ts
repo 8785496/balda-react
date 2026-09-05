@@ -9,10 +9,8 @@
 // these listeners are the only route. All of them are passive: false, since
 // preventDefault on a passive listener is a no-op.
 
-// two consecutive taps closer than this in time and in place are the
-// double-tap zoom gesture
+// two consecutive taps closer than this are the double-tap zoom gesture
 const DOUBLE_TAP_MS = 300;
-const DOUBLE_TAP_PX = 30;
 
 export function blockZoomGestures(): void {
   // iOS pinch: gesturestart fires once the second finger lands, before any
@@ -21,28 +19,16 @@ export function blockZoomGestures(): void {
     document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
 
   // iOS double-tap zoom: the second touchend inside the window is the one to
-  // cancel. Cancelling a touchend also cancels the click the browser would
-  // synthesize from that tap (iOS and Android alike), so the check must be as
-  // narrow as the browser's own: the second tap has to land on the spot of
-  // the first. A quick tap elsewhere — a keyboard key and then a cell, a
-  // wrong cell and then the right one — is two taps, and both must click.
+  // cancel. Cancelling touchend does not suppress the click that follows a
+  // single tap, so buttons keep working; it only kills the zoom.
   let lastTouchEnd = 0;
-  let lastX = 0;
-  let lastY = 0;
   document.addEventListener(
     'touchend',
     (e) => {
-      const t = e.changedTouches[0];
-      if (t === undefined)
-        return;
       const now = e.timeStamp;
-      const near = Math.abs(t.clientX - lastX) <= DOUBLE_TAP_PX &&
-        Math.abs(t.clientY - lastY) <= DOUBLE_TAP_PX;
-      if (now - lastTouchEnd <= DOUBLE_TAP_MS && near)
+      if (now - lastTouchEnd <= DOUBLE_TAP_MS)
         e.preventDefault();
       lastTouchEnd = now;
-      lastX = t.clientX;
-      lastY = t.clientY;
     },
     { passive: false },
   );
