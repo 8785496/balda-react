@@ -806,7 +806,8 @@ button:disabled {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin: 8px 0 10px;
+  /* the top margin is the counter's gap off the board above it */
+  margin: 16px 0 10px;
 }
 
 /* «Слово 7 из 21» rides the controls row, out of the flow and dead center;
