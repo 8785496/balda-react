@@ -10,6 +10,7 @@ import { alphabetFor, dicFor, startWordFor } from '../src/game/lang';
 import { SIZE, START_ROW, MAX_WORDS } from '../src/game/constants';
 import { neighbors, areAdjacent, wordFromTrack } from '../src/state/helpers';
 import { gameReducer, freshGame, initialState } from '../src/state/gameReducer';
+import type { GameState } from '../src/state/types';
 import { saveGame, loadGame, clearGame, initGame } from '../src/state/persist';
 import { addGame, listGames, removeGame, clearHistory, entryToState, MAX_GAMES } from '../src/state/history';
 
@@ -514,6 +515,103 @@ if (mv2 === null) {
   assert(s.phase === 'idle' && s.status !== null, 'no move for the bot — the turn is skipped without a crash');
 }
 
+// --- undo: the footer's button rolls the last round back ---
+
+// a player's move played the way the full-game sim below plays them: the
+// found word placed and dragged in, ending in the bot phase
+function playFoundMove(st: GameState, m: NonNullable<ReturnType<typeof findBestMove>>): GameState {
+  const b = st.board.slice();
+  b[m.index] = m.char;
+  const path = findWordPath(b, m.word, m.index);
+  if (path === null) throw new Error('no path for the word ' + m.word);
+  st = gameReducer(st, { type: 'CLICK_CELL', index: m.index });
+  st = gameReducer(st, { type: 'SET_LETTER', char: m.char });
+  st = gameReducer(st, { type: 'DRAG_START', index: path[0] });
+  for (let k = 1; k < path.length; k++) st = gameReducer(st, { type: 'DRAG_CELL', index: path[k] });
+  return gameReducer(st, { type: 'SUBMIT_MOVE' });
+}
+
+// with nothing played the action is a no-op, and mid-move too — the button
+// cancels the move first (CANCEL_MOVE), so undo only ever meets a settled state
+let u = freshGame('ru', 'балда');
+assert(gameReducer(u, { type: 'UNDO_MOVE' }) === u, 'undo with no words played is a no-op');
+u = gameReducer(u, { type: 'CLICK_CELL', index: 6 });
+assert(gameReducer(u, { type: 'UNDO_MOVE' }) === u,
+  'undo does nothing in the letter phase — the button cancels first');
+u = gameReducer(u, { type: 'SET_LETTER', char: 'ф' });
+assert(gameReducer(u, { type: 'UNDO_MOVE' }) === u, 'undo does nothing in the word phase either');
+u = gameReducer(u, { type: 'CANCEL_MOVE' });
+assert(u.phase === 'idle' && u.board[6] === '' && u.numChar === null,
+  'the cancel the button runs first rolls the placed letter back');
+
+// a full round rolls back whole: the computer's word and the player's one
+// before it, the board rebuilt from the surviving tracks
+u = gameReducer(u, { type: 'CLICK_CELL', index: 6 });
+u = gameReducer(u, { type: 'SET_LETTER', char: 'ф' });
+u = gameReducer(u, { type: 'DRAG_START', index: 6 });
+for (const c of [11, 12, 13, 14]) u = gameReducer(u, { type: 'DRAG_CELL', index: c });
+u = gameReducer(u, { type: 'SUBMIT_MOVE' });
+assert(gameReducer(u, { type: 'UNDO_MOVE' }) === u, 'undo is a no-op in the bot phase — it waits the reply out');
+u = gameReducer(u, { type: 'BOT_MOVED', move: { word: 'халда', char: 'х', index: 16, track: [16, 17, 12, 13, 14] } });
+assert(u.usedWords.length === 3 && u.board[6] === 'ф' && u.board[16] === 'х',
+  'undo fixture: a full round is on the board');
+u = gameReducer(u, { type: 'UNDO_MOVE' });
+assert(u.phase === 'idle' && u.usedWords.join(',') === 'балда' &&
+  u.playerWords.length === 0 && u.botWords.length === 0,
+  "undo rolls the whole round back — the computer's word and the player's one");
+assert(u.board[6] === '' && u.board[16] === '' && u.board.slice(10, 15).join('') === 'балда',
+  'undo rebuilds the board from the surviving tracks');
+assert(u.tracks['фалда'] === undefined && u.tracks['халда'] === undefined &&
+  u.tracks['балда'] !== undefined, 'undo drops the rolled-back words from the tracks');
+assert(u.lastBotMove === null && u.status === null && u.track.length === 0 && u.numChar === null &&
+  u.selectedCell === null && u.boardBackup === null, 'undo clears the transient fields');
+
+// a skipped reply: only the player's word rolls back
+u = gameReducer(u, { type: 'CLICK_CELL', index: 6 });
+u = gameReducer(u, { type: 'SET_LETTER', char: 'ф' });
+u = gameReducer(u, { type: 'DRAG_START', index: 6 });
+for (const c of [11, 12, 13, 14]) u = gameReducer(u, { type: 'DRAG_CELL', index: c });
+u = gameReducer(u, { type: 'SUBMIT_MOVE' });
+u = gameReducer(u, { type: 'BOT_MOVED', move: null });
+assert(u.phase === 'idle' && u.usedWords.length === 2 && u.botWords.length === 0,
+  'undo fixture: the player played, the bot skipped');
+u = gameReducer(u, { type: 'UNDO_MOVE' });
+assert(u.usedWords.join(',') === 'балда' && u.playerWords.length === 0 && u.board[6] === '',
+  "after a skipped reply undo removes the player's word alone");
+
+// two rounds up: one undo steps exactly one round back, the second reaches
+// the starting position. The replies here are real found moves — a found
+// word's track spells out on the board, so the rebuilt board must equal the
+// played one cell for cell (the constructed халда fixture above is fine for
+// word lists, but its track claims a letter the board never held)
+u = playFoundMove(u, { word: 'фалда', char: 'ф', index: 6, track: [6, 11, 12, 13, 14] });
+const botMove1 = findBestMove(u.board, u.usedWords);
+if (botMove1 === null) {
+  console.log('     undo: no reply found for round 1 — the two-round walk is not exercised');
+} else {
+  u = gameReducer(u, { type: 'BOT_MOVED', move: botMove1 });
+  const afterRound1 = u;
+  const m2 = findBestMove(u.board, u.usedWords);
+  if (m2 === null) {
+    console.log('     undo: no second move found at this position — the two-round walk is not exercised');
+  } else {
+    u = playFoundMove(u, m2);
+    const mBot2 = findBestMove(u.board, u.usedWords);
+    u = gameReducer(u, { type: 'BOT_MOVED', move: mBot2 }); // null = the bot skips again
+    assert(u.usedWords.length === afterRound1.usedWords.length + (mBot2 === null ? 1 : 2),
+      'undo fixture: two rounds are played');
+    u = gameReducer(u, { type: 'UNDO_MOVE' });
+    assert(u.phase === 'idle' && u.usedWords.length === afterRound1.usedWords.length &&
+      u.usedWords.join(',') === afterRound1.usedWords.join(',') &&
+      u.board.join('') === afterRound1.board.join(''),
+      'one undo steps exactly one round back');
+    u = gameReducer(u, { type: 'UNDO_MOVE' });
+    assert(u.usedWords.join(',') === 'балда' && u.board[6] === '' &&
+      u.board[botMove1.index] === '' && u.board[m2.index] === '',
+      'the second undo reaches the starting position');
+  }
+}
+
 // --- a full game to the end through the reducer (both sides play the best move) ---
 // a fixed starting word keeps this run deterministic
 let g = freshGame('ru', 'балда');
@@ -561,6 +659,19 @@ function sumLen(words: string[]): number {
   return n;
 }
 console.log('     final score: player ' + sumLen(g.playerWords) + ' : ' + sumLen(g.botWords) + ' computer');
+
+// the finished game is undoable too: the closing round rolls back and the
+// game resumes in idle
+const overBotClosed = g.botWords[g.botWords.length - 1] === g.usedWords[g.usedWords.length - 1];
+const gUndone = gameReducer(g, { type: 'UNDO_MOVE' });
+assert(gUndone.phase === 'idle' &&
+  gUndone.usedWords.length === g.usedWords.length - (overBotClosed ? 2 : 1) &&
+  gUndone.playerWords.length === g.playerWords.length - 1,
+  'undo from the finished game drops the closing round and resumes play');
+let undoneBoardOk = true;
+for (const w of gUndone.usedWords)
+  if (wordFromTrack(gUndone.board, gUndone.tracks[w]) !== w) undoneBoardOk = false;
+assert(undoneBoardOk, 'the undone board spells every surviving word along its track');
 
 // --- the saved game (state/persist.ts) ---
 
@@ -611,6 +722,18 @@ assert(rolled !== null && rolled.board.join('') === restored!.board.join(''), 't
 // the finished game keeps its phase, so the end panel comes back
 saveGame({ ...p, phase: 'over' });
 assert(loadGame('ru')?.phase === 'over', 'a finished game is restored as over');
+
+// an undo that takes the game back to its starting word unpins the save,
+// like any game without progress (the bot's owed reply is skipped first —
+// undo only runs on a settled game)
+const undoneToStart = gameReducer(
+  gameReducer(p, { type: 'BOT_MOVED', move: null }),
+  { type: 'UNDO_MOVE' },
+);
+assert(undoneToStart.usedWords.length === 1 && undoneToStart.phase === 'idle',
+  'persist fixture: the last round is undone back to the starting word');
+saveGame(undoneToStart);
+assert(loadGame('ru') === null, 'a game undone to its starting word is not saved');
 
 // a game still on its starting word is not worth restoring — and clears the slot
 saveGame(freshGame('ru', START_WORD));

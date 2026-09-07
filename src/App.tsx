@@ -300,6 +300,24 @@ export default function App() {
     }
   }
 
+  // the footer's undo button: while a move is being made (the letter picked,
+  // the path drawn) it acts as cancel first — the placed letter rolls back;
+  // on a settled position it undoes the last played round, the computer's
+  // word together with the player's one before it
+  function undoMove() {
+    if (state.phase === 'letter' || state.phase === 'word')
+      dispatch({ type: 'CANCEL_MOVE' });
+    else
+      dispatch({ type: 'UNDO_MOVE' });
+  }
+
+  // the undo button grays out while the computer is thinking (a half-made
+  // move is waited out, not canceled behind the player's back) and when
+  // there is nothing to undo — no word played beyond the starting one
+  const undoDisabled =
+    state.phase === 'bot' ||
+    ((state.phase === 'idle' || state.phase === 'over') && state.playerWords.length === 0);
+
   return (
     <div className="context">
       <StatusBar
@@ -355,12 +373,9 @@ export default function App() {
         )}
       </div>
       <Controls
-        phase={state.phase}
         texts={texts}
         usedCount={state.usedWords.length}
         maxWords={MAX_WORDS}
-        onRestart={() => dispatch({ type: 'NEW_GAME' })}
-        onCancel={() => dispatch({ type: 'CANCEL_MOVE' })}
       />
       <ScorePanel
         playerWords={state.playerWords}
@@ -370,8 +385,8 @@ export default function App() {
         onWordClick={handleWordClick}
       />
       {/* one centered row of icon+caption buttons — the standard mobile tab
-          look: new game, history, help, settings; on phones the footer is
-          pinned to the bottom edge in this shape */}
+          look: new game, undo, history, help, settings; on phones the footer
+          is pinned to the bottom edge in this shape */}
       <footer className="footer">
         <button
           type="button"
@@ -388,6 +403,37 @@ export default function App() {
             </svg>
           </span>
           {texts.footer.newGame}
+        </button>
+        <button
+          type="button"
+          className="footer-btn"
+          onClick={undoMove}
+          disabled={undoDisabled}
+          title={texts.footer.undoTitle}
+          aria-label={texts.footer.undoTitle}
+        >
+          <span className="footer-btn-icon" aria-hidden="true">
+            {/* the undo arrow: a left-pointing head with the return curve
+                sweeping down and around it */}
+            <svg viewBox="0 0 16 16" width="20" height="20" focusable="false">
+              <path
+                d="M6 2.7 2.7 6 6 9.3"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M13.3 13.3V8.7a2.7 2.7 0 0 0-2.7-2.7H2.7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          {texts.footer.undo}
         </button>
         <button
           type="button"

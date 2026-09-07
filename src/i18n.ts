@@ -18,13 +18,6 @@ export interface Texts {
   turnPlayer: string;            // the turn badge on the player's side
   botThinking: string;           // the badge while the computer is thinking
   boardAria: string;
-  controls: {
-    cancel: string;              // «Отмена»
-    restart: string;             // «Заново»
-    confirm: string;             // the armed «Точно?»
-    restartTitle: string;
-    restartArmedTitle: string;
-  };
   keyboard: {
     aria: string;
     title: string;               // «Выберите букву»
@@ -77,6 +70,7 @@ export interface Texts {
     lang: string;                // the language section's label
     difficulty: string;          // the difficulty section's label
     start: string;               // the start button
+    confirm: string;             // the armed «Точно?» over a game in progress
     close: string;               // the modal close button
   };
   settings: {
@@ -84,6 +78,8 @@ export interface Texts {
     close: string;               // the modal close button
   };
   footer: {
+    undo: string;                // the caption under the undo button
+    undoTitle: string;           // the undo button's tooltip/aria-label
     newGame: string;             // the caption under the plus button
     history: string;             // under the clock
     help: string;                // under the "?"
@@ -102,13 +98,6 @@ export const TEXTS: Record<Lang, Texts> = {
     turnPlayer: 'Ваш ход',
     botThinking: 'Думаю…',
     boardAria: 'Игровое поле',
-    controls: {
-      cancel: 'Отмена',
-      restart: 'Заново',
-      confirm: 'Точно?',
-      restartTitle: 'Начать игру заново',
-      restartArmedTitle: 'Нажмите ещё раз — игра начнётся заново',
-    },
     keyboard: {
       aria: 'Виртуальная клавиатура',
       title: 'Выберите букву',
@@ -188,6 +177,7 @@ export const TEXTS: Record<Lang, Texts> = {
       lang: 'Язык',
       difficulty: 'Сложность',
       start: 'Начать игру',
+      confirm: 'Точно?',
       close: 'Закрыть',
     },
     settings: {
@@ -195,6 +185,8 @@ export const TEXTS: Record<Lang, Texts> = {
       close: 'Закрыть',
     },
     footer: {
+      undo: 'Ход назад',
+      undoTitle: 'Отменить ход (последний сыгранный раунд)',
       newGame: 'Новая игра',
       history: 'История',
       help: 'Помощь',
@@ -206,13 +198,6 @@ export const TEXTS: Record<Lang, Texts> = {
     turnPlayer: 'Your turn',
     botThinking: 'Thinking…',
     boardAria: 'Game board',
-    controls: {
-      cancel: 'Cancel',
-      restart: 'Restart',
-      confirm: 'Sure?',
-      restartTitle: 'Restart the game',
-      restartArmedTitle: 'Tap again — the game will restart',
-    },
     keyboard: {
       aria: 'On-screen keyboard',
       title: 'Choose a letter',
@@ -290,6 +275,7 @@ export const TEXTS: Record<Lang, Texts> = {
       lang: 'Language',
       difficulty: 'Difficulty',
       start: 'Start game',
+      confirm: 'Sure?',
       close: 'Close',
     },
     settings: {
@@ -297,6 +283,8 @@ export const TEXTS: Record<Lang, Texts> = {
       close: 'Close',
     },
     footer: {
+      undo: 'Undo',
+      undoTitle: 'Undo the move (the last played round)',
       newGame: 'New game',
       history: 'History',
       help: 'Help',

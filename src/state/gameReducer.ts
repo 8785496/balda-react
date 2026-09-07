@@ -299,6 +299,55 @@ export function gameReducer(state: GameState, action: Action): GameState {
       };
     }
 
+    // The footer's undo of the last round: the computer's word and the
+    // player's one before it roll back (the player's alone when the computer
+    // skipped its reply), and the board is rebuilt from the surviving words'
+    // tracks — every letter on the board belongs to some played word's path
+    // (the added letter is always on its own word's track), so the replay
+    // restores it exactly, no added-cell bookkeeping needed. Running from
+    // 'over' too: the closing move is as undoable as any other.
+    case 'UNDO_MOVE': {
+      if (state.phase !== 'idle' && state.phase !== 'over')
+        return state;
+      if (state.playerWords.length === 0)
+        return state;
+      const last = state.usedWords[state.usedWords.length - 1];
+      // the round is two moves unless the game's last word is the player's —
+      // then the computer skipped its reply (words never repeat, so the
+      // identity check cannot misfire)
+      const botPlayedLast =
+        state.botWords.length > 0 && last === state.botWords[state.botWords.length - 1];
+      const playerWord = state.playerWords[state.playerWords.length - 1];
+      const botWord = botPlayedLast ? state.botWords[state.botWords.length - 1] : null;
+      const usedWords = state.usedWords.slice(0, state.usedWords.length - (botPlayedLast ? 2 : 1));
+      const tracks = { ...state.tracks };
+      delete tracks[playerWord];
+      if (botWord !== null)
+        delete tracks[botWord];
+      const board: string[] = new Array(SIZE * SIZE).fill('');
+      for (const w of usedWords) {
+        const t = state.tracks[w];
+        for (let i = 0; i < w.length && i < t.length; i++)
+          board[t[i]] = w[i];
+      }
+      return {
+        ...state,
+        phase: 'idle',
+        board,
+        usedWords,
+        playerWords: state.playerWords.slice(0, -1),
+        botWords: botPlayedLast ? state.botWords.slice(0, -1) : state.botWords,
+        tracks,
+        track: [],
+        numChar: null,
+        selectedCell: null,
+        boardBackup: null,
+        error: null,
+        status: null,
+        lastBotMove: null,
+      };
+    }
+
     case 'BOT_MOVED': {
       if (state.phase !== 'bot')
         return state;

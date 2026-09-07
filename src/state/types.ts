@@ -65,4 +65,9 @@ export type Action =
   | { type: 'CLOSE_KEYBOARD' } // dismiss the open letter keyboard without touching the move
   | { type: 'SUBMIT_MOVE' }
   | { type: 'CANCEL_MOVE' }
+  // the footer's undo of the last round: the computer's word and the player's
+  // one before it roll back (the player's alone when the computer skipped).
+  // A move in progress is not this action's business — the button cancels it
+  // first (CANCEL_MOVE), so undo only ever reaches a settled position
+  | { type: 'UNDO_MOVE' }
   | { type: 'BOT_MOVED'; move: BotMove | null };

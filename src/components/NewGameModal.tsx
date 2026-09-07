@@ -3,9 +3,9 @@
 // a plain selection until the button applies it (and restarts the game);
 // the difficulty applies at once — it only steers the computer's next move,
 // no restart needed, so it survives closing the sheet without starting.
-// Over a game in progress the start button arms first («Точно?», 3 s) — the
-// same two-tap confirmation as «Заново». Closes on the ✕ button, a click on
-// the backdrop or Escape (App.tsx).
+// Over a game in progress the start button arms first («Точно?», 3 s) — a
+// two-tap confirmation against destroying the game by a stray tap. Closes
+// on the ✕ button, a click on the backdrop or Escape (App.tsx).
 import { useEffect, useState } from 'react';
 import type { Lang } from '../game/lang';
 import type { Difficulty } from '../difficulty';
@@ -98,7 +98,7 @@ export function NewGameModal({
           className={'newgame-start' + (armed ? ' armed' : '')}
           onClick={start}
         >
-          {armed ? texts.controls.confirm : t.start}
+          {armed ? t.confirm : t.start}
         </button>
       </div>
     </div>

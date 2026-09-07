@@ -374,7 +374,8 @@ a:hover {
   flex-direction: column;
 }
 
-/* --- footer switchers: the language and difficulty segmented controls --- */
+/* --- segmented controls: the language and difficulty pickers of the
+   new-game sheet (the old footer switchers are gone, the class stayed) --- */
 
 /* a pill group of small toggle buttons; .active is the current choice, .armed
    is the language switch awaiting its confirming second tap */
@@ -388,9 +389,11 @@ a:hover {
 }
 
 .seg-btn {
+  flex: 1 1 0; /* equal shares: the active pill fills its segment, not the label */
   min-width: 0;
   margin: 0;
   padding: 2px 10px;
+  white-space: nowrap;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.5;
@@ -431,12 +434,12 @@ a:hover {
   background: color-mix(in srgb, var(--error) 12%, transparent);
 }
 
-/* --- footer: four buttons in the standard mobile-tab look — the icon over
-   a small caption, no frames or circles; each opens its modal: the new-game
-   sheet (plus), the history (clock), the rules (?) and the settings sheet
-   (gear). One centered row at every width; phones pin it to the bottom edge
-   and spread the buttons across it (the phones media query at the end of
-   the file) --- */
+/* --- footer: five buttons in the standard mobile-tab look — the icon over
+   a small caption, no frames or circles: the undo of the last round (the
+   curved arrow), then the four modal buttons — the new-game sheet (plus),
+   the history (clock), the rules (?) and the settings sheet (gear). One
+   centered row at every width; phones pin it to the bottom edge and spread
+   the buttons across it (the phones media query at the end of the file) --- */
 
 .footer {
   display: flex;
@@ -788,11 +791,10 @@ button:disabled {
   cursor: default;
 }
 
-/* the controls are a single row: «Заново» on the left, «Отмена» on the right
-   (while a move is being made), the game progress counter dead center — the
-   word is submitted by the drag release, so there is no submit button.
-   Space-between pins the buttons to the row's edges whether or not «Отмена»
-   is shown, so «Заново» never moves */
+/* the controls are a single row with only the game progress counter on it —
+   the old «Заново»/«Отмена» buttons are gone: a game restarts from the
+   new-game modal, and cancel/undo lives on the footer's undo button. The
+   word is submitted by the drag release, so there is no submit button */
 .controls {
   display: flex;
   justify-content: center;
@@ -807,9 +809,8 @@ button:disabled {
   margin: 8px 0 10px;
 }
 
-/* «Слово 7 из 21» rides the controls row, out of the flow and dead center,
-   so the appearing/disappearing «Отмена» never shifts it; quiet-colored
-   like the score column names (.score-name) */
+/* «Слово 7 из 21» rides the controls row, out of the flow and dead center;
+   quiet-colored like the score column names (.score-name) */
 .words-progress {
   position: absolute;
   left: 50%;
@@ -817,36 +818,6 @@ button:disabled {
   font-size: 14px;
   white-space: nowrap;
   color: color-mix(in srgb, var(--text) 60%, transparent);
-}
-
-/* small text buttons: Отмена and the demoted Заново */
-.btn-secondary {
-  min-width: 0;
-  margin: 2px;
-  padding: 4px 12px;
-  font-size: 14px;
-  box-shadow: none;
-  background: transparent;
-  border-color: transparent; /* keeps the base 1px box: no size jump on hover */
-}
-
-.btn-secondary:hover {
-  border-color: var(--btn-hover-border);
-  background: color-mix(in srgb, var(--text) 8%, transparent);
-  color: var(--btn-color);
-}
-
-.btn-restart {
-  font-weight: 600;
-}
-
-/* the armed «Точно?» state — the second-tap confirmation, tinted with the
-   theme's error color to read as danger */
-.btn-restart.armed,
-.btn-restart.armed:hover {
-  border-color: var(--error);
-  background: color-mix(in srgb, var(--error) 12%, transparent);
-  color: var(--error);
 }
 
 /* --- board --- */
@@ -1819,8 +1790,7 @@ button.status-start:focus-visible,
 }
 
 /* the new-game sheet's primary action: a full-width button in the theme's
-   primary palette; the armed confirmation takes the error tint, like the
-   armed «Заново» */
+   primary palette; the armed confirmation takes the error tint */
 .newgame-start {
   display: block;
   width: 100%;
@@ -2122,7 +2092,7 @@ button.status-start:focus-visible,
     -webkit-backdrop-filter: blur(10px);
   }
 
-  /* the tab-bar spread: the four buttons share the screen's width evenly
+  /* the tab-bar spread: the five buttons share the screen's width evenly
      (capped, so a tablet held upright keeps them a centered cluster) */
   .footer-btn {
     flex: 1 1 0;
@@ -2300,14 +2270,15 @@ button.status-start:focus-visible,
 /* --- landscape phones (wider than 560px, under 500px tall): a phone held
    sideways matches the landscape-tablet query above, but its ~400px of
    height are tablet-unfriendly — the tablet's 230px chrome reserve left the
-   board a ~130px stamp, the «Слово 7 из 21» counter rode the board-width
-   controls row right on top of «Заново», and a board-width letter keyboard
-   would have ~16px keys. The same three-column grid stays, with the chrome
-   compacted to earn the board its height back: the status row, the controls
-   row and the one-line footer all slim down; the controls row leaves the
-   board column and spans the whole width, so the centered counter is clear
-   of the buttons at the screen edges; the board's height reserve drops to
-   ~150px; and the shell stops scrolling, like the portrait phone's --- */
+   board a ~130px stamp, a board-width controls row had no room for the
+   centered «Слово 7 из 21» counter beside anything else on it, and a
+   board-width letter keyboard would have ~16px keys. The same three-column
+   grid stays, with the chrome compacted to earn the board its height back:
+   the status row, the controls row and the one-line footer all slim down;
+   the controls row leaves the board column and spans the whole width, so
+   the centered counter keeps clear room to itself; the board's height
+   reserve drops to ~150px; and the shell stops scrolling, like the portrait
+   phone's --- */
 
 @media (min-width: 561px) and (orientation: landscape) and (max-height: 500px) {
   html,
@@ -2374,11 +2345,6 @@ button.status-start:focus-visible,
 
   .controls-row {
     margin: 4px 0 6px;
-  }
-
-  .btn-secondary {
-    padding: 3px 12px;
-    font-size: 13px;
   }
 
   .words-progress {
