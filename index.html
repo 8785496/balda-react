@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" data-theme="neon">
+<html lang="ru" data-theme="wood">
   <head>
     <meta charset="UTF-8" />
     <!-- no pinch/double-tap zoom: the board is a drag surface, and an
@@ -12,16 +12,20 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <!-- the launch chrome color (matches the splash/icon identity); once the
-         app runs, App.tsx re-points these tags at the active board theme, so
-         the browser chrome follows the theme switcher. Two media variants:
-         Chrome prefers the tag matching the system scheme, and in the
-         installed standalone app it ignores a scheme-less tag outright when
-         Android's dark mode is on (Chromium 40634649) — with both variants
-         present it keeps reading the theme color from the page instead of
-         falling back to the manifest's static value -->
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#8a5a2b" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#8a5a2b" />
+    <!-- the chrome color always matches the page background: these tags start
+         at the default theme's chrome (the page ships data-theme='wood'),
+         and once the app runs App.tsx re-points them at the active board
+         theme, so the bar reads as the page continuing behind it at every
+         moment. Two media variants carrying the same color: in the installed
+         standalone app Chrome ignores a scheme-less tag outright when
+         Android's dark mode is on (Chromium 40634649) — with a matching
+         variant present it keeps reading the color from the page. The
+         manifest's theme_color/background_color carry the same value (the
+         splash and the pre-paint header share it); the manifest cannot vary
+         it by scheme — theme_color is a single static string (the
+         media-array form from w3c/manifest#975 was never standardized) -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e7d9bd" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#e7d9bd" />
     <title>Балда (игра)</title>
     <!-- the installable-app route to a fullscreen phone experience: added to
          the home screen, the game launches standalone, with no address bar.

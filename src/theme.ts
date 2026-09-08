@@ -16,15 +16,17 @@ export const THEMES = [
 export type ThemeId = (typeof THEMES)[number]['id'];
 
 // applied when the player has no saved choice
-export const DEFAULT_THEME: ThemeId = 'neon';
+export const DEFAULT_THEME: ThemeId = 'wood';
 
-// meta theme-color of index.html — the pre-JS value, also the fallback here
-const CHROME_AT_LAUNCH = '#8a5a2b';
+// meta theme-color of index.html — the default theme's chrome, matching the
+// hardcoded data-theme='wood' first paint; also the fallback here, so the
+// bar always reads as the page background continuing behind it
+const CHROME_AT_FIRST_PAINT = '#e7d9bd';
 
-// the chrome color for a theme id; index.html ships the static launch color
-// (wood, matching the splash) and App re-points the tag at the active theme
+// the chrome color for a theme id; index.html ships the first-paint color
+// and App re-points the tag at the active theme
 export function chromeColorFor(id: ThemeId): string {
-  return THEMES.find((t) => t.id === id)?.chrome ?? CHROME_AT_LAUNCH;
+  return THEMES.find((t) => t.id === id)?.chrome ?? CHROME_AT_FIRST_PAINT;
 }
 
 const STORAGE_KEY = 'balda-theme';
