@@ -12,20 +12,20 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
-    <!-- the chrome color always matches the page background: these tags start
+    <!-- the chrome color always matches the page background: the tag starts
          at the default theme's chrome (the page ships data-theme='wood'),
-         and once the app runs App.tsx re-points them at the active board
+         and once the app runs App.tsx re-points it at the active board
          theme, so the bar reads as the page continuing behind it at every
-         moment. Two media variants carrying the same color: in the installed
-         standalone app Chrome ignores a scheme-less tag outright when
-         Android's dark mode is on (Chromium 40634649) — with a matching
-         variant present it keeps reading the color from the page. The
-         manifest's theme_color/background_color carry the same value (the
-         splash and the pre-paint header share it); the manifest cannot vary
-         it by scheme — theme_color is a single static string (the
-         media-array form from w3c/manifest#975 was never standardized) -->
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e7d9bd" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#e7d9bd" />
+         moment. One scheme-less tag, deliberately: a light/dark media pair
+         was tried (to dodge the standalone dark-mode bug, Chromium 40634649
+         — a scheme-less tag is ignored there and the bar falls back to the
+         manifest's static color) but it killed the live recoloring on
+         Android — with the pair the bar stopped following theme switches,
+         with the single tag it always has. The manifest's
+         theme_color/background_color carry the same first-paint value (the
+         splash and the pre-paint header share it), and the manifest color is
+         also what a dark-mode standalone build shows instead of this tag -->
+    <meta name="theme-color" content="#e7d9bd" />
     <title>Балда (игра)</title>
     <!-- the installable-app route to a fullscreen phone experience: added to
          the home screen, the game launches standalone, with no address bar.
