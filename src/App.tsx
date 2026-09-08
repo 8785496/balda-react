@@ -329,6 +329,7 @@ export default function App() {
         lang={state.lang}
         texts={texts}
         onWordClick={handleWordClick}
+        onCancel={() => dispatch({ type: 'CANCEL_MOVE' })}
       />
       <div className="board-wrap">
         <Board

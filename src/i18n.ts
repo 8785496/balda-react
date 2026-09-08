@@ -18,6 +18,10 @@ export interface Texts {
   turnPlayer: string;            // the turn badge on the player's side
   botThinking: string;           // the badge while the computer is thinking
   boardAria: string;
+  controls: {
+    cancel: string;              // the top-left button canceling a move in progress
+    cancelTitle: string;         // its tooltip/aria-label
+  };
   keyboard: {
     aria: string;
     title: string;               // «Выберите букву»
@@ -98,6 +102,10 @@ export const TEXTS: Record<Lang, Texts> = {
     turnPlayer: 'Ваш ход',
     botThinking: 'Думаю…',
     boardAria: 'Игровое поле',
+    controls: {
+      cancel: 'Отмена',
+      cancelTitle: 'Отменить текущий ход',
+    },
     keyboard: {
       aria: 'Виртуальная клавиатура',
       title: 'Выберите букву',
@@ -198,6 +206,10 @@ export const TEXTS: Record<Lang, Texts> = {
     turnPlayer: 'Your turn',
     botThinking: 'Thinking…',
     boardAria: 'Game board',
+    controls: {
+      cancel: 'Cancel',
+      cancelTitle: 'Cancel the move in progress',
+    },
     keyboard: {
       aria: 'On-screen keyboard',
       title: 'Choose a letter',

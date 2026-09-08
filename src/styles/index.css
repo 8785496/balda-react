@@ -791,6 +791,30 @@ button:disabled {
   cursor: default;
 }
 
+/* the cancel button of a move in progress: the first item of the status row,
+   pinned top left, red and bold. It shows only while a move is being made
+   (the letter/word phases — the old controls-row «Отмена») and rolls the
+   placed letter back; the footer's undo button keeps doing the same between
+   moves, one played round at a time */
+.btn-cancel {
+  min-width: 0;
+  margin: 0;
+  flex-shrink: 0;
+  padding: 4px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--error);
+  border: 1px solid color-mix(in srgb, var(--error) 45%, transparent);
+  background: color-mix(in srgb, var(--error) 10%, transparent);
+}
+
+.btn-cancel:hover,
+.btn-cancel:active {
+  color: var(--error);
+  border-color: var(--error);
+  background: color-mix(in srgb, var(--error) 18%, transparent);
+}
+
 /* the controls are a single row with only the game progress counter on it —
    the old «Заново»/«Отмена» buttons are gone: a game restarts from the
    new-game modal, and cancel/undo lives on the footer's undo button. The

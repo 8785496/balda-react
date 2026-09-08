@@ -12,7 +12,10 @@
 // itself, tappable the same way: on the board it is just letters, and no
 // score column owns it — this is its only lookup/translation entry point.
 // In the english game the word is followed by its IPA transcription
-// (WordIpa from ScorePanel), like the score-list words.
+// (WordIpa from ScorePanel), like the score-list words. The cancel button of
+// a move in progress rides the same row's left edge (the old controls-row
+// «Отмена», now styled red and bold): it shows only while a move is being
+// made (the letter/word phases) and dispatches CANCEL_MOVE.
 // Validation
 // errors render as a toast: a warning-icon pill (role=alert) fixed to the
 // top of the screen, hidden again after a few seconds — it takes no
@@ -39,9 +42,11 @@ interface StatusBarProps {
   texts: Texts;
   // an english bot word opens its translation popup; russian words never call it
   onWordClick: (word: string) => void;
+  // the top-left cancel button: rolls a move in progress back (CANCEL_MOVE)
+  onCancel: () => void;
 }
 
-export function StatusBar({ result, startWord, error, status, phase, lang, texts, onWordClick }: StatusBarProps) {
+export function StatusBar({ result, startWord, error, status, phase, lang, texts, onWordClick, onCancel }: StatusBarProps) {
   const botThinking = phase === 'bot';
   // the toast hides itself after a few seconds even though the error stays in
   // the game state until the player's next action clears it; every failed
@@ -116,6 +121,17 @@ export function StatusBar({ result, startWord, error, status, phase, lang, texts
   return (
     <div className="status-bar">
       <div className="status-row">
+        {(phase === 'letter' || phase === 'word') && (
+          <button
+            type="button"
+            className="btn-cancel"
+            onClick={onCancel}
+            title={texts.controls.cancelTitle}
+            aria-label={texts.controls.cancelTitle}
+          >
+            {texts.controls.cancel}
+          </button>
+        )}
         {phase !== 'over' && (
           /* both labels are rendered, stacked in one grid cell — the badge's
              width is always the wider label's, so nothing shifts on the flip */
