@@ -26,6 +26,34 @@
          splash and the pre-paint header share it), and the manifest color is
          also what a dark-mode standalone build shows instead of this tag -->
     <meta name="theme-color" content="#e7d9bd" />
+    <!-- current Chrome standalone colors the status bar once per page load
+         and never re-reads the meta live (the same install recolored live
+         until a Chrome/WebAPK update in September 2026; single tag or media
+         pair, mutation or node replacement — all behave the same), so the
+         launch value is the one that sticks. This script applies the saved
+         theme before the first paint — data-theme and the meta together, so
+         a night player gets a dark page and a dark bar at every launch, and
+         a live theme switch updates everything in the page at once except
+         the OS bar, which catches up on the next app start. Keep the
+         id→chrome map and the default in sync with src/theme.ts -->
+    <script>
+      (function () {
+        var themes = {
+          wood: '#e7d9bd',
+          night: '#171b22',
+          neon: '#2a1a5e',
+          paper: '#ffffff',
+        };
+        var theme = 'wood';
+        try {
+          var saved = localStorage.getItem('balda-theme');
+          if (saved && saved in themes) theme = saved;
+        } catch (e) {}
+        document.documentElement.dataset.theme = theme;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', themes[theme]);
+      })();
+    </script>
     <title>Балда (игра)</title>
     <!-- the installable-app route to a fullscreen phone experience: added to
          the home screen, the game launches standalone, with no address bar.
