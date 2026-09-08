@@ -19,7 +19,7 @@ export interface Texts {
   botThinking: string;           // the badge while the computer is thinking
   boardAria: string;
   controls: {
-    cancel: string;              // the top-left button canceling a move in progress
+    cancel: string;              // the status row's link canceling a move in progress
     cancelTitle: string;         // its tooltip/aria-label
   };
   keyboard: {

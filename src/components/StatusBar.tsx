@@ -12,11 +12,12 @@
 // itself, tappable the same way: on the board it is just letters, and no
 // score column owns it — this is its only lookup/translation entry point.
 // In the english game the word is followed by its IPA transcription
-// (WordIpa from ScorePanel), like the score-list words. The cancel button of
-// a move in progress floats at the same row's right edge — borderless, red
-// and bold, out of the row's flow, so its appearing and leaving never move
-// the badge or the word (the old controls-row «Отмена»): it shows only while
-// a move is being made (the letter/word phases) and dispatches CANCEL_MOVE.
+// (WordIpa from ScorePanel), like the score-list words. The cancel link of
+// a move in progress floats at the same row's right edge — plain red bold
+// text like any link, out of the row's flow, so its appearing and leaving
+// never move the badge or the word (the old controls-row «Отмена»): it shows
+// only while a move is being made (the letter/word phases) and dispatches
+// CANCEL_MOVE.
 // Validation
 // errors render as a toast: a warning-icon pill (role=alert) fixed to the
 // top of the screen, hidden again after a few seconds — it takes no
@@ -43,7 +44,7 @@ interface StatusBarProps {
   texts: Texts;
   // an english bot word opens its translation popup; russian words never call it
   onWordClick: (word: string) => void;
-  // the status row's floating cancel button: rolls a move in progress back
+  // the status row's floating cancel link: rolls a move in progress back
   // (CANCEL_MOVE); positioned absolutely, it takes no layout space
   onCancel: () => void;
 }
@@ -133,15 +134,18 @@ export function StatusBar({ result, startWord, error, status, phase, lang, texts
         )}
         <div className="result">{line}</div>
         {(phase === 'letter' || phase === 'word') && (
-          <button
-            type="button"
+          <a
             className="btn-cancel"
-            onClick={onCancel}
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              onCancel();
+            }}
             title={texts.controls.cancelTitle}
             aria-label={texts.controls.cancelTitle}
           >
             {texts.controls.cancel}
-          </button>
+          </a>
         )}
       </div>
       {error !== null && toastShown && (

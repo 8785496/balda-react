@@ -793,9 +793,10 @@ button:disabled {
   cursor: default;
 }
 
-/* the cancel button of a move in progress: pinned to the status row's right
-   edge, borderless red bold text. It is out of the row's flow (absolute), so
-   its appearing and leaving never shift the badge, the word or the row's
+/* the cancel link of a move in progress: pinned to the status row's right
+   edge, plain red bold text like any link (the hover underline comes from
+   the global a:hover). It is out of the row's flow (absolute), so its
+   appearing and leaving never shift the badge, the word or the row's
    height — the same trick the error toast below uses. It shows only while a
    move is being made (the letter/word phases — the old controls-row
    «Отмена») and rolls the placed letter back; the footer's undo button keeps
@@ -805,21 +806,11 @@ button:disabled {
   right: 0;
   top: 50%;
   transform: translateY(-50%);
-  min-width: 0;
-  margin: 0;
   padding: 6px 12px;
   font-size: 14px;
   line-height: 1;
   font-weight: 700;
   color: var(--error);
-  border: none;
-  background: transparent;
-}
-
-.btn-cancel:hover,
-.btn-cancel:active {
-  color: var(--error);
-  background: color-mix(in srgb, var(--error) 10%, transparent);
 }
 
 /* the controls are a single row with only the game progress counter on it —
