@@ -13,9 +13,10 @@
 // score column owns it — this is its only lookup/translation entry point.
 // In the english game the word is followed by its IPA transcription
 // (WordIpa from ScorePanel), like the score-list words. The cancel button of
-// a move in progress rides the same row's left edge (the old controls-row
-// «Отмена», now styled red and bold): it shows only while a move is being
-// made (the letter/word phases) and dispatches CANCEL_MOVE.
+// a move in progress floats at the same row's right edge — borderless, red
+// and bold, out of the row's flow, so its appearing and leaving never move
+// the badge or the word (the old controls-row «Отмена»): it shows only while
+// a move is being made (the letter/word phases) and dispatches CANCEL_MOVE.
 // Validation
 // errors render as a toast: a warning-icon pill (role=alert) fixed to the
 // top of the screen, hidden again after a few seconds — it takes no
@@ -42,7 +43,8 @@ interface StatusBarProps {
   texts: Texts;
   // an english bot word opens its translation popup; russian words never call it
   onWordClick: (word: string) => void;
-  // the top-left cancel button: rolls a move in progress back (CANCEL_MOVE)
+  // the status row's floating cancel button: rolls a move in progress back
+  // (CANCEL_MOVE); positioned absolutely, it takes no layout space
   onCancel: () => void;
 }
 
@@ -121,6 +123,15 @@ export function StatusBar({ result, startWord, error, status, phase, lang, texts
   return (
     <div className="status-bar">
       <div className="status-row">
+        {phase !== 'over' && (
+          /* both labels are rendered, stacked in one grid cell — the badge's
+             width is always the wider label's, so nothing shifts on the flip */
+          <div className={'turn ' + (botThinking ? 'turn-bot' : 'turn-player')}>
+            <span className={botThinking ? 'turn-alt' : ''}>{texts.turnPlayer}</span>
+            <span className={botThinking ? '' : 'turn-alt'}>{texts.botThinking}</span>
+          </div>
+        )}
+        <div className="result">{line}</div>
         {(phase === 'letter' || phase === 'word') && (
           <button
             type="button"
@@ -132,15 +143,6 @@ export function StatusBar({ result, startWord, error, status, phase, lang, texts
             {texts.controls.cancel}
           </button>
         )}
-        {phase !== 'over' && (
-          /* both labels are rendered, stacked in one grid cell — the badge's
-             width is always the wider label's, so nothing shifts on the flip */
-          <div className={'turn ' + (botThinking ? 'turn-bot' : 'turn-player')}>
-            <span className={botThinking ? 'turn-alt' : ''}>{texts.turnPlayer}</span>
-            <span className={botThinking ? '' : 'turn-alt'}>{texts.botThinking}</span>
-          </div>
-        )}
-        <div className="result">{line}</div>
       </div>
       {error !== null && toastShown && (
         <div className="error show" role="alert">
