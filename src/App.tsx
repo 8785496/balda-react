@@ -145,11 +145,21 @@ export default function App() {
   // status bar of the installed standalone app on Android follows it live,
   // which the manifest's static theme_color alone cannot do. The meta ships
   // as light/dark media variants (see index.html — Chrome's dark-mode
-  // standalone bug ignores a scheme-less tag), so every variant is rewritten
+  // standalone bug ignores a scheme-less tag), so every variant is rewritten.
+  // Each tag is replaced rather than mutated: some Android standalone builds
+  // re-read the bar color only when the tag is (re)inserted, and an
+  // attribute-only change leaves the bar at the old color until the next
+  // page load
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+    const color = chromeColorFor(theme);
     document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
-      meta.setAttribute('content', chromeColorFor(theme));
+      const fresh = document.createElement('meta');
+      fresh.setAttribute('name', 'theme-color');
+      const media = meta.getAttribute('media');
+      if (media !== null) fresh.setAttribute('media', media);
+      fresh.setAttribute('content', color);
+      meta.replaceWith(fresh);
     });
     saveTheme(theme);
   }, [theme]);
